@@ -1,0 +1,43 @@
+name: Frontend CI
+on:
+  push: { branches: [dev, qa, main] }
+  pull_request: { branches: [qa, main] }
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('package.json') != '' && hashFiles('angular.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect placeholder
+        id: detect
+        run: |
+          if grep -q "PLACEHOLDER" package.json || grep -q "PLACEHOLDER" angular.json; then
+            echo "placeholder=true" >> $GITHUB_OUTPUT
+          else
+            echo "placeholder=false" >> $GITHUB_OUTPUT
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.placeholder == 'false'
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install deps
+        if: steps.detect.outputs.placeholder == 'false'
+        run: npm ci
+      - name: Setup Chrome
+        if: steps.detect.outputs.placeholder == 'false'
+        uses: browser-actions/setup-chrome@v1
+      - name: Unit tests (ChromeHeadless)
+        if: steps.detect.outputs.placeholder == 'false'
+        env:
+          CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+      - name: Build
+        if: steps.detect.outputs.placeholder == 'false'
+        run: npx ng build --configuration=production
+      - name: Upload dist
+        if: steps.detect.outputs.placeholder == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: museai-frontend-dist
+          path: dist/**

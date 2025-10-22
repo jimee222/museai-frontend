@@ -1,0 +1,11 @@
+{
+  "name": "museai-frontend-template",
+  "version": "0.0.0",
+  "private": true,
+  "PLACEHOLDER": true,
+  "description": "Template placeholder; reemplaza con Angular CLI.",
+  "scripts": {
+    "test": "echo \"Placeholder package.json: reemplaza con Angular real\" && exit 0",
+    "build": "echo \"Placeholder: reemplaza con Angular real\" && exit 0"
+  }
+}
