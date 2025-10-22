@@ -1,0 +1,16 @@
+<nav class="nav">
+  <a class="brand" routerLink="/" aria-label="Ir a inicio">
+    <img ngSrc="/assets/brand/museai-logo.png" width="40" height="40" alt="Muse AI" />
+
+    <span class="brand__name">Muse AI</span>
+  </a>
+
+  <div class="links">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+    <a routerLink="/login" routerLinkActive="active">Login</a>
+    <a routerLink="/register" routerLinkActive="active">Registro</a>
+    <a routerLink="/explore3d" routerLinkActive="active">Explora 3D</a>
+    <a routerLink="/quiz" routerLinkActive="active">Quiz</a>
+    <a routerLink="/profile" routerLinkActive="active">Perfil</a>
+  </div>
+</nav>

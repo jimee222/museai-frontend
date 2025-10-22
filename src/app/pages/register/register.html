@@ -1,0 +1,109 @@
+<section class="register-wrap">
+  <!-- panel izquierda imagen -->
+  <aside class="register-media">
+    <div class="panel__img-wrap">
+      <img
+        ngSrc="assets/arteiaVertical.webp"
+        width="1" height="1"
+      alt="Arte e IA"
+      class="panel__img"
+      />
+    </div>
+  </aside>
+
+  <!-- panel formulario -->
+  <form class="register-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <header class="reg-header">
+      <img
+        ngSrc="assets/brand/museai-logo.png"
+        width="497" height="497"
+      alt="Muse AI"
+      class="reg-logo"
+      />
+      <h2>Registrar Usuario</h2>
+    </header>
+
+    <div class="grid">
+      <label>
+        <span>Nombre</span>
+        <input type="text" formControlName="firstName" placeholder="Nombre"/>
+        <small class="error" *ngIf="field('firstName').touched && field('firstName').invalid">
+          Requerido (máx. 60)
+        </small>
+      </label>
+
+      <label>
+        <span>Primer Apellido</span>
+        <input type="text" formControlName="lastName1" placeholder="Primer Apellido"/>
+        <small class="error" *ngIf="field('lastName1').touched && field('lastName1').invalid">
+          Requerido (máx. 60)
+        </small>
+      </label>
+
+      <label>
+        <span>Segundo Apellido</span>
+        <input type="text" formControlName="lastName2" placeholder="Segundo Apellido"/>
+      </label>
+
+      <label>
+        <span>Fecha de Nacimiento</span>
+        <input type="date" formControlName="birthDate"/>
+        <small class="error" *ngIf="field('birthDate').touched && field('birthDate').invalid">
+          Requerida
+        </small>
+      </label>
+
+      <label>
+        <span>Correo</span>
+        <input type="email" formControlName="email" placeholder="correo@ejemplo.com"/>
+        <small class="error" *ngIf="field('email').touched && field('email').invalid">
+          Correo válido requerido
+        </small>
+      </label>
+
+      <label>
+        <span>Teléfono</span>
+        <input type="tel" formControlName="phone" placeholder="+506 8888 8888"/>
+        <small class="error" *ngIf="field('phone').touched && field('phone').invalid">
+          Solo números, +, -, espacios (7–20)
+        </small>
+      </label>
+
+      <div class="pwcol" [formGroup]="passwords">
+        <label>
+          <span>Contraseña</span>
+          <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres"/>
+        </label>
+        <label>
+          <span>Confirmar contraseña</span>
+          <input type="password" formControlName="confirm" placeholder="Repite la contraseña"/>
+        </label>
+        <small class="error" *ngIf="passwords.touched && passwords.errors?.['mismatch']">
+          Las contraseñas no coinciden
+        </small>
+      </div>
+
+      <label class="level">
+        <span>Nivel de conocimiento en arte</span>
+        <select formControlName="artLevel">
+          <option value="" disabled>Selecciona…</option>
+          <option *ngFor="let lv of levels" [value]="lv.value">{{ lv.label }}</option>
+        </select>
+        <small class="error" *ngIf="field('artLevel').touched && field('artLevel').invalid">
+          Selecciona un nivel
+        </small>
+      </label>
+    </div>
+
+    <button class="btn btn-primary submit" type="submit" [disabled]="!canSubmit()">
+      {{ submitting() ? 'Registrando…' : 'Registrar' }}
+    </button>
+
+    <button type="button" class="btn btn-google" (click)="googleSignIn()">
+      <svg viewBox="0 0 48 48" aria-hidden="true" class="g-logo">
+        <path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l-3.7 3.7c-1.5-1.4-3.5-2.1-5.5-2.1-4.7 0-8.6 3.8-8.6 8.6s3.8 8.6 8.6 8.6c4 0 6.9-2.3 7.9-5.5H24v-4.7h15.6c.2 1 .3 2 .3 3.2 0 8.8-5.9 15-15.9 15-9.2 0-16.6-7.5-16.6-16.6S14.8 9.5 24 9.5z"/>
+      </svg>
+      <span>Continuar con Google</span>
+    </button>
+  </form>
+</section>
