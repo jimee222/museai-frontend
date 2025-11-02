@@ -2,6 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { GoogleAuthService } from '../../services/google-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -15,7 +16,7 @@ export class Login {
   submitting = signal(false);
   canSubmit = computed(() => this.form.valid && !this.submitting());
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private googleAuthService: GoogleAuthService) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
@@ -36,11 +37,9 @@ export class Login {
     this.submitting.set(false);
   }
   googleSignIn() {
-    // Por ahora solo UI: aquí luego iría tu flujo real (OAuth / redirección)
-    console.log('Simulación: continuar con Google');
-    // Opcional: feedback visual
     this.submitting.set(true);
-    setTimeout(() => this.submitting.set(false), 600);
+    this.googleAuthService.signInWithGoogle();
+    setTimeout(() => this.submitting.set(false), 1000);
   }
 
 }
