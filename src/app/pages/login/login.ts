@@ -1,45 +1,66 @@
-import { Component, computed, signal } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { GoogleAuthService } from '../../services/google-auth.service';
+import { Component, ViewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NgOptimizedImage],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.css',
 })
 export class Login {
-  form: FormGroup;
-  submitting = signal(false);
-  canSubmit = computed(() => this.form.valid && !this.submitting());
+  public loginError = '';
+  public isSubmitting = false;
 
-  constructor(private fb: FormBuilder, private googleAuthService: GoogleAuthService) {
-    this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      remember: [false]
+  @ViewChild('email') private emailModel!: NgModel;
+  @ViewChild('password') private passwordModel!: NgModel;
+
+  public loginForm: { email: string; password: string; remember: boolean } = {
+    email: '',
+    password: '',
+    remember: false,
+  };
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+  ) {}
+
+  public handleLogin(event: Event): void {
+    event.preventDefault();
+    this.loginError = '';
+
+    if (!this.emailModel?.valid) {
+      this.emailModel?.control.markAsTouched();
+    }
+
+    if (!this.passwordModel?.valid) {
+      this.passwordModel?.control.markAsTouched();
+    }
+
+    if (!this.emailModel?.valid || !this.passwordModel?.valid) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    const { email, password } = this.loginForm;
+
+    this.authService.login({ email, password }).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.router.navigateByUrl('/app/dashboard');
+      },
+      error: (err: any) => {
+        this.isSubmitting = false;
+        this.loginError = err?.error?.description ?? 'No se pudo iniciar sesión.';
+      },
     });
   }
 
-  get f() { return this.form.controls; }
-
-  async submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.submitting.set(true);
-
-    // Aquí luego se hace this.http.post(`${environment.apiBaseUrl}/auth/login`, this.form.value)
-    console.log('LOGIN payload:', this.form.value);
-
-    await new Promise(r => setTimeout(r, 600));
-    this.submitting.set(false);
+  public googleSignIn(): void {
+    // TODO: implementar autenticación con Google
   }
-  googleSignIn() {
-    this.submitting.set(true);
-    this.googleAuthService.signInWithGoogle();
-    setTimeout(() => this.submitting.set(false), 1000);
-  }
-
 }
