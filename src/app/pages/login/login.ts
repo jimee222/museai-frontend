@@ -1,46 +1,44 @@
-import { Component, computed, signal } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Component, ViewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.component.scss'
 })
-export class Login {
-  form: FormGroup;
-  submitting = signal(false);
-  canSubmit = computed(() => this.form.valid && !this.submitting());
+export class LoginComponent {
+  public loginError!: string;
+  @ViewChild('email') emailModel!: NgModel;
+  @ViewChild('password') passwordModel!: NgModel;
 
-  constructor(private fb: FormBuilder) {
-    this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      remember: [false]
-    });
-  }
+  public loginForm: { email: string; password: string } = {
+    email: '',
+    password: '',
+  };
 
-  get f() { return this.form.controls; }
+  constructor(
+    private router: Router, 
+    private authService: AuthService
+  ) {}
 
-  async submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.submitting.set(true);
-
-    // Aquí luego se hace this.http.post(`${environment.apiBaseUrl}/auth/login`, this.form.value)
-    console.log('LOGIN payload:', this.form.value);
-
-    await new Promise(r => setTimeout(r, 600));
-    this.submitting.set(false);
-  }
-  googleSignIn() {
-    // Por ahora solo UI: aquí luego iría tu flujo real (OAuth / redirección)
-    console.log('Simulación: continuar con Google');
-    // Opcional: feedback visual
-    this.submitting.set(true);
-    setTimeout(() => this.submitting.set(false), 600);
-  }
-
+  public handleLogin(event: Event) {
+    event.preventDefault();
+    if (!this.emailModel.valid) {
+      this.emailModel.control.markAsTouched();
+    }
+    if (!this.passwordModel.valid) {
+      this.passwordModel.control.markAsTouched();
+    }
+    if (this.emailModel.valid && this.passwordModel.valid) {
+      this.authService.login(this.loginForm).subscribe({
+        next: () => this.router.navigateByUrl('/app/dashboard'),
+        error: (err: any) => (this.loginError = err.error.description),
+      });
+    }
+  }
 }
