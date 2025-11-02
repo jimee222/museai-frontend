@@ -2,7 +2,7 @@
   <aside class="login-media">
     <div class="panel__img-wrap">
       <img
-        ngSrc="assets/arteiaVertical.webp"
+        ngSrc="assets\arteiaVertical.webp"
         width="768" height="768"
         priority
         alt="Arte e IA"
@@ -11,7 +11,12 @@
     </div>
   </aside>
 
-  <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <form
+    class="login-card"
+    #loginNgForm="ngForm"
+    (ngSubmit)="handleLogin($event)"
+    novalidate
+  >
     <header class="log-header">
       <img ngSrc="assets/brand/museai-logo.png" width="497" height="497" alt="Muse AI" class="log-logo" />
       <div class="titles">
@@ -26,11 +31,15 @@
       <span>Usuario</span>
       <input
         type="email"
-        formControlName="email"
+        name="email"
+        required
+        email
         placeholder="correo@ejemplo.com"
         autocomplete="username"
+        [(ngModel)]="loginForm.email"
+        #email="ngModel"
       />
-      <small class="error" *ngIf="f['email'].touched && f['email'].invalid">
+      <small class="error" *ngIf="email.touched && email.invalid">
         Ingrese un correo válido.
       </small>
     </label>
@@ -39,29 +48,37 @@
       <span>Contraseña</span>
       <input
         type="password"
-        formControlName="password"
+        name="password"
+        required
+        minlength="8"
         placeholder="••••••••"
         autocomplete="current-password"
+        [(ngModel)]="loginForm.password"
+        #password="ngModel"
       />
-      <small class="error" *ngIf="f['password'].touched && f['password'].invalid">
+      <small class="error" *ngIf="password.touched && password.invalid">
         Contraseña requerida (mínimo 8 caracteres).
       </small>
     </label>
 
     <div class="row">
       <label class="remember">
-        <input type="checkbox" formControlName="remember" />
+        <input
+          type="checkbox"
+          name="remember"
+          [(ngModel)]="loginForm.remember"
+        />
         <span>Recordarme</span>
       </label>
       <a routerLink="/recover" class="link">¿Olvidó su contraseña?</a>
     </div>
 
-    <p class="error" *ngIf="apiError()">
-      {{ apiError() }}
+    <p class="error" *ngIf="loginError">
+      {{ loginError }}
     </p>
 
     <button class="btn btn-primary submit" type="submit">
-      {{ submitting() ? 'Ingresando…' : 'Iniciar Sesión' }}
+      {{ isSubmitting ? 'Ingresando…' : 'Iniciar Sesión' }}
     </button>
 
     <p class="hint">
