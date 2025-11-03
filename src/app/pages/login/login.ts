@@ -51,7 +51,7 @@ export class Login {
     this.authService.login({ email, password }).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.router.navigateByUrl('/app/dashboard');
+        this.router.navigateByUrl('/app/menu');
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -63,4 +63,8 @@ export class Login {
   public googleSignIn(): void {
     // TODO: implementar autenticación con Google
   }
+
+  public goToRecover = (): void => {
+    this.router.navigateByUrl('/recover');
+  };
 }

@@ -70,7 +70,7 @@
         />
         <span>Recordarme</span>
       </label>
-      <a routerLink="/recover" class="link">¿Olvidó su contraseña?</a>
+      <button type="button" class="link link-button" (click)="goToRecover()">¿Olvidó su contraseña?</button>
     </div>
 
     <p class="error" *ngIf="loginError">
