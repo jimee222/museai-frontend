@@ -3,6 +3,8 @@ import { Component, ViewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { GoogleAuthService } from '../../services/google-auth.service';
+
 
 @Component({
   selector: 'app-login',
@@ -27,6 +29,7 @@ export class Login {
   constructor(
     private router: Router,
     private authService: AuthService,
+    private googleAuthService: GoogleAuthService 
   ) {}
 
   public handleLogin(event: Event): void {
@@ -60,7 +63,14 @@ export class Login {
     });
   }
 
-  public googleSignIn(): void {
-    // TODO: implementar autenticación con Google
-  }
+  googleSignIn() {
+  this.isSubmitting = true;
+  this.googleAuthService.signInWithGoogle();
+  setTimeout(() => this.isSubmitting = false, 1000);
+}
+
+ngOnInit() {
+  this.googleAuthService.signInWithGoogle();
+}
+
 }

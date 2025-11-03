@@ -52,7 +52,11 @@ export class GoogleAuthService {
     callback: (response: any) => this.handleCredentialResponse(response)
   });
 
-  google.accounts.id.prompt(); // abre el One Tap o ventana nativa
+  // 🔹 Mostrar botón estándar (evita problemas de CORS)
+  google.accounts.id.renderButton(
+    document.getElementById("googleButtonDiv"),
+    { theme: "outline", size: "large" }
+  );
 }
 }
 
