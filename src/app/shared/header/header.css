@@ -1,24 +1,64 @@
-.nav{
-  position: sticky; top:0; z-index:50;
-  display:flex; align-items:center;
-  padding:8px 14px;
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
   background: var(--secondary-color);
   color: var(--text);
 }
 
-.brand{
-  display:inline-flex; align-items:center; gap:10px;
-  text-decoration:none; color:inherit; font-weight:800;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 800;
 }
-.brand__logo{ object-fit:contain; border-radius:8px; }
-.brand__name{ font-size:1rem; }
 
-.links{
-  margin-left:auto; display:inline-flex; align-items:center; gap:22px;
+.brand__logo {
+  object-fit: contain;
+  border-radius: 8px;
 }
-.links a{ text-decoration:none; color:inherit; font-weight:700; opacity:.95; }
-.links a:hover, .links a.active{ opacity:1; text-decoration:underline; }
-.logout-btn{
+
+.brand__name {
+  font-size: 1rem;
+}
+
+.links {
+  margin-left: auto;
+  display: flex;              
+  align-items: center;
+  gap: 36px;                  
+}
+
+.links a {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 700;
+  opacity: 0.95;
+  transition: opacity 0.2s ease, text-decoration 0.2s ease;
+}
+
+.links a:hover,
+.links a.active {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+
+.links .guest-links,
+.links .auth-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;  
+}
+
+[hidden] {
+  display: none !important;
+}.logout-btn{
   border:1px solid rgba(255,255,255,.65);
   background:transparent;
   color:inherit;

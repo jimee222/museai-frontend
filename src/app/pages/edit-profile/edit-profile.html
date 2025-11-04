@@ -1,0 +1,103 @@
+<section class="register-wrap">
+  <aside class="register-media">
+    <div class="panel__img-wrap">
+      <img
+        ngSrc="assets/robotcomputer.webp"
+        width="1" height="1"
+      alt="Robot Editor"
+      class="panel__img"
+      />
+    </div>
+  </aside>
+
+  <!-- panel formulario -->
+  <form class="register-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <header class="reg-header">
+      <img
+        ngSrc="assets/brand/museai-logo.png"
+        width="497" height="497"
+      alt="Muse AI"
+      class="reg-logo"
+      />
+      <h2>Editar Perfil</h2>
+    </header>
+
+    <div class="grid">
+      <label>
+        <span>Nombre</span>
+        <input type="text" formControlName="firstName" placeholder="Nombre"/>
+        <small class="error" *ngIf="field('firstName').touched && field('firstName').invalid">
+          Requerido (máx. 60)
+        </small>
+      </label>
+
+      <label>
+        <span>Primer Apellido</span>
+        <input type="text" formControlName="lastName1" placeholder="Primer Apellido"/>
+        <small class="error" *ngIf="field('lastName1').touched && field('lastName1').invalid">
+          Requerido (máx. 60)
+        </small>
+      </label>
+
+      <label>
+        <span>Segundo Apellido</span>
+        <input type="text" formControlName="lastName2" placeholder="Segundo Apellido"/>
+      </label>
+
+      <label>
+        <span>Fecha de Nacimiento</span>
+        <input type="date" formControlName="birthDate"/>
+        <small class="error" *ngIf="field('birthDate').touched && field('birthDate').invalid">
+          Requerida
+        </small>
+      </label>
+
+      <label>
+        <span>Correo</span>
+        <input type="email" formControlName="email" placeholder="correo@ejemplo.com"/>
+        <small class="error" *ngIf="field('email').touched && field('email').invalid">
+          Correo válido requerido
+        </small>
+      </label>
+
+      <label>
+        <span>Teléfono</span>
+        <input type="tel" formControlName="phone" placeholder="+506 8888 8888"/>
+        <small class="error" *ngIf="field('phone').touched && field('phone').invalid">
+          Solo números, +, -, espacios (7–20)
+        </small>
+      </label>
+
+      <div class="pwcol" [formGroup]="passwords">
+        <label>
+          <span>Contraseña</span>
+          <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres"/>
+        </label>
+        <label>
+          <span>Confirmar contraseña</span>
+          <input type="password" formControlName="confirm" placeholder="Repite la contraseña"/>
+        </label>
+        <small class="error" *ngIf="passwords.touched && passwords.errors?.['mismatch']">
+          Las contraseñas no coinciden
+        </small>
+      </div>
+
+      <label class="level">
+        <span>Nivel de conocimiento en arte</span>
+        <select formControlName="artLevel">
+          <option value="" disabled>Selecciona…</option>
+          <option *ngFor="let lv of levels" [value]="lv.value">{{ lv.label }}</option>
+        </select>
+        <small class="error" *ngIf="field('artLevel').touched && field('artLevel').invalid">
+          Selecciona un nivel
+        </small>
+      </label>
+    </div>
+    <button class="btn btn-primary submit"
+        type="submit"
+        [disabled]="form.invalid || submitting()">
+      {{ submitting() ? 'Editando Perfil...' : 'Editar' }}
+    </button>
+    
+  </form>
+</section>

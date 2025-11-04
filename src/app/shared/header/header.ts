@@ -1,24 +1,29 @@
 import { Component } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { NgIf, NgOptimizedImage } from '@angular/common';
+import {NgOptimizedImage , CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, NgIf],
+  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, CommonModule],
   templateUrl: './header.html',
-  styleUrl: './header.css'
+  styleUrls: ['./header.css']
 })
 export class HeaderComponent {
+  isAuthenticated: boolean = false;
+
   constructor(
-    private auth: AuthService,
+    public auth: AuthService,
     private router: Router,
   ) {}
 
-  public isAuthenticated(): boolean {
-    return this.auth.check();
-  }
+ ngOnInit() {
+    this.auth.isLoggedIn$.subscribe(status => {
+      this.isAuthenticated = status;
+    });
+  }  
 
   public logout(): void {
     this.auth.logout();

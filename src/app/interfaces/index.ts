@@ -17,6 +17,7 @@ export interface IUser {
   birthDate?: string;
   email?: string;
   password?: string;
+  phone?: string;
   artLevel?: 'beginner' | 'intermediate' | 'advanced';
   createdAt?: string;
   updatedAt?: string;
@@ -54,4 +55,13 @@ export interface IHttpResponse<T> {
     pageNumber?: number;
     pageSize?: number;
   };
+}
+
+export interface ISearch {
+  page?: number;
+  size?: number;
+  pageNumber?: number;
+  pageSize?: number;
+  totalElements?: number;
+  totalPages?:number;
 }
