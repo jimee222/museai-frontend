@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { IAuthority, ILoginResponse, IResponse, IRoleType, IUser, IHttpResponse } from '../interfaces';
 import { Observable, firstValueFrom, of, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,8 @@ export class AuthService {
   private expiresIn! : number;
   private user: IUser = {email: '', authorities: []};
   private http: HttpClient = inject(HttpClient);
+  private loggedIn = new BehaviorSubject<boolean>(!!localStorage.getItem('access_token'));
+  public isLoggedIn$ = this.loggedIn.asObservable();
 
   constructor() {
     this.load();
@@ -62,6 +65,7 @@ export class AuthService {
         this.expiresIn = response.expiresIn;
         this.user = response.authUser;
         this.save();
+        this.loggedIn.next(true);
       })
     );
   }
@@ -125,6 +129,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('expiresIn');
     localStorage.removeItem('auth_user');
+    this.loggedIn.next(false);
   }
 
   public getUserAuthorities (): IAuthority[] | undefined {
@@ -132,22 +137,27 @@ export class AuthService {
   }
 
   public areActionsAvailable(routeAuthorities: string[]): boolean  {
-    // definición de las variables de validación
+    
     let allowedUser: boolean = false;
     let isAdmin: boolean = false;
-    // se obtienen los permisos del usuario
+   
     let userAuthorities = this.getUserAuthorities();
-    // se valida que sea una ruta permitida para el usuario
+    
     for (const authority of routeAuthorities) {
       if (userAuthorities?.some(item => item.authority == authority) ) {
         allowedUser = userAuthorities?.some(item => item.authority == authority)
       }
       if (allowedUser) break;
     }
-    // se valida que el usuario tenga un rol de administración
+   
     if (userAuthorities?.some(item => item.authority == IRoleType.admin || item.authority == IRoleType.superAdmin)) {
       isAdmin = userAuthorities?.some(item => item.authority == IRoleType.admin || item.authority == IRoleType.superAdmin);
     }          
     return allowedUser && isAdmin;
   }
+
+public isLoggedIn(): boolean {
+  return this.loggedIn.value;
+}
+
 }

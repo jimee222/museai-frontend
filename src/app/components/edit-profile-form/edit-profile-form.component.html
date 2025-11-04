@@ -1,0 +1,119 @@
+<form [formGroup]="form">
+  <div>
+    <h2 class="mb-0">{{ 'Edit Profile' }}</h2>
+  </div>
+
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="firstName">Nombre*</label>
+        <input id="firstName" formControlName="firstName" type="text" class="form-control" />
+        @if (form.controls['firstName'].invalid && (form.controls['firstName'].dirty || form.controls['firstName'].touched)) {
+          <p class="text-danger my-1 p-absolute">El nombre es un campo obligatorio</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="lastName1">Primer Apellido*</label>
+        <input id="lastName1" formControlName="lastName1" type="text" class="form-control" />
+        @if (form.controls['lastName1'].invalid && (form.controls['lastName1'].dirty || form.controls['lastName1'].touched)) {
+          <p class="text-danger my-1 p-absolute">El primer apellido es un campo obligatorio</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="lastName2">Segundo Apellido*</label>
+        <input id="lastName2" formControlName="lastName2" type="text" class="form-control" />
+        @if (form.controls['lastName2'].invalid && (form.controls['lastName2'].dirty || form.controls['lastName2'].touched)) {
+          <p class="text-danger my-1 p-absolute">El segundo apellido es un campo obligatorio</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="birthDate">Fecha de Nacimiento*</label>
+        <input id="birthDate" formControlName="birthDate" type="date" class="form-control" />
+        @if (form.controls['birthDate'].invalid && (form.controls['birthDate'].dirty || form.controls['birthDate'].touched)) {
+          <p class="text-danger my-1 p-absolute">La fecha de nacimiento es un campo obligatorio</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="email">Correo*</label>
+        <input id="email" formControlName="email" type="email" class="form-control" />
+        @if (form.controls['email'].invalid && (form.controls['email'].dirty || form.controls['email'].touched)) {
+          <p class="text-danger my-1 p-absolute">El correo electrónico es obligatorio y debe ser válido</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="phone">Teléfono*</label>
+        <input id="phone" formControlName="phone" type="tel" class="form-control" />
+        @if (form.controls['phone'].invalid && (form.controls['phone'].dirty || form.controls['phone'].touched)) {
+          <p class="text-danger my-1 p-absolute">El teléfono es un campo obligatorio</p>
+        }
+      </div>
+    </div>
+  </div> 
+
+  
+  <div formGroupName="passwords" class="row">
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="password">Contraseña*</label>
+        <input id="password" formControlName="password" type="password" class="form-control" placeholder="Mínimo 8 caracteres" />
+        @if (passwords.controls['password'].invalid && (passwords.controls['password'].dirty || passwords.controls['password'].touched)) {
+          <p class="text-danger my-1 p-absolute">
+            La contraseña es obligatoria y debe tener al menos 8 caracteres, incluyendo mayúscula, minúscula y número
+          </p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-2">
+        <label class="mb-1" for="confirm">Confirmar Contraseña*</label>
+        <input id="confirm" formControlName="confirm" type="password" class="form-control" placeholder="Repite la contraseña" />
+        @if (passwords.controls['confirm'].invalid && (passwords.controls['confirm'].dirty || passwords.controls['confirm'].touched)) {
+          <p class="text-danger my-1 p-absolute">La confirmación de la contraseña es obligatoria</p>
+        }
+        @if (passwords.errors?.['mismatch'] && (passwords.controls['confirm'].dirty || passwords.controls['confirm'].touched)) {
+          <p class="text-danger my-1 p-absolute">Las contraseñas no coinciden</p>
+        }
+      </div>
+    </div>
+  </div>
+
+
+  <div class="col-md-6">
+    <div class="mb-2">
+      <label class="mb-1" for="artLevel">Nivel de conocimiento en arte*</label>
+      <select id="artLevel" formControlName="artLevel" class="form-select">
+        <option value="" disabled selected>Selecciona…</option>
+        <option *ngFor="let lv of levels" [value]="lv.value">{{ lv.label }}</option>
+      </select>
+      @if (form.controls['artLevel'].invalid && (form.controls['artLevel'].dirty || form.controls['artLevel'].touched)) {
+        <p class="text-danger my-1 p-absolute">Selecciona un nivel de conocimiento</p>
+      }
+    </div>
+  </div>
+
+ 
+  <div class="row">
+    <div class="col-12 d-flex justify-content-end mt-3">
+      <button (click)="callSaveMethod.emit(form.value)" [disabled]="form.invalid" class="btn btn-primary" type="button">
+        {{ 'Update' }}
+      </button>
+    </div>
+  </div>
+</form>

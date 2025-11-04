@@ -1,0 +1,133 @@
+/* layout general similar al mockup */
+.register-wrap{
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 20px;
+}
+
+/* panel de la izquierda con imagen */
+.register-media{
+  background: var(--main-color);
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 10px;
+}
+.panel__img-wrap{
+  width: 100%;
+  aspect-ratio: 7 / 7;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.panel__img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* tarjeta del formulario */
+.register-card{
+  background: var(--main-color);
+  color: var(--text);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.1);
+}
+.reg-header{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom: 6px;
+}
+.reg-header h2{
+  margin:0; font-size:1.25rem; font-weight:800;
+}
+.reg-logo{
+  width: 38px; height: auto; display:block;
+  filter: none;
+}
+
+/* grilla de inputs (dos columnas) */
+.grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+label{
+  display:flex; flex-direction:column; gap:6px;
+  font-weight: 700;
+}
+label span{ font-size:.9rem; color:#fff; }
+
+input, select{
+  appearance: none;
+  padding: .55rem .7rem;
+  border-radius: 8px;
+  border: 0;
+  outline: none;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 600;
+}
+
+/* contraseñas en 2 columnas y mensaje */
+.pwcol{
+  grid-column: 1 / 3;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px;
+}
+
+.level{ grid-column: 1 / 3; }
+
+.error{
+  color: #ffe4e6; font-weight: 600; font-size: .8rem;
+}
+
+/* botón */
+.btn{
+  display:inline-flex; justify-content:center; align-items:center; gap:.5rem;
+  font-weight:700; border:none; cursor:pointer;
+}
+.btn-primary{
+  background: var(--third-color);
+  color: var(--text);
+}
+.submit{
+  align-self: stretch;
+  margin-top: 6px;
+  padding: .7rem 1rem;
+  border-radius: 14px;
+}
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+/* separador "o continúa con" */
+.oauth-sep{
+  display:flex; align-items:center; gap:.75rem;
+  margin: .75rem 0;
+  color:#fff; opacity:.9; font-weight:700;
+}
+.oauth-sep span{
+  flex:1; height:1px; background:rgba(0,0,0,.15);
+}
+
+/* botón Google */
+.btn-google{
+  display:flex; align-items:center; justify-content:center; gap:.6rem;
+  width:100%;
+  background:#fff; color:#3c4043;
+  border:1px solid #dadce0;
+  border-radius:14px; padding:.65rem 1rem;
+  font-weight:700; cursor:pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.btn-google:hover{ background:#f7f8f8; }
+.btn-google:active{ transform: translateY(1px); }
+.g-logo{ width:20px; height:20px; display:block; }
+
+/* responsive */
+@media (max-width: 1023px){
+  .register-wrap{ grid-template-columns: 1fr; }
+  .pwcol{ grid-template-columns: 1fr; }
+}
