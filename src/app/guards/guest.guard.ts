@@ -8,9 +8,10 @@ export const GuestGuard: CanActivateFn = (route, state) => {
   const auth   = inject(AuthService);
 
   // Permite entrar si NO hay sesión
-  if (!auth.check()) return true;
+  if (!auth.check()) {
+    return true;
+  }
 
-  // Si ya hay sesión, redirige a donde prefieras
-  router.navigateByUrl('/app/dashboard');
-  return false;
+  // Si ya hay sesión, redirige al menú inicial
+  return router.parseUrl('/app/menu');
 };

@@ -107,6 +107,18 @@ export class AuthService {
     return this.http.post<IHttpResponse<IUser>>('auth/register', payload);
     }
 
+  public requestPasswordRecovery(email: string): Observable<IHttpResponse<null>> {
+    return this.http.post<IHttpResponse<null>>('auth/password/recovery', { email });
+  }
+
+  public resetPassword(payload: {
+    email: string;
+    code: string;
+    newPassword: string;
+  }): Observable<IHttpResponse<null>> {
+    return this.http.post<IHttpResponse<null>>('auth/password/reset', payload);
+  }
+
 
   public logout() {
     this.accessToken = '';

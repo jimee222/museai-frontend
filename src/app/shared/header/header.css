@@ -18,3 +18,17 @@
 }
 .links a{ text-decoration:none; color:inherit; font-weight:700; opacity:.95; }
 .links a:hover, .links a.active{ opacity:1; text-decoration:underline; }
+.logout-btn{
+  border:1px solid rgba(255,255,255,.65);
+  background:transparent;
+  color:inherit;
+  font-weight:700;
+  padding:6px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .2s ease, opacity .2s ease;
+}
+.logout-btn:hover{
+  background:rgba(255,255,255,.15);
+  opacity:1;
+}

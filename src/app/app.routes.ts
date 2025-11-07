@@ -1,23 +1,70 @@
 import { Routes } from '@angular/router';
-import { Landing  } from './pages/landing/landing';
-import { Login  } from './pages/login/login';
-import { GoogleTestComponent  } from './pages/google-test/google-test';
-import { Register  } from './pages/register/register';
-import { Profile  } from './pages/profile/profile';
-import { About  } from './pages/about/about';
-import { NotFound  } from './pages/not-found/not-found';
+import { Login } from './pages/login/login';
+import { Register } from './pages/register/register';
+import { Recover } from './pages/recover/recover';
+import { Menu } from './pages/menu/menu';
+import { Profile } from './pages/profile/profile';
+import { About } from './pages/about/about';
+import { NotFound } from './pages/not-found/not-found';
+import { Landing } from './pages/landing/landing';
 import { GuestGuard } from './guards/guest.guard';
-
+import { AuthGuard } from './guards/auth.guard';
+import { MuseumComponent } from './pages/museum/museum.component';
 
 export const routes: Routes = [
-  { path: '', component: Landing , pathMatch: 'full' },
-  { path: 'about', component: About  },
-  { path: 'login', component: Login  },
-  { path: 'register', 
-    component: Register, 
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'login',
+  },
+  {
+    path: 'login',
+    component: Login,
     canActivate: [GuestGuard],
-   },
-  { path: 'profile', component: Profile  },
-  { path: '**', component: NotFound  },
-  { path: 'test-google', component: GoogleTestComponent  },
+  },
+  {
+    path: 'register',
+    component: Register,
+    canActivate: [GuestGuard],
+  },
+  {
+    path: 'recover',
+    component: Recover,
+  },
+  {
+    path: 'landing',
+    component: Landing,
+  },
+  {
+    path: 'about',
+    component: About,
+  },
+  {
+    path: 'app',
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'menu',
+        component: Menu,
+      },
+      {
+        path: 'profile',
+        component: Profile,
+      },
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'menu',
+      },
+    ],
+  },
+  {
+      path: 'museum',
+      component: MuseumComponent,
+      canActivate: [AuthGuard] 
+    },  
+  {
+    path: '**',
+    component: NotFound,
+  },
 ];

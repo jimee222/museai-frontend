@@ -54,7 +54,7 @@ export class Login {
     this.authService.login({ email, password }).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.router.navigateByUrl('/app/dashboard');
+        this.router.navigateByUrl('/app/menu');
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -69,8 +69,12 @@ export class Login {
   setTimeout(() => this.isSubmitting = false, 1000);
 }
 
-ngOnInit() {
-  this.googleAuthService.signInWithGoogle();
-}
+  ngOnInit() {
+    this.googleAuthService.signInWithGoogle();
+  }
 
+
+  public goToRecover = (): void => {
+  this.router.navigateByUrl('/recover');
+  };
 }
