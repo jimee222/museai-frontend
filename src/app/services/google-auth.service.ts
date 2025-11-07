@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
+import { ILoginResponse } from '../interfaces';
 
 declare const google: any;
 
@@ -9,54 +11,65 @@ declare const google: any;
   providedIn: 'root'
 })
 export class GoogleAuthService {
-  private clientId = '951939636581-dsvpc8hdbhi5678d9dpojjbvr0jk5go6.apps.googleusercontent.com'; 
+  private clientId = '951939636581-dsvpc8hdbhi5678d9dpojjbvr0jk5go6.apps.googleusercontent.com';
+  private initialized = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
-  /** Inicializa el SDK de Google */
-  initGoogle() {
-    if (typeof google !== 'undefined') {
-      google.accounts.id.initialize({
-        client_id: this.clientId,
-        callback: (response: any) => this.handleCredentialResponse(response)
-      });
-    }
+   private ensureInit() {
+    if (this.initialized) return;
+    if (typeof google === 'undefined') return;
+
+    google.accounts.id.initialize({
+      client_id: this.clientId,
+      callback: (response: any) => this.handleCredentialResponse(response),
+    });
+    this.initialized = true;
   }
 
-  /** Ejecuta el flujo One Tap (si quieres mostrar popup automático) */
-  prompt() {
-    if (typeof google !== 'undefined') {
-      google.accounts.id.prompt();
-    }
+    /** Pinta el botón oficial de Google dentro del elemento con ese id */
+  renderGoogleButton(targetId: string) {
+    this.ensureInit();
+    const el = document.getElementById(targetId);
+    if (!el || typeof google === 'undefined') return;
+
+    google.accounts.id.renderButton(el, {
+      theme: 'outline',
+      size: 'large',
+      // (opcional) otros estilos del botón:
+      // type: 'standard', shape: 'rectangular', text: 'continue_with', logo_alignment: 'left'
+    });
+
+    // (opcional) mostrar el One Tap
+    // google.accounts.id.prompt();
   }
 
-  /** Recibe el token y lo envía al backend */
-  handleCredentialResponse(response: any) {
+  signInWithGoogle() {
+    google.accounts.id.initialize({
+      client_id: this.clientId,
+      callback: (response: any) => this.handleCredentialResponse(response)
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("googleButtonDiv"),
+      { theme: "outline", size: "large" }
+    );
+  }
+
+  private handleCredentialResponse(response: any) {
     const idToken = response.credential;
 
-    this.http.post(`${environment.apiUrl}/auth/google`, { idToken }).subscribe({
-      next: (res: any) => {
-        localStorage.setItem('token', res.token);
-        this.router.navigate(['/app/dashboard']);
-      },
-      error: err => {
-        console.error('Error en login con Google:', err);
-      }
-    });
+    this.http.post<ILoginResponse>(`${environment.apiUrl}/auth/google`, { idToken })
+      .subscribe({
+        next: (res) => {
+          this.authService.setSession(res);
+          this.router.navigateByUrl('/app/menu');
+        },
+        error: (err) => console.error('Error en login con Google:', err)
+      });
   }
-
-  /** Abre el popup nativo de Google (sin botón renderizado automático) */
- signInWithGoogle() {
-  google.accounts.id.initialize({
-    client_id: this.clientId,
-    callback: (response: any) => this.handleCredentialResponse(response)
-  });
-
-  // 🔹 Mostrar botón estándar (evita problemas de CORS)
-  google.accounts.id.renderButton(
-    document.getElementById("googleButtonDiv"),
-    { theme: "outline", size: "large" }
-  );
 }
-}
-
