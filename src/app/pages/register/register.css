@@ -1,4 +1,4 @@
-/* layout general similar al mockup */
+
 .register-wrap{
   max-width: 1200px;
   margin: 24px auto;
@@ -7,8 +7,6 @@
   grid-template-columns: 1.05fr .95fr;
   gap: 20px;
 }
-
-/* panel de la izquierda con imagen */
 .register-media{
   background: var(--main-color);
   border-radius: 18px;
@@ -28,7 +26,6 @@
   display: block;
 }
 
-/* tarjeta del formulario */
 .register-card{
   background: var(--main-color);
   color: var(--text);
@@ -51,7 +48,6 @@
   filter: none;
 }
 
-/* grilla de inputs (dos columnas) */
 .grid{
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -86,7 +82,6 @@ input, select{
   color: #ffe4e6; font-weight: 600; font-size: .8rem;
 }
 
-/* botón */
 .btn{
   display:inline-flex; justify-content:center; align-items:center; gap:.5rem;
   font-weight:700; border:none; cursor:pointer;
@@ -102,7 +97,7 @@ input, select{
   border-radius: 14px;
 }
 .btn:disabled{ opacity:.6; cursor:not-allowed; }
-/* separador "o continúa con" */
+
 .oauth-sep{
   display:flex; align-items:center; gap:.75rem;
   margin: .75rem 0;
@@ -131,3 +126,25 @@ input, select{
   .register-wrap{ grid-template-columns: 1fr; }
   .pwcol{ grid-template-columns: 1fr; }
 }
+
+.pw-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pw-input input {
+  flex: 1;
+  padding-right: 2rem;
+}
+.eye-btn {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.eye-btn:hover {
+  opacity: 0.8;
+}
+

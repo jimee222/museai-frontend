@@ -1,5 +1,4 @@
 <section class="register-wrap">
-  <!-- panel izquierda imagen -->
   <aside class="register-media">
     <div class="panel__img-wrap">
       <img
@@ -10,8 +9,6 @@
       />
     </div>
   </aside>
-
-  <!-- panel formulario -->
   <form class="register-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <header class="reg-header">
       <img
@@ -47,15 +44,18 @@
 
       <label>
         <span>Fecha de Nacimiento</span>
-        <input type="date" formControlName="birthDate"/>
-        <small class="error" *ngIf="field('birthDate').touched && field('birthDate').invalid">
+        <input type="date" formControlName="birthDate" />
+        <small class="error" *ngIf="field('birthDate').touched && field('birthDate').errors?.['required']">
           Requerida
+        </small>
+        <small class="error" *ngIf="field('birthDate').errors?.['tooYoung']">
+          Debes tener al menos 12 años para registrarte
         </small>
       </label>
 
       <label>
         <span>Correo</span>
-        <input type="email" formControlName="email" placeholder="correo@ejemplo.com"/>
+        <input type="email" formControlName="email" placeholder="correo@ejemplo.com" />
         <small class="error" *ngIf="field('email').touched && field('email').invalid">
           Correo válido requerido
         </small>
@@ -70,17 +70,40 @@
       </label>
 
       <div class="pwcol" [formGroup]="passwords">
-        <label>
+        <label class="pwfield">
           <span>Contraseña</span>
-          <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres"/>
+          <div class="pw-input">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Mínimo 8 caracteres"
+              autocomplete="new-password"
+            />
+            <button type="button" (click)="toggleShow('password')" class="eye-btn">
+              👁
+            </button>
+          </div>
+          <small class="error" *ngIf="passwords.get('password')?.touched && passwords.get('password')?.invalid">
+            Debe tener mínimo 8 caracteres, 2 mayúsculas, minúsculas y números
+          </small>
         </label>
-        <label>
+
+        <label class="pwfield">
           <span>Confirmar contraseña</span>
-          <input type="password" formControlName="confirm" placeholder="Repite la contraseña"/>
+          <div class="pw-input">
+            <input
+              [type]="showConfirm() ? 'text' : 'password'"
+              formControlName="confirm"
+              placeholder="Repite la contraseña"
+            />
+            <button type="button" (click)="toggleShow('confirm')" class="eye-btn">
+              👁
+            </button>
+          </div>
+          <small class="error" *ngIf="passwords.errors?.['mismatch']">
+            Las contraseñas no coinciden
+          </small>
         </label>
-        <small class="error" *ngIf="passwords.touched && passwords.errors?.['mismatch']">
-          Las contraseñas no coinciden
-        </small>
       </div>
 
       <label class="level">
