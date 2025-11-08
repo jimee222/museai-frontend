@@ -159,5 +159,15 @@ export class AuthService {
 public isLoggedIn(): boolean {
   return this.loggedIn.value;
 }
+  public reload(): void {
+  this.load();
+}
+
+public setSession(loginResponse: ILoginResponse): void {
+  this.accessToken = loginResponse.token;
+  this.user = loginResponse.authUser;
+  this.expiresIn = loginResponse.expiresIn;
+  this.save();
+}
 
 }

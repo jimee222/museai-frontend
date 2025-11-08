@@ -8,7 +8,9 @@ import { About } from './pages/about/about';
 import { NotFound } from './pages/not-found/not-found';
 import { Landing } from './pages/landing/landing';
 import { GuestGuard } from './guards/guest.guard';
-import { AuthGuard } from './guards/auth.guard';import { EditProfile } from './pages/edit-profile/edit-profile'; 
+import { AuthGuard } from './guards/auth.guard';
+import { MuseumComponent } from './pages/museum/museum.component';
+import { EditProfile } from './pages/edit-profile/edit-profile';
 
 export const routes: Routes = [
   {
@@ -61,6 +63,11 @@ export const routes: Routes = [
       },
     ],
   },
+  {
+      path: 'museum',
+      component: MuseumComponent,
+      canActivate: [AuthGuard] 
+    },  
   {
     path: '**',
     component: NotFound,

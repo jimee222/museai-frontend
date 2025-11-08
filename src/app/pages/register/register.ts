@@ -10,7 +10,8 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service'; // ajusta la ruta si cambia
+import { GoogleAuthService } from '../../services/google-auth.service';
 
 function samePassword(group: AbstractControl): ValidationErrors | null {
   const pwd = group.get('password')?.value;
@@ -61,7 +62,8 @@ export class Register {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+     private googleAuth: GoogleAuthService, 
   ) {
     this.form = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(60)]],
@@ -136,4 +138,10 @@ export class Register {
       },
     });
   }
+
+    ngOnInit(): void {
+    // Pinta el botón oficial de Google en el div del registro
+    this.googleAuth.renderGoogleButton('googleRegisterBtn');
+  }
+
 }
