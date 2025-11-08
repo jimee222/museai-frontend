@@ -167,7 +167,19 @@ public setSession(loginResponse: ILoginResponse): void {
   this.accessToken = loginResponse.token;
   this.user = loginResponse.authUser;
   this.expiresIn = loginResponse.expiresIn;
+
+  try {
+    const payload = JSON.parse(atob(loginResponse.token.split('.')[1]));
+    if (payload.authorities && (!this.user.authorities || this.user.authorities.length === 0)) {
+      this.user.authorities = payload.authorities.map((a: string) => ({ authority: a }));
+    }
+  } catch (err) {
+    console.error('Error decoding token:', err);
+  }
+
   this.save();
+  this.loggedIn.next(true);
 }
+
 
 }
