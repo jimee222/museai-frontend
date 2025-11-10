@@ -63,7 +63,7 @@ export class Register {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-     private googleAuth: GoogleAuthService, 
+     private googleAuth: GoogleAuthService,
   ) {
     this.form = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(60)]],

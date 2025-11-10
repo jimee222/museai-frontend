@@ -88,7 +88,7 @@ export class AuthService {
       if(route.data && route.data.authorities) {
         if (this.hasAnyRole(route.data.authorities)) {
           permittedRoutes.unshift(route);
-        } 
+        }
       }
     }
     return permittedRoutes;
@@ -137,22 +137,22 @@ export class AuthService {
   }
 
   public areActionsAvailable(routeAuthorities: string[]): boolean  {
-    
+
     let allowedUser: boolean = false;
     let isAdmin: boolean = false;
-   
+
     let userAuthorities = this.getUserAuthorities();
-    
+
     for (const authority of routeAuthorities) {
       if (userAuthorities?.some(item => item.authority == authority) ) {
         allowedUser = userAuthorities?.some(item => item.authority == authority)
       }
       if (allowedUser) break;
     }
-   
+
     if (userAuthorities?.some(item => item.authority == IRoleType.admin || item.authority == IRoleType.superAdmin)) {
       isAdmin = userAuthorities?.some(item => item.authority == IRoleType.admin || item.authority == IRoleType.superAdmin);
-    }          
+    }
     return allowedUser && isAdmin;
   }
 
@@ -167,8 +167,20 @@ public setSession(loginResponse: ILoginResponse): void {
   this.accessToken = loginResponse.token;
   this.user = loginResponse.authUser;
   this.expiresIn = loginResponse.expiresIn;
+
+  try {
+    const payload = JSON.parse(atob(loginResponse.token.split('.')[1]));
+    if (payload.authorities && (!this.user.authorities || this.user.authorities.length === 0)) {
+      this.user.authorities = payload.authorities.map((a: string) => ({ authority: a }));
+    }
+  } catch (err) {
+    console.error('Error decoding token:', err);
+  }
+
   this.save();
+  this.loggedIn.next(true);
 }
+
 
 }
 
