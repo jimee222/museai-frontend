@@ -33,6 +33,9 @@ type ExportFormat = 'glb' | 'stl';
         [lightsEnabled]="toggles().lights"
         [activeBrush]="activeBrush()"
         [booleanMode]="booleanMode()"
+        [selectionAvailable]="selectionState().available"
+        [selectionScale]="selectionState().scale"
+        [selectionY]="selectionState().y"
         (primitive)="handlePrimitive($event)"
         (toggleGrid)="onToggle('grid', $event)"
         (toggleAxes)="onToggle('axes', $event)"
@@ -44,6 +47,9 @@ type ExportFormat = 'glb' | 'stl';
         (brushSelected)="onBrushSelected($event)"
         (booleanAction)="onBooleanAction($event)"
         (modifierAction)="onModifierAction($event)"
+        (duplicateSelection)="onDuplicateSelection()"
+        (selectionScaleChange)="onSelectionScaleChange($event)"
+        (selectionYChange)="onSelectionYChange($event)"
       ></app-sculptor-toolbar>
 
       <div class="workspace">
@@ -53,6 +59,7 @@ type ExportFormat = 'glb' | 'stl';
             (statsChange)="updateStats($event)"
             (banner)="showBanner($event.type, $event.text)"
             (booleanModeChange)="onViewportBooleanMode($event)"
+            (selectionStateChange)="onSelectionStateChange($event)"
           ></app-sculptor-viewport>
           <app-asset-dropzone
             (filesDropped)="onDropzoneFiles($event)"
@@ -212,6 +219,11 @@ export class SculptorPageComponent implements AfterViewInit {
   readonly selectedSculptureId = signal<string | null>(null);
   readonly activeBrush = signal<SculptBrush>('none');
   readonly booleanMode = signal<BooleanMode>('none');
+  readonly selectionState = signal<{ available: boolean; scale: number; y: number }>({
+    available: false,
+    scale: 1,
+    y: 0,
+  });
 
   private bannerTimeout: number | null = null;
 
@@ -269,11 +281,27 @@ export class SculptorPageComponent implements AfterViewInit {
     this.booleanMode.set(mode);
   }
 
+  onSelectionStateChange(state: { hasSelection: boolean; scale: number; y: number }): void {
+    this.selectionState.set({ available: state.hasSelection, scale: state.scale, y: state.y });
+  }
+
   async onModifierAction(action: ModifierAction): Promise<void> {
     if (!this.viewport) {
       return;
     }
     await this.viewport.applyModifier(action);
+  }
+
+  onDuplicateSelection(): void {
+    this.viewport?.duplicateSelection();
+  }
+
+  onSelectionScaleChange(scale: number): void {
+    this.viewport?.setSelectionScale(scale);
+  }
+
+  onSelectionYChange(yValue: number): void {
+    this.viewport?.setSelectionY(yValue);
   }
 
   onResetCamera(): void {

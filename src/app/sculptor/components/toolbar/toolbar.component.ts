@@ -43,6 +43,37 @@ type ExportFormat = 'glb' | 'stl';
         </label>
       </div>
 
+      <header>Selection</header>
+      <div class="selection-controls">
+        <button type="button" (click)="duplicateSelection.emit()" [disabled]="!selectionAvailable" aria-label="Duplicate selection">
+          Duplicate
+        </button>
+        <label>
+          Scale
+          <input
+            type="range"
+            min="0.2"
+            max="3"
+            step="0.1"
+            [value]="selectionScale"
+            [disabled]="!selectionAvailable"
+            (input)="onScaleInput($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Y Offset
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            [value]="selectionY"
+            [disabled]="!selectionAvailable"
+            (input)="onYInput($any($event.target).value)"
+          />
+        </label>
+      </div>
+
       <header>Actions</header>
       <div class="button-group">
         <button type="button" (click)="triggerImport()" aria-label="Import model">Import</button>
@@ -104,6 +135,20 @@ type ExportFormat = 'glb' | 'stl';
         flex-wrap: wrap;
         gap: 0.5rem;
       }
+      .selection-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .selection-controls label {
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      input[type='range'] {
+        width: 100%;
+      }
       button {
         flex: 1 1 30%;
         padding: 0.35rem 0.5rem;
@@ -147,6 +192,9 @@ export class ToolbarComponent {
   @Input() lightsEnabled = true;
   @Input() activeBrush: SculptBrush = 'none';
   @Input() booleanMode: BooleanMode = 'none';
+  @Input() selectionAvailable = false;
+  @Input() selectionScale = 1;
+  @Input() selectionY = 0;
   @Output() primitive = new EventEmitter<PrimitiveType>();
   @Output() toggleGrid = new EventEmitter<boolean>();
   @Output() toggleAxes = new EventEmitter<boolean>();
@@ -158,6 +206,9 @@ export class ToolbarComponent {
   @Output() brushSelected = new EventEmitter<SculptBrush>();
   @Output() booleanAction = new EventEmitter<BooleanMode>();
   @Output() modifierAction = new EventEmitter<ModifierAction>();
+  @Output() duplicateSelection = new EventEmitter<void>();
+  @Output() selectionScaleChange = new EventEmitter<number>();
+  @Output() selectionYChange = new EventEmitter<number>();
   @ViewChild('importInput') private importInput?: ElementRef<HTMLInputElement>;
 
   onPrimitive(type: PrimitiveType): void {
@@ -191,6 +242,20 @@ export class ToolbarComponent {
       this.booleanAction.emit('none');
     } else {
       this.booleanAction.emit(mode);
+    }
+  }
+
+  onScaleInput(value: string): void {
+    const parsed = parseFloat(value);
+    if (!Number.isNaN(parsed)) {
+      this.selectionScaleChange.emit(parsed);
+    }
+  }
+
+  onYInput(value: string): void {
+    const parsed = parseFloat(value);
+    if (!Number.isNaN(parsed)) {
+      this.selectionYChange.emit(parsed);
     }
   }
 }

@@ -46,6 +46,8 @@ interface BannerEvent {
 }
 
 // Viewport hosting the Three.js renderer, OrbitControls, and TransformControls.
+const MAX_VERTEX_COUNT = 120_000;
+
 @Component({
   selector: 'app-sculptor-viewport',
   standalone: true,
@@ -93,6 +95,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   @Output() statsChange = new EventEmitter<{ fps: number; triangles: number }>();
   @Output() banner = new EventEmitter<BannerEvent>();
   @Output() booleanModeChange = new EventEmitter<BooleanMode>();
+  @Output() selectionStateChange = new EventEmitter<{ hasSelection: boolean; scale: number; y: number }>();
 
   private renderer!: WebGLRenderer;
   private camera!: PerspectiveCamera;
@@ -117,6 +120,12 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   private brushStrength = 0.35;
   private booleanMode: BooleanMode = 'none';
   private booleanSource: Mesh | null = null;
+  private isPlaneDragging = false;
+  private planeDragPointerId: number | null = null;
+  private planeDragHeight = 0;
+  private planeDragOffset = new Vector3();
+  private planeDragStarted = false;
+  private transformDragging = false;
 
   constructor(
     private readonly ngZone: NgZone,
@@ -214,6 +223,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     try {
       if (action === 'subdivide') {
         mesh.geometry = subdivideGeometry(mesh.geometry as BufferGeometry);
+        this.warnIfGeometryTooLarge(mesh.geometry as BufferGeometry);
       } else {
         this.applyBevelModifier(mesh);
       }
@@ -232,6 +242,46 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       this.banner.emit({ type: 'error', text: 'Modifier failed' });
       console.error(error);
     }
+  }
+
+  duplicateSelection(): void {
+    const mesh = this.getEditableMesh(this.selected);
+    if (!mesh) {
+      this.banner.emit({ type: 'error', text: 'Select a mesh to duplicate' });
+      return;
+    }
+    const clone = mesh.clone(true);
+    clone.traverse((child) => {
+      if ((child as Mesh).isMesh) {
+        const meshChild = child as Mesh;
+        meshChild.geometry = (meshChild.geometry as BufferGeometry).clone();
+      }
+    });
+    clone.position.add(new Vector3(0.75, 0, 0.75));
+    this.prepareObject(clone);
+    this.scene.add(clone);
+    this.setSelection(clone);
+    this.banner.emit({ type: 'success', text: 'Selection duplicated' });
+  }
+
+  setSelectionScale(scale: number): void {
+    const mesh = this.getEditableMesh(this.selected);
+    if (!mesh) {
+      return;
+    }
+    mesh.scale.setScalar(scale);
+    mesh.updateMatrix();
+    this.emitSelectionState();
+  }
+
+  setSelectionY(yValue: number): void {
+    const mesh = this.getEditableMesh(this.selected);
+    if (!mesh) {
+      return;
+    }
+    mesh.position.y = yValue;
+    mesh.updateMatrixWorld(true);
+    this.emitSelectionState();
   }
 
   setGridVisible(state: boolean): void {
@@ -338,29 +388,55 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.setSelection(hit.object);
+    const mesh = this.getEditableMesh(hit.object);
+    if (mesh && !this.transformDragging) {
+      this.beginPlaneDrag(mesh, hit.point, event);
+    }
   }
 
   handlePointerMove(event: PointerEvent): void {
-    if (!this.isBrushing || this.activeBrush === 'none') {
+    if (this.isBrushing && this.activeBrush !== 'none') {
+      const point = this.getBrushPoint(event);
+      const mesh = this.getEditableMesh(this.selected);
+      if (!point || !mesh) {
+        this.endBrushSession();
+        return;
+      }
+      const delta = new Vector3().subVectors(point, this.brushLastPoint);
+      this.applyBrush(point, delta, mesh);
+      this.brushLastPoint.copy(point);
+      event.preventDefault();
       return;
     }
-    const point = this.getBrushPoint(event);
-    const mesh = this.getEditableMesh(this.selected);
-    if (!point || !mesh) {
-      this.endBrushSession();
+
+    if (this.isPlaneDragging && event.pointerId === this.planeDragPointerId) {
+      const mesh = this.getEditableMesh(this.selected);
+      if (!mesh) {
+        this.endPlaneDrag();
+        return;
+      }
+      const planePoint = this.getPlaneIntersection(event, this.planeDragHeight);
+      if (!planePoint) {
+        return;
+      }
+      this.planeDragStarted = true;
+      planePoint.add(this.planeDragOffset);
+      mesh.position.copy(planePoint);
+      this.transformControls?.object?.updateMatrixWorld(true);
+      this.emitSelectionState();
+      event.preventDefault();
       return;
     }
-    const delta = new Vector3().subVectors(point, this.brushLastPoint);
-    this.applyBrush(point, delta, mesh);
-    this.brushLastPoint.copy(point);
-    event.preventDefault();
   }
 
   handlePointerUp(event?: PointerEvent): void {
-    if (event?.pointerId !== undefined && this.brushPointerId === event.pointerId) {
-      this.containerRef.nativeElement.releasePointerCapture?.(event.pointerId);
+    if (event?.pointerId !== undefined) {
+      if (this.brushPointerId === event.pointerId || this.planeDragPointerId === event.pointerId) {
+        this.containerRef.nativeElement.releasePointerCapture?.(event.pointerId);
+      }
     }
     this.endBrushSession();
+    this.endPlaneDrag();
   }
 
   handleDragOver(event: DragEvent): void {
@@ -389,6 +465,26 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     }
     this.isBrushing = false;
     this.brushPointerId = null;
+    this.orbitControls && (this.orbitControls.enabled = true);
+  }
+
+  private beginPlaneDrag(mesh: Mesh, point: Vector3, event: PointerEvent): void {
+    this.isPlaneDragging = true;
+    this.planeDragPointerId = event.pointerId;
+    this.planeDragHeight = point.y;
+    this.planeDragOffset.copy(mesh.position).sub(new Vector3(point.x, this.planeDragHeight, point.z));
+    this.planeDragStarted = false;
+    this.containerRef.nativeElement.setPointerCapture?.(event.pointerId);
+    this.orbitControls && (this.orbitControls.enabled = false);
+  }
+
+  private endPlaneDrag(): void {
+    if (!this.isPlaneDragging) {
+      return;
+    }
+    this.isPlaneDragging = false;
+    this.planeDragPointerId = null;
+    this.planeDragStarted = false;
     this.orbitControls && (this.orbitControls.enabled = true);
   }
 
@@ -424,8 +520,30 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.raycaster.setFromCamera(this.pointer, this.camera);
   }
 
+  private getPlaneIntersection(event: PointerEvent, height: number): Vector3 | null {
+    this.updatePointer(event);
+    const origin = this.raycaster.ray.origin;
+    const direction = this.raycaster.ray.direction;
+    const denom = direction.y;
+    if (Math.abs(denom) < 1e-5) {
+      return null;
+    }
+    const t = (height - origin.y) / denom;
+    if (t < 0) {
+      return null;
+    }
+    return direction.clone().multiplyScalar(t).add(origin);
+  }
+
   private applyBrush(point: Vector3, delta: Vector3, mesh: Mesh): void {
     if (this.activeBrush === 'none') {
+      return;
+    }
+    if (this.exceedsVertexBudget(mesh.geometry as BufferGeometry)) {
+      this.banner.emit({
+        type: 'error',
+        text: 'Mesh has become too dense; reduce subdivisions before sculpting more',
+      });
       return;
     }
     const geometry = this.ensureEditableGeometry(mesh);
@@ -469,6 +587,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     positionAttr.needsUpdate = true;
     geometry.computeVertexNormals();
     geometry.computeBoundingSphere();
+    this.warnIfGeometryTooLarge(geometry);
   }
 
   private worldDeltaToLocal(mesh: Mesh, delta: Vector3): Vector3 {
@@ -485,6 +604,20 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       mesh.geometry = geometry;
     }
     return geometry;
+  }
+
+  private emitSelectionState(): void {
+    const mesh = this.getEditableMesh(this.selected);
+    if (!mesh) {
+      this.selectionStateChange.emit({ hasSelection: false, scale: 1, y: 0 });
+      return;
+    }
+    const scale = (mesh.scale.x + mesh.scale.y + mesh.scale.z) / 3;
+    this.selectionStateChange.emit({
+      hasSelection: true,
+      scale: Number(scale.toFixed(2)),
+      y: Number(mesh.position.y.toFixed(2)),
+    });
   }
 
   private getEditableMesh(object: Object3D | null): Mesh | null {
@@ -520,6 +653,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       positionAttr.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
     positionAttr.needsUpdate = true;
+    this.warnIfGeometryTooLarge(geometry);
   }
 
   private performBooleanOperation(targetMesh: Mesh): void {
@@ -541,6 +675,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
           ? sourceCSG.union(targetCSG)
           : sourceCSG.subtract(targetCSG);
       const resultGeometry = SimpleCSG.toMesh(resultCSG, sourceMesh.matrixWorld);
+      this.warnIfGeometryTooLarge(resultGeometry);
       const resultMesh = new Mesh(resultGeometry, (sourceMesh as Mesh).material);
       resultMesh.castShadow = true;
       resultMesh.receiveShadow = true;
@@ -568,6 +703,20 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private exceedsVertexBudget(geometry: BufferGeometry): boolean {
+    const count = geometry.getAttribute('position')?.count ?? 0;
+    return count > MAX_VERTEX_COUNT;
+  }
+
+  private warnIfGeometryTooLarge(geometry: BufferGeometry): void {
+    if (this.exceedsVertexBudget(geometry)) {
+      this.banner.emit({
+        type: 'error',
+        text: 'Mesh exceeds safe vertex count; exports may be unstable',
+      });
+    }
+  }
+
   private setupScene(): void {
     const canvas = this.canvasRef.nativeElement;
     this.renderer = this.threeFactory.createRenderer(canvas);
@@ -592,6 +741,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.transformControls.addEventListener(
       'dragging-changed',
       (event: TransformControlsEventMap['dragging-changed']) => {
+        this.transformDragging = Boolean((event as unknown as { value: boolean }).value);
         if (this.orbitControls) {
           this.orbitControls.enabled = !event.value;
         }
@@ -680,12 +830,14 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
         this.cancelBooleanMode();
       }
     }
+    this.emitSelectionState();
   }
 
   private clearSelection(): void {
     this.selected = null;
     this.transformControls?.detach();
     this.cancelBooleanMode();
+    this.emitSelectionState();
   }
 
   private findMeshAncestor(object: Object3D | null): Object3D | null {
