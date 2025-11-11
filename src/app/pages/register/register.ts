@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../../services/auth.service'; // ajusta la ruta si cambia
+import { AuthService } from '../../services/auth.service';
 import { GoogleAuthService } from '../../services/google-auth.service';
 
 function samePassword(group: AbstractControl): ValidationErrors | null {
@@ -63,7 +63,7 @@ export class Register {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-     private googleAuth: GoogleAuthService, 
+     private googleAuth: GoogleAuthService,
   ) {
     this.form = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(60)]],
