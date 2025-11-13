@@ -58,6 +58,8 @@ const MATERIAL_PRESETS: Record<MaterialPreset, { color: string; metalness: numbe
 
 // Viewport hosting the Three.js renderer, OrbitControls, and TransformControls.
 const MAX_VERTEX_COUNT = 120_000;
+const PLANE_DRAG_ACTIVATION_PX = 8;
+const PLANE_DRAG_ACTIVATION_DISTANCE_SQ = PLANE_DRAG_ACTIVATION_PX * PLANE_DRAG_ACTIVATION_PX;
 
 @Component({
   selector: 'app-sculptor-viewport',
@@ -136,6 +138,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   private planeDragHeight = 0;
   private planeDragOffset = new Vector3();
   private planeDragStarted = false;
+  private planeDragStart = new Vector2();
   private transformDragging = false;
   private symmetry: SculptSymmetry = 'none';
   private materialPreset: MaterialPreset = 'clay';
@@ -471,7 +474,15 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       if (!planePoint) {
         return;
       }
-      this.planeDragStarted = true;
+      if (!this.planeDragStarted) {
+        const dx = event.clientX - this.planeDragStart.x;
+        const dy = event.clientY - this.planeDragStart.y;
+        if (dx * dx + dy * dy < PLANE_DRAG_ACTIVATION_DISTANCE_SQ) {
+          return;
+        }
+        this.planeDragStarted = true;
+        this.containerRef.nativeElement.setPointerCapture?.(event.pointerId);
+      }
       planePoint.add(this.planeDragOffset);
       if (this.snapToGround) {
         planePoint.y = Math.max(planePoint.y, 0);
@@ -485,11 +496,6 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   }
 
   handlePointerUp(event?: PointerEvent): void {
-    if (event?.pointerId !== undefined) {
-      if (this.brushPointerId === event.pointerId || this.planeDragPointerId === event.pointerId) {
-        this.containerRef.nativeElement.releasePointerCapture?.(event.pointerId);
-      }
-    }
     this.endBrushSession();
     this.endPlaneDrag();
   }
@@ -518,6 +524,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     if (!this.isBrushing) {
       return;
     }
+    if (this.brushPointerId !== null) {
+      this.containerRef.nativeElement.releasePointerCapture?.(this.brushPointerId);
+    }
     this.isBrushing = false;
     this.brushPointerId = null;
     this.orbitControls && (this.orbitControls.enabled = true);
@@ -529,13 +538,16 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.planeDragHeight = point.y;
     this.planeDragOffset.copy(mesh.position).sub(new Vector3(point.x, this.planeDragHeight, point.z));
     this.planeDragStarted = false;
-    this.containerRef.nativeElement.setPointerCapture?.(event.pointerId);
+    this.planeDragStart.set(event.clientX, event.clientY);
     this.orbitControls && (this.orbitControls.enabled = false);
   }
 
   private endPlaneDrag(): void {
     if (!this.isPlaneDragging) {
       return;
+    }
+    if (this.planeDragStarted && this.planeDragPointerId !== null) {
+      this.containerRef.nativeElement.releasePointerCapture?.(this.planeDragPointerId);
     }
     this.isPlaneDragging = false;
     this.planeDragPointerId = null;
