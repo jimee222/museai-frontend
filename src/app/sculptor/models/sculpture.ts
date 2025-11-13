@@ -1,4 +1,4 @@
-// Core sculpture metadata persisted in localStorage.
+// Core sculpture metadata persisted through the backend Sculpture API.
 export interface Sculpture {
   id: string;
   name: string;
@@ -6,6 +6,7 @@ export interface Sculpture {
   createdAt: string;
   updatedAt: string;
   sceneJson: string; // Result of THREE.Scene.toJSON()
+  slug?: string | null;
   materialPreset?: MaterialPreset;
   brushPreset?: SculptBrush;
   symmetry?: SculptSymmetry;
@@ -43,4 +44,9 @@ export interface SculptWorkspaceSettings {
   symmetry: SculptSymmetry;
   material: MaterialPreset;
   snapToGround: boolean;
+}
+
+export interface SculptureMetadataPayload {
+  version: number;
+  workspace?: SculptWorkspaceSettings;
 }

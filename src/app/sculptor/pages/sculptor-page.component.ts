@@ -370,17 +370,17 @@ export class SculptorPageComponent implements AfterViewInit {
       .map((tag) => tag.trim())
       .filter(Boolean);
 
-    const existingId = this.selectedSculptureId();
-    const scene = this.viewport.getScene();
-    const workspace = this.workspaceSettings();
-    const saved = existingId
-      ? this.store.updateScene(existingId, scene, workspace)
-      : this.store.saveFromScene(scene, name, tags, workspace);
-
-    if (saved) {
+    try {
+      const existingId = this.selectedSculptureId();
+      const scene = this.viewport.getScene();
+      const workspace = this.workspaceSettings();
+      const saved = existingId
+        ? await this.store.updateScene(existingId, scene, name, tags, workspace)
+        : await this.store.saveFromScene(scene, name, tags, workspace);
       this.selectedSculptureId.set(saved.id);
-      this.showBanner('success', 'Saved successfully');
-    } else {
+      this.showBanner('success', existingId ? 'Sculpture updated' : 'Sculpture saved');
+    } catch (error) {
+      console.error(error);
       this.showBanner('error', 'Unable to save sculpture');
     }
   }
@@ -425,13 +425,18 @@ export class SculptorPageComponent implements AfterViewInit {
     }
   }
 
-  deleteSculpture(sculpture: Sculpture): void {
+  async deleteSculpture(sculpture: Sculpture): Promise<void> {
     if (confirm(`Delete "${sculpture.name}"?`)) {
-      this.store.remove(sculpture.id);
-      if (this.selectedSculptureId() === sculpture.id) {
-        this.selectedSculptureId.set(null);
+      try {
+        await this.store.remove(sculpture.id);
+        if (this.selectedSculptureId() === sculpture.id) {
+          this.selectedSculptureId.set(null);
+        }
+        this.showBanner('success', 'Sculpture removed');
+      } catch (error) {
+        console.error(error);
+        this.showBanner('error', 'Failed to delete sculpture');
       }
-      this.showBanner('success', 'Sculpture removed');
     }
   }
 

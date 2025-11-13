@@ -1,77 +1,153 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { Scene } from 'three';
-import { Sculpture, SculptWorkspaceSettings } from '../models/sculpture';
+import {
+  Sculpture,
+  SculptureMetadataPayload,
+  SculptWorkspaceSettings,
+} from '../models/sculpture';
 
-const STORAGE_KEY = 'sculptor.gallery.v1';
+interface SculptureResponseDto {
+  id: string;
+  name: string;
+  slug?: string | null;
+  tags: string[] | null;
+  metadata: string | null;
+  sceneJson: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-// Provides CRUD operations against localStorage for persisted sculptures.
+interface SculptureRequestDto {
+  name: string;
+  sceneJson: string;
+  metadata: string;
+  tags: string[];
+  slug?: string | null;
+}
+
+// Provides CRUD operations against the backend Sculpture API.
 @Injectable({ providedIn: 'root' })
 export class SculptureStoreService {
-  private readonly sculpturesSubject = new BehaviorSubject<Sculpture[]>(this.readFromStorage());
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = 'api/sculptures';
+  private readonly sculpturesSubject = new BehaviorSubject<Sculpture[]>([]);
+
   readonly sculptures$ = this.sculpturesSubject.asObservable();
 
-  saveFromScene(
+  constructor() {
+    void this.refresh();
+  }
+
+  async refresh(tag?: string): Promise<void> {
+    try {
+      const params = tag ? { tag } : undefined;
+      const response = await firstValueFrom(
+        this.http.get<SculptureResponseDto[]>(this.baseUrl, { params }),
+      );
+      this.sculpturesSubject.next(response.map((dto) => this.fromDto(dto)));
+    } catch (error) {
+      console.error('Failed to load sculptures', error);
+    }
+  }
+
+  async saveFromScene(
     scene: Scene,
     name: string,
     tags: string[] = [],
     workspace?: SculptWorkspaceSettings,
-  ): Sculpture {
-    const now = new Date().toISOString();
-    const sculpture: Sculpture = {
-      id: crypto.randomUUID?.() ?? `${Date.now()}`,
-      name: name.trim() || 'Untitled Sculpture',
-      tags,
-      createdAt: now,
-      updatedAt: now,
-      sceneJson: JSON.stringify(scene.toJSON()),
-      workspace,
-    };
-    const next = [...this.sculpturesSubject.value, sculpture];
-    this.persist(next);
-    return sculpture;
-  }
-
-  updateScene(id: string, scene: Scene, workspace?: SculptWorkspaceSettings): Sculpture | null {
-    const existing = this.sculpturesSubject.value.find((item) => item.id === id);
-    if (!existing) {
-      return null;
+  ): Promise<Sculpture> {
+    const payload = this.buildRequestPayload(name, tags, scene, workspace);
+    try {
+      const dto = await firstValueFrom(this.http.post<SculptureResponseDto>(this.baseUrl, payload));
+      const sculpture = this.fromDto(dto);
+      this.sculpturesSubject.next([...this.sculpturesSubject.value, sculpture]);
+      return sculpture;
+    } catch (error) {
+      console.error('Failed to save sculpture', error);
+      throw error;
     }
-    const updated: Sculpture = {
-      ...existing,
-      updatedAt: new Date().toISOString(),
-      sceneJson: JSON.stringify(scene.toJSON()),
-      workspace: workspace ?? existing.workspace,
-    };
-    const next = this.sculpturesSubject.value.map((item) => (item.id === id ? updated : item));
-    this.persist(next);
-    return updated;
   }
 
-  remove(id: string): void {
-    const next = this.sculpturesSubject.value.filter((item) => item.id !== id);
-    this.persist(next);
+  async updateScene(
+    id: string,
+    scene: Scene,
+    name: string,
+    tags: string[] = [],
+    workspace?: SculptWorkspaceSettings,
+  ): Promise<Sculpture> {
+    const payload = this.buildRequestPayload(name, tags, scene, workspace);
+    try {
+      const dto = await firstValueFrom(
+        this.http.put<SculptureResponseDto>(`${this.baseUrl}/${id}`, payload),
+      );
+      const sculpture = this.fromDto(dto);
+      this.sculpturesSubject.next(
+        this.sculpturesSubject.value.map((item) => (item.id === id ? sculpture : item)),
+      );
+      return sculpture;
+    } catch (error) {
+      console.error(`Failed to update sculpture ${id}`, error);
+      throw error;
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+      this.sculpturesSubject.next(this.sculpturesSubject.value.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error(`Failed to delete sculpture ${id}`, error);
+      throw error;
+    }
   }
 
   loadSceneJson(id: string): string | null {
     return this.sculpturesSubject.value.find((item) => item.id === id)?.sceneJson ?? null;
   }
 
-  private persist(items: Sculpture[]): void {
-    this.sculpturesSubject.next(items);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  private buildRequestPayload(
+    name: string,
+    tags: string[],
+    scene: Scene,
+    workspace?: SculptWorkspaceSettings,
+  ): SculptureRequestDto {
+    const metadata: SculptureMetadataPayload = {
+      version: 1,
+      workspace,
+    };
+    return {
+      name: name.trim() || 'Untitled Sculpture',
+      tags: tags.map((tag) => tag.trim()).filter(Boolean),
+      sceneJson: JSON.stringify(scene.toJSON()),
+      metadata: JSON.stringify(metadata),
+    };
   }
 
-  private readFromStorage(): Sculpture[] {
+  private fromDto(dto: SculptureResponseDto): Sculpture {
+    const metadata = this.parseMetadata(dto.metadata);
+    return {
+      id: dto.id,
+      name: dto.name,
+      slug: dto.slug,
+      tags: dto.tags ?? [],
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+      sceneJson: dto.sceneJson,
+      workspace: metadata.workspace,
+    };
+  }
+
+  private parseMetadata(raw: string | null): SculptureMetadataPayload {
+    if (!raw) {
+      return { version: 1 };
+    }
     try {
-      const payload = localStorage.getItem(STORAGE_KEY);
-      if (!payload) {
-        return [];
-      }
-      const parsed: Sculpture[] = JSON.parse(payload);
-      return Array.isArray(parsed) ? parsed : [];
+      const parsed = JSON.parse(raw) as SculptureMetadataPayload;
+      return parsed ?? { version: 1 };
     } catch {
-      return [];
+      return { version: 1 };
     }
   }
 }
