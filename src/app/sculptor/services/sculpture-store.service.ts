@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Scene } from 'three';
-import { Sculpture } from '../models/sculpture';
+import { Sculpture, SculptWorkspaceSettings } from '../models/sculpture';
 
 const STORAGE_KEY = 'sculptor.gallery.v1';
 
@@ -11,7 +11,12 @@ export class SculptureStoreService {
   private readonly sculpturesSubject = new BehaviorSubject<Sculpture[]>(this.readFromStorage());
   readonly sculptures$ = this.sculpturesSubject.asObservable();
 
-  saveFromScene(scene: Scene, name: string, tags: string[] = []): Sculpture {
+  saveFromScene(
+    scene: Scene,
+    name: string,
+    tags: string[] = [],
+    workspace?: SculptWorkspaceSettings,
+  ): Sculpture {
     const now = new Date().toISOString();
     const sculpture: Sculpture = {
       id: crypto.randomUUID?.() ?? `${Date.now()}`,
@@ -20,13 +25,14 @@ export class SculptureStoreService {
       createdAt: now,
       updatedAt: now,
       sceneJson: JSON.stringify(scene.toJSON()),
+      workspace,
     };
     const next = [...this.sculpturesSubject.value, sculpture];
     this.persist(next);
     return sculpture;
   }
 
-  updateScene(id: string, scene: Scene): Sculpture | null {
+  updateScene(id: string, scene: Scene, workspace?: SculptWorkspaceSettings): Sculpture | null {
     const existing = this.sculpturesSubject.value.find((item) => item.id === id);
     if (!existing) {
       return null;
@@ -35,6 +41,7 @@ export class SculptureStoreService {
       ...existing,
       updatedAt: new Date().toISOString(),
       sceneJson: JSON.stringify(scene.toJSON()),
+      workspace: workspace ?? existing.workspace,
     };
     const next = this.sculpturesSubject.value.map((item) => (item.id === id ? updated : item));
     this.persist(next);

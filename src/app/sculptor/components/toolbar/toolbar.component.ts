@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BooleanMode, ModifierAction, SculptBrush } from '../../models/sculpt-tools';
+import { MaterialPreset, SculptSymmetry } from '../../models/sculpture';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
@@ -27,6 +28,32 @@ type ExportFormat = 'glb' | 'stl';
         <button type="button" (click)="selectBrush('smooth')" [class.active]="activeBrush === 'smooth'" aria-label="Smooth brush">Smooth</button>
       </div>
 
+      <header>Brush Settings</header>
+      <div class="selection-controls">
+        <label>
+          Radius
+          <input
+            type="range"
+            min="0.1"
+            max="3"
+            step="0.05"
+            [value]="brushRadius"
+            (input)="onBrushRadiusInput($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Strength
+          <input
+            type="range"
+            min="0.05"
+            max="1"
+            step="0.05"
+            [value]="brushStrength"
+            (input)="onBrushStrengthInput($any($event.target).value)"
+          />
+        </label>
+      </div>
+
       <header>Scene</header>
       <div class="button-group toggles">
         <label>
@@ -41,6 +68,34 @@ type ExportFormat = 'glb' | 'stl';
           <input type="checkbox" [checked]="lightsEnabled" (change)="toggleLights.emit($event.target.checked)" />
           Lights
         </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="snapToGround"
+            (change)="snapToGroundChange.emit($event.target.checked)"
+          />
+          Snap
+        </label>
+      </div>
+
+      <header>Symmetry</header>
+      <div class="button-group">
+        <button type="button" (click)="selectSymmetry('none')" [class.active]="symmetry === 'none'">None</button>
+        <button type="button" (click)="selectSymmetry('x')" [class.active]="symmetry === 'x'">X</button>
+        <button type="button" (click)="selectSymmetry('y')" [class.active]="symmetry === 'y'">Y</button>
+        <button type="button" (click)="selectSymmetry('z')" [class.active]="symmetry === 'z'">Z</button>
+        <button type="button" (click)="selectSymmetry('xy')" [class.active]="symmetry === 'xy'">XY</button>
+        <button type="button" (click)="selectSymmetry('xz')" [class.active]="symmetry === 'xz'">XZ</button>
+        <button type="button" (click)="selectSymmetry('yz')" [class.active]="symmetry === 'yz'">YZ</button>
+      </div>
+
+      <header>Material</header>
+      <div class="button-group">
+        <button type="button" (click)="selectMaterial('clay')" [class.active]="materialPreset === 'clay'">Clay</button>
+        <button type="button" (click)="selectMaterial('metal')" [class.active]="materialPreset === 'metal'">Metal</button>
+        <button type="button" (click)="selectMaterial('glass')" [class.active]="materialPreset === 'glass'">Glass</button>
+        <button type="button" (click)="selectMaterial('matte')" [class.active]="materialPreset === 'matte'">Matte</button>
+        <button type="button" (click)="selectMaterial('wireframe')" [class.active]="materialPreset === 'wireframe'">Wire</button>
       </div>
 
       <header>Selection</header>
@@ -112,17 +167,24 @@ type ExportFormat = 'glb' | 'stl';
   styles: [
     `
       :host {
-        display: block;
+        display: flex;
+        flex-direction: column;
         width: 240px;
         background: #0d1117;
         color: #f0f0f0;
         border-right: 1px solid rgba(255, 255, 255, 0.08);
         padding: 1rem;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
       }
       .toolbar {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 0.5rem;
       }
       header {
         font-weight: 600;
@@ -195,6 +257,11 @@ export class ToolbarComponent {
   @Input() selectionAvailable = false;
   @Input() selectionScale = 1;
   @Input() selectionY = 0;
+  @Input() brushRadius = 0.9;
+  @Input() brushStrength = 0.35;
+  @Input() symmetry: SculptSymmetry = 'none';
+  @Input() materialPreset: MaterialPreset = 'clay';
+  @Input() snapToGround = true;
   @Output() primitive = new EventEmitter<PrimitiveType>();
   @Output() toggleGrid = new EventEmitter<boolean>();
   @Output() toggleAxes = new EventEmitter<boolean>();
@@ -209,6 +276,11 @@ export class ToolbarComponent {
   @Output() duplicateSelection = new EventEmitter<void>();
   @Output() selectionScaleChange = new EventEmitter<number>();
   @Output() selectionYChange = new EventEmitter<number>();
+  @Output() brushRadiusChange = new EventEmitter<number>();
+  @Output() brushStrengthChange = new EventEmitter<number>();
+  @Output() symmetryChange = new EventEmitter<SculptSymmetry>();
+  @Output() materialPresetChange = new EventEmitter<MaterialPreset>();
+  @Output() snapToGroundChange = new EventEmitter<boolean>();
   @ViewChild('importInput') private importInput?: ElementRef<HTMLInputElement>;
 
   onPrimitive(type: PrimitiveType): void {
@@ -257,5 +329,27 @@ export class ToolbarComponent {
     if (!Number.isNaN(parsed)) {
       this.selectionYChange.emit(parsed);
     }
+  }
+
+  onBrushRadiusInput(value: string): void {
+    const parsed = parseFloat(value);
+    if (!Number.isNaN(parsed)) {
+      this.brushRadiusChange.emit(parsed);
+    }
+  }
+
+  onBrushStrengthInput(value: string): void {
+    const parsed = parseFloat(value);
+    if (!Number.isNaN(parsed)) {
+      this.brushStrengthChange.emit(parsed);
+    }
+  }
+
+  selectSymmetry(value: SculptSymmetry): void {
+    this.symmetryChange.emit(value);
+  }
+
+  selectMaterial(value: MaterialPreset): void {
+    this.materialPresetChange.emit(value);
   }
 }

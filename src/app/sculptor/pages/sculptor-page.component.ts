@@ -14,11 +14,26 @@ import { ViewportComponent } from '../components/viewport/viewport.component';
 import { AssetDropzoneComponent } from '../components/asset-dropzone/asset-dropzone.component';
 import { SculptureStoreService } from '../services/sculpture-store.service';
 import { downloadBlob } from '../utils/download';
-import { Sculpture, SculptorDisplayToggles } from '../models/sculpture';
+import {
+  MaterialPreset,
+  Sculpture,
+  SculptWorkspaceSettings,
+  SculptSymmetry,
+  SculptorDisplayToggles,
+} from '../models/sculpture';
 import { BooleanMode, ModifierAction, SculptBrush } from '../models/sculpt-tools';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
+
+const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
+  activeBrush: 'none',
+  brushRadius: 0.9,
+  brushStrength: 0.35,
+  symmetry: 'none',
+  material: 'clay',
+  snapToGround: true,
+};
 
 // Sculptor page shell coordinating toolbar, viewport, dropzone, and gallery.
 @Component({
@@ -36,6 +51,11 @@ type ExportFormat = 'glb' | 'stl';
         [selectionAvailable]="selectionState().available"
         [selectionScale]="selectionState().scale"
         [selectionY]="selectionState().y"
+        [brushRadius]="workspaceSettings().brushRadius"
+        [brushStrength]="workspaceSettings().brushStrength"
+        [symmetry]="workspaceSettings().symmetry"
+        [materialPreset]="workspaceSettings().material"
+        [snapToGround]="workspaceSettings().snapToGround"
         (primitive)="handlePrimitive($event)"
         (toggleGrid)="onToggle('grid', $event)"
         (toggleAxes)="onToggle('axes', $event)"
@@ -50,6 +70,11 @@ type ExportFormat = 'glb' | 'stl';
         (duplicateSelection)="onDuplicateSelection()"
         (selectionScaleChange)="onSelectionScaleChange($event)"
         (selectionYChange)="onSelectionYChange($event)"
+        (brushRadiusChange)="onBrushRadiusChange($event)"
+        (brushStrengthChange)="onBrushStrengthChange($event)"
+        (symmetryChange)="onSymmetryChange($event)"
+        (materialPresetChange)="onMaterialPresetChange($event)"
+        (snapToGroundChange)="onSnapToGroundChange($event)"
       ></app-sculptor-toolbar>
 
       <div class="workspace">
@@ -224,6 +249,7 @@ export class SculptorPageComponent implements AfterViewInit {
     scale: 1,
     y: 0,
   });
+  readonly workspaceSettings = signal<SculptWorkspaceSettings>({ ...DEFAULT_WORKSPACE });
 
   private bannerTimeout: number | null = null;
 
@@ -242,6 +268,7 @@ export class SculptorPageComponent implements AfterViewInit {
       this.viewport.setAxesVisible(options.axes);
       this.viewport.setLightsEnabled(options.lights);
     });
+    this.syncWorkspaceToViewport();
   }
 
   handlePrimitive(type: PrimitiveType): void {
@@ -250,7 +277,7 @@ export class SculptorPageComponent implements AfterViewInit {
 
   onBrushSelected(tool: SculptBrush): void {
     this.activeBrush.set(tool);
-    this.viewport?.setBrush(tool);
+    this.updateWorkspace({ activeBrush: tool });
     const label = tool === 'none' ? 'Transform tools enabled' : `${tool.charAt(0).toUpperCase()}${tool.slice(1)} brush ready`;
     this.showBanner('success', label);
   }
@@ -304,6 +331,27 @@ export class SculptorPageComponent implements AfterViewInit {
     this.viewport?.setSelectionY(yValue);
   }
 
+  onBrushRadiusChange(value: number): void {
+    this.updateWorkspace({ brushRadius: value });
+  }
+
+  onBrushStrengthChange(value: number): void {
+    this.updateWorkspace({ brushStrength: value });
+  }
+
+  onSymmetryChange(symmetry: SculptSymmetry): void {
+    this.updateWorkspace({ symmetry });
+  }
+
+  onMaterialPresetChange(preset: MaterialPreset): void {
+    this.updateWorkspace({ material: preset });
+    this.viewport?.setMaterialPreset(preset, true);
+  }
+
+  onSnapToGroundChange(enabled: boolean): void {
+    this.updateWorkspace({ snapToGround: enabled });
+  }
+
   onResetCamera(): void {
     this.viewport?.resetCamera();
   }
@@ -324,9 +372,10 @@ export class SculptorPageComponent implements AfterViewInit {
 
     const existingId = this.selectedSculptureId();
     const scene = this.viewport.getScene();
+    const workspace = this.workspaceSettings();
     const saved = existingId
-      ? this.store.updateScene(existingId, scene)
-      : this.store.saveFromScene(scene, name, tags);
+      ? this.store.updateScene(existingId, scene, workspace)
+      : this.store.saveFromScene(scene, name, tags, workspace);
 
     if (saved) {
       this.selectedSculptureId.set(saved.id);
@@ -369,6 +418,11 @@ export class SculptorPageComponent implements AfterViewInit {
     const json = sculpture.sceneJson;
     this.viewport?.loadSceneFromJson(json);
     this.selectedSculptureId.set(sculpture.id);
+    if (sculpture.workspace) {
+      this.applyWorkspaceSettings(sculpture.workspace);
+    } else {
+      this.applyWorkspaceSettings(DEFAULT_WORKSPACE);
+    }
   }
 
   deleteSculpture(sculpture: Sculpture): void {
@@ -418,5 +472,28 @@ export class SculptorPageComponent implements AfterViewInit {
       next.lights = false;
     }
     this.toggles.set(next);
+  }
+
+  private updateWorkspace(partial: Partial<SculptWorkspaceSettings>): void {
+    this.workspaceSettings.update((prev) => ({ ...prev, ...partial }));
+    this.syncWorkspaceToViewport();
+  }
+
+  private applyWorkspaceSettings(settings: SculptWorkspaceSettings): void {
+    this.workspaceSettings.set({ ...DEFAULT_WORKSPACE, ...settings });
+    this.activeBrush.set(settings.activeBrush);
+    this.syncWorkspaceToViewport();
+  }
+
+  private syncWorkspaceToViewport(): void {
+    if (!this.viewport) {
+      return;
+    }
+    const ws = this.workspaceSettings();
+    this.viewport.setBrushSettings({ radius: ws.brushRadius, strength: ws.brushStrength });
+    this.viewport.setSymmetry(ws.symmetry);
+    this.viewport.setMaterialPreset(ws.material, false);
+    this.viewport.setSnapToGround(ws.snapToGround);
+    this.viewport.setBrush(ws.activeBrush);
   }
 }

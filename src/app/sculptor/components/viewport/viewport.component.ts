@@ -12,9 +12,10 @@ import {
 import {
   Box3,
   BoxGeometry,
+  BufferAttribute,
   BufferGeometry,
-  Color,
   CylinderGeometry,
+  InterleavedBufferAttribute,
   Mesh,
   MeshStandardMaterial,
   Object3D,
@@ -36,6 +37,7 @@ import { BooleanMode, ModifierAction, SculptBrush } from '../../models/sculpt-to
 import { subdivideGeometry } from '../../utils/simple-subdivision';
 import { SimpleCSG } from '../../utils/simple-csg';
 import { ThreeFactoryService } from '../../services/three-factory.service';
+import { MaterialPreset, SculptSymmetry } from '../../models/sculpture';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
@@ -44,6 +46,15 @@ interface BannerEvent {
   type: 'success' | 'error';
   text: string;
 }
+
+const MATERIAL_PRESETS: Record<MaterialPreset, { color: string; metalness: number; roughness: number; wireframe?: boolean }> =
+  {
+    clay: { color: '#d4a373', metalness: 0.05, roughness: 0.8 },
+    metal: { color: '#bcc2cd', metalness: 0.9, roughness: 0.2 },
+    glass: { color: '#bfe4ff', metalness: 0.1, roughness: 0.05 },
+    matte: { color: '#9ca3af', metalness: 0.05, roughness: 0.95 },
+    wireframe: { color: '#22d3ee', metalness: 0, roughness: 1, wireframe: true },
+  };
 
 // Viewport hosting the Three.js renderer, OrbitControls, and TransformControls.
 const MAX_VERTEX_COUNT = 120_000;
@@ -126,6 +137,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   private planeDragOffset = new Vector3();
   private planeDragStarted = false;
   private transformDragging = false;
+  private symmetry: SculptSymmetry = 'none';
+  private materialPreset: MaterialPreset = 'clay';
+  private snapToGround = true;
 
   constructor(
     private readonly ngZone: NgZone,
@@ -190,6 +204,41 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     }
     if (brush === 'none') {
       this.endBrushSession();
+    }
+  }
+
+  setBrushSettings(settings: { radius?: number; strength?: number }): void {
+    if (typeof settings.radius === 'number') {
+      this.brushRadius = settings.radius;
+    }
+    if (typeof settings.strength === 'number') {
+      this.brushStrength = settings.strength;
+    }
+  }
+
+  setSymmetry(symmetry: SculptSymmetry): void {
+    this.symmetry = symmetry;
+  }
+
+  setMaterialPreset(preset: MaterialPreset, applyToSelection = true): void {
+    this.materialPreset = preset;
+    if (applyToSelection) {
+      const mesh = this.getEditableMesh(this.selected);
+      if (mesh) {
+        this.applyMaterialPreset(mesh, preset);
+      }
+    }
+  }
+
+  setSnapToGround(state: boolean): void {
+    this.snapToGround = state;
+    if (state) {
+      const mesh = this.getEditableMesh(this.selected);
+      if (mesh) {
+        mesh.position.y = Math.max(mesh.position.y, 0);
+        mesh.updateMatrixWorld(true);
+        this.emitSelectionState();
+      }
     }
   }
 
@@ -258,6 +307,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       }
     });
     clone.position.add(new Vector3(0.75, 0, 0.75));
+    if (this.snapToGround) {
+      clone.position.y = Math.max(clone.position.y, 0);
+    }
     this.prepareObject(clone);
     this.scene.add(clone);
     this.setSelection(clone);
@@ -279,7 +331,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     if (!mesh) {
       return;
     }
-    mesh.position.y = yValue;
+    mesh.position.y = this.snapToGround ? Math.max(yValue, 0) : yValue;
     mesh.updateMatrixWorld(true);
     this.emitSelectionState();
   }
@@ -403,7 +455,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
         return;
       }
       const delta = new Vector3().subVectors(point, this.brushLastPoint);
-      this.applyBrush(point, delta, mesh);
+      this.applyBrush(point, delta, mesh, this.brushLastPoint.clone());
       this.brushLastPoint.copy(point);
       event.preventDefault();
       return;
@@ -421,6 +473,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       }
       this.planeDragStarted = true;
       planePoint.add(this.planeDragOffset);
+      if (this.snapToGround) {
+        planePoint.y = Math.max(planePoint.y, 0);
+      }
       mesh.position.copy(planePoint);
       this.transformControls?.object?.updateMatrixWorld(true);
       this.emitSelectionState();
@@ -456,7 +511,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.ensureEditableGeometry(mesh);
     this.orbitControls && (this.orbitControls.enabled = false);
     this.containerRef.nativeElement.setPointerCapture?.(event.pointerId);
-    this.applyBrush(point, new Vector3(), mesh);
+    this.applyBrush(point, new Vector3(), mesh, point.clone());
   }
 
   private endBrushSession(): void {
@@ -535,7 +590,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     return direction.clone().multiplyScalar(t).add(origin);
   }
 
-  private applyBrush(point: Vector3, delta: Vector3, mesh: Mesh): void {
+  private applyBrush(point: Vector3, delta: Vector3, mesh: Mesh, previousPoint: Vector3): void {
     if (this.activeBrush === 'none') {
       return;
     }
@@ -547,21 +602,42 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const geometry = this.ensureEditableGeometry(mesh);
-    let normalAttr = geometry.getAttribute('normal');
+    let normalAttr = this.ensureBufferAttribute(geometry, 'normal');
     if (!normalAttr) {
       geometry.computeVertexNormals();
-      normalAttr = geometry.getAttribute('normal');
+      normalAttr = this.ensureBufferAttribute(geometry, 'normal');
     }
-    const positionAttr = geometry.getAttribute('position');
+    const positionAttr = this.ensureBufferAttribute(geometry, 'position');
     if (!positionAttr) {
       return;
     }
     mesh.updateMatrixWorld(true);
+
+    const variants = this.createSymmetryVariants(point, delta, previousPoint);
+    for (const variant of variants) {
+      this.applyBrushVariant(variant.point, variant.delta, variant.previousPoint, mesh, positionAttr, normalAttr);
+    }
+
+    positionAttr.needsUpdate = true;
+    geometry.computeVertexNormals();
+    geometry.computeBoundingSphere();
+    this.warnIfGeometryTooLarge(geometry);
+  }
+
+  private applyBrushVariant(
+    point: Vector3,
+    delta: Vector3,
+    previousPoint: Vector3,
+    mesh: Mesh,
+    positionAttr: BufferAttribute,
+    normalAttr: BufferAttribute | null,
+  ): void {
     const worldVertex = new Vector3();
     const vertex = new Vector3();
     const normal = new Vector3();
     const localPoint = mesh.worldToLocal(point.clone());
-    const localDelta = delta.lengthSq() > 0 ? this.worldDeltaToLocal(mesh, delta) : new Vector3();
+    const localDelta = delta.lengthSq() > 0 ? this.worldDeltaToLocal(mesh, delta, previousPoint) : new Vector3();
+
     for (let i = 0; i < positionAttr.count; i++) {
       vertex.fromBufferAttribute(positionAttr, i);
       worldVertex.copy(vertex).applyMatrix4(mesh.matrixWorld);
@@ -584,15 +660,11 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       }
       positionAttr.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
-    positionAttr.needsUpdate = true;
-    geometry.computeVertexNormals();
-    geometry.computeBoundingSphere();
-    this.warnIfGeometryTooLarge(geometry);
   }
 
-  private worldDeltaToLocal(mesh: Mesh, delta: Vector3): Vector3 {
-    const from = mesh.worldToLocal(this.brushLastPoint.clone());
-    const toWorld = this.brushLastPoint.clone().add(delta);
+  private worldDeltaToLocal(mesh: Mesh, delta: Vector3, previousPoint: Vector3): Vector3 {
+    const from = mesh.worldToLocal(previousPoint.clone());
+    const toWorld = previousPoint.clone().add(delta);
     const to = mesh.worldToLocal(toWorld);
     return to.sub(from);
   }
@@ -604,6 +676,92 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       mesh.geometry = geometry;
     }
     return geometry;
+  }
+
+  private ensureBufferAttribute(
+    geometry: BufferGeometry,
+    key: string,
+  ): BufferAttribute | null {
+    const attribute = geometry.getAttribute(key);
+    if (!attribute) {
+      return null;
+    }
+    if (attribute instanceof BufferAttribute) {
+      return attribute;
+    }
+    if (this.isInterleavedAttribute(attribute)) {
+      const converted = attribute.clone();
+      geometry.setAttribute(key, converted);
+      return converted;
+    }
+    return null;
+  }
+
+  private isInterleavedAttribute(
+    attribute: BufferAttribute | InterleavedBufferAttribute,
+  ): attribute is InterleavedBufferAttribute {
+    return (attribute as InterleavedBufferAttribute).isInterleavedBufferAttribute === true;
+  }
+
+  private createSymmetryVariants(point: Vector3, delta: Vector3, previousPoint: Vector3): Array<{
+    point: Vector3;
+    delta: Vector3;
+    previousPoint: Vector3;
+  }> {
+    const variants = [
+      {
+        point: point.clone(),
+        delta: delta.clone(),
+        previousPoint: previousPoint.clone(),
+      },
+    ];
+    const axes = this.getSymmetryAxes();
+    for (const axis of axes) {
+      const current = [...variants];
+      for (const variant of current) {
+        const mirroredPoint = variant.point.clone();
+        const mirroredDelta = variant.delta.clone();
+        const mirroredPrev = variant.previousPoint.clone();
+        this.mirrorVector(mirroredPoint, axis);
+        this.mirrorVector(mirroredDelta, axis);
+        this.mirrorVector(mirroredPrev, axis);
+        variants.push({
+          point: mirroredPoint,
+          delta: mirroredDelta,
+          previousPoint: mirroredPrev,
+        });
+      }
+    }
+    return variants;
+  }
+
+  private getSymmetryAxes(): Array<'x' | 'y' | 'z'> {
+    switch (this.symmetry) {
+      case 'x':
+        return ['x'];
+      case 'y':
+        return ['y'];
+      case 'z':
+        return ['z'];
+      case 'xy':
+        return ['x', 'y'];
+      case 'xz':
+        return ['x', 'z'];
+      case 'yz':
+        return ['y', 'z'];
+      default:
+        return [];
+    }
+  }
+
+  private mirrorVector(vector: Vector3, axis: 'x' | 'y' | 'z'): void {
+    if (axis === 'x') {
+      vector.x *= -1;
+    } else if (axis === 'y') {
+      vector.y *= -1;
+    } else {
+      vector.z *= -1;
+    }
   }
 
   private emitSelectionState(): void {
@@ -630,12 +788,12 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
 
   private applyBevelModifier(mesh: Mesh): void {
     const geometry = this.ensureEditableGeometry(mesh);
-    let normalAttr = geometry.getAttribute('normal');
+    let normalAttr = this.ensureBufferAttribute(geometry, 'normal');
     if (!normalAttr) {
       geometry.computeVertexNormals();
-      normalAttr = geometry.getAttribute('normal');
+      normalAttr = this.ensureBufferAttribute(geometry, 'normal');
     }
-    const positionAttr = geometry.getAttribute('position');
+    const positionAttr = this.ensureBufferAttribute(geometry, 'position');
     if (!positionAttr) {
       return;
     }
@@ -717,6 +875,26 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private applyMaterialPreset(mesh: Mesh, preset: MaterialPreset): void {
+    mesh.traverse((child) => {
+      if ((child as Mesh).isMesh) {
+        (child as Mesh).material = this.createMaterialFromPreset(preset);
+      }
+    });
+  }
+
+  private createMaterialFromPreset(preset: MaterialPreset): MeshStandardMaterial {
+    const config = MATERIAL_PRESETS[preset];
+    return new MeshStandardMaterial({
+      color: config.color,
+      metalness: config.metalness,
+      roughness: config.roughness,
+      wireframe: config.wireframe ?? false,
+      transparent: preset === 'glass',
+      opacity: preset === 'glass' ? 0.5 : 1,
+    });
+  }
+
   private setupScene(): void {
     const canvas = this.canvasRef.nativeElement;
     this.renderer = this.threeFactory.createRenderer(canvas);
@@ -794,7 +972,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       default:
         geometry = new BoxGeometry(1.5, 1.5, 1.5);
     }
-    const material = new MeshStandardMaterial({ color: new Color('#d1d5db'), roughness: 0.6, metalness: 0.1 });
+    const material = this.createMaterialFromPreset(this.materialPreset);
     const mesh = new Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
