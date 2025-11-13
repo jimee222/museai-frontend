@@ -1,0 +1,94 @@
+.creator-shell {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  padding-bottom: 40px;
+}
+
+/* Barra negra centrada */
+.toolbar { display: flex; justify-content: center; }
+.toolbar__inner {
+  background: #1f1f1f;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+.tool-group { display: inline-flex; align-items: center; gap: 8px; }
+.lbl { font-size: .9rem; color: #e5e7eb; }
+
+/* Botones */
+.btn {
+  border: 1px solid #3b3b3b;
+  background: #2a2a2a;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: .9rem;
+  transition: all .15s ease;
+}
+.btn:hover { box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.btn.danger { border-color: #ef4444; }
+.btn--dark { background: #2a2a2a; border: 1px solid #4b4b4b; }
+.btn--chip { border-radius: 999px; }
+.btn--pill { border-radius: 999px; background: #3b3b3b; }
+.btn.active { outline: 2px solid #d4e157; outline-offset: 1px; }
+
+/* Canvas (más pequeño) */
+.canvas-area { display: flex; justify-content: center; }
+.canvas-card {
+  width: 100%;
+  max-width: 860px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+}
+.canvas-surface {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  cursor: crosshair;
+}
+
+.canvas-card .canvas-container {
+  width: 100% !important;
+  height: 480px !important;   /* ← alto real del lienzo */
+}
+
+/* Información de la obra */
+.meta {
+  width: 100%;
+  max-width: 860px;               /* 🔹 alineado con el canvas */
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+.meta__title { margin: 4px 0; font-weight: 700; color: #1f1f1f; }
+.meta__row { display: grid; gap: 8px; }
+.meta__label { font-weight: 600; color: #1f1f1f; }
+.meta__title-wrap { display: flex; gap: 8px; align-items: center; }
+.meta__input,
+.meta__textarea {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: .95rem;
+  background: #fff;
+}
+.meta__actions { display: flex; gap: 16px; }
+.hidden { display: none; }
+
+/* Inputs */
+input[type='color'] {
+  width: 36px; height: 28px; border: none; background: transparent; padding: 0; cursor: pointer;
+}
+input[type='range'] { width: 160px; }
