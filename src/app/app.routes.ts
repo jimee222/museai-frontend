@@ -13,6 +13,7 @@ import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
 import { AuthGuard } from './guards/auth.guard';
 import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
+import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
 
 export const routes: Routes = [
   {
@@ -74,6 +75,10 @@ export const routes: Routes = [
       component: MuseumComponent,
       canActivate: [AuthGuard] 
     },  
+  {
+    path: 'sculptor',
+    component: SculptorPageComponent,
+  },
   {
     path: '**',
     component: NotFound,

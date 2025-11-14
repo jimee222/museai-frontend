@@ -1,1 +1,71 @@
-<p>profile works!</p>
+<section class="profile-page">
+  <header class="profile-header text-center">
+    <img
+      src="/assets/brand/museai-logo.png"
+      width="120"
+      height="120"
+      alt="Muse AI"
+      class="brand-logo"
+    />
+    <h2 class="title">Mi Perfil</h2>
+    <p class="subtitle">Visualiza tu información personal, quizzes y recorridos de MuseAI</p>
+  </header>
+
+  
+  <nav class="tabs">
+    <span 
+      class="tab" 
+      [class.active]="activeTab() === 'info'" 
+      (click)="activeTab.set('info')"
+    >
+      Información Personal
+    </span>
+    <span 
+      class="tab" 
+      [class.active]="activeTab() === 'quizzes'" 
+      (click)="activeTab.set('quizzes')"
+    >
+      Quizzes
+    </span>
+    <span 
+      class="tab" 
+      [class.active]="activeTab() === 'recorridos'" 
+      (click)="activeTab.set('recorridos')"
+    >
+      Recorridos
+    </span>
+  </nav>
+
+  <main class="profile-content text-center">
+    <ng-container *ngIf="!loading(); else loadingTpl">
+      <ng-container *ngIf="user(); else errorTpl">
+
+        
+        <div class="tab-content" [class.active]="activeTab() === 'info'">
+          <div class="card-container">
+            <profile-card [user]="user()"></profile-card>
+          </div>
+        </div>
+
+        
+        <div class="tab-content" [class.active]="activeTab() === 'quizzes'">
+          <p> Próximamente tus quizzes aparecerán aquí.</p>
+        </div>
+
+        
+        <div class="tab-content" [class.active]="activeTab() === 'recorridos'">
+          <p> Aquí podrás ver tus recorridos.</p>
+        </div>
+
+      </ng-container>
+    </ng-container>
+
+    <ng-template #loadingTpl>
+      <p class="text-light">Cargando perfil...</p>
+    </ng-template>
+
+    <ng-template #errorTpl>
+      <p class="text-danger">{{ error() }}</p>
+    </ng-template>
+  </main>
+</section>

@@ -1,0 +1,153 @@
+/* ====== Contenedor principal ====== */
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 60px 20px;
+  background:var(--background-color) ;
+  color: #3b2b14;
+  gap: 24px;
+}
+
+/* ====== Header ====== */
+.profile-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.profile-header .brand-logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.profile-header .title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3b2b14;
+}
+
+.profile-header .subtitle {
+  margin: 0;
+  color: #6d552a;
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+/* ====== Menú de pestañas ====== */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin: 1.5rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #6d552a;
+}
+
+.tab {
+  position: relative;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.3s ease;
+  text-decoration: none;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #5c4033;
+  transition: width 0.3s ease;
+}
+
+.tab:hover {
+  color: #3b2b14;
+}
+
+.tab:hover::after {
+  width: 100%;
+}
+
+.tab.active {
+  color: #3b2b14;
+  font-weight: 700;
+}
+
+.tab.active::after {
+  width: 100%;
+}
+
+/* ====== Contenido principal ====== */
+.profile-content {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 80px;
+}
+
+/* ====== Contenedor de la tarjeta ====== */
+.card-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.card-container .card {
+  background-color: #5c4033;
+  color: white;
+  width: 80%;
+  max-width: 900px;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ====== Transiciones de contenido ====== */
+.tab-content {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  display: none;
+}
+
+.tab-content.active {
+  opacity: 1;
+  transform: translateY(0);
+  display: block;
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 40px 16px;
+  }
+
+  .profile-header .title {
+    font-size: 1.6rem;
+  }
+
+  .tabs {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .tab {
+    width: auto;
+    text-align: center;
+  }
+
+  .profile-content {
+    padding: 0 20px;
+  }
+}
