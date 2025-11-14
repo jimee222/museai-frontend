@@ -5,7 +5,7 @@
   padding-bottom: 40px;
 }
 
-/* Barra negra centrada */
+
 .toolbar { display: flex; justify-content: center; }
 .toolbar__inner {
   background: #1f1f1f;
@@ -22,7 +22,6 @@
 .tool-group { display: inline-flex; align-items: center; gap: 8px; }
 .lbl { font-size: .9rem; color: #e5e7eb; }
 
-/* Botones */
 .btn {
   border: 1px solid #3b3b3b;
   background: #2a2a2a;
@@ -40,7 +39,7 @@
 .btn--pill { border-radius: 999px; background: #3b3b3b; }
 .btn.active { outline: 2px solid #d4e157; outline-offset: 1px; }
 
-/* Canvas (más pequeño) */
+
 .canvas-area { display: flex; justify-content: center; }
 .canvas-card {
   width: 100%;
@@ -60,13 +59,13 @@
 
 .canvas-card .canvas-container {
   width: 100% !important;
-  height: 480px !important;   /* ← alto real del lienzo */
+  height: 480px !important;   
 }
 
-/* Información de la obra */
+
 .meta {
   width: 100%;
-  max-width: 860px;               /* 🔹 alineado con el canvas */
+  max-width: 860px;               
   margin: 0 auto;
   display: grid;
   gap: 16px;
@@ -87,7 +86,7 @@
 .meta__actions { display: flex; gap: 16px; }
 .hidden { display: none; }
 
-/* Inputs */
+
 input[type='color'] {
   width: 36px; height: 28px; border: none; background: transparent; padding: 0; cursor: pointer;
 }

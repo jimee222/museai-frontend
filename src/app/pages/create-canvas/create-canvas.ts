@@ -30,7 +30,7 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
     this.applyBrush('pencil');
     this.applyBrushStyle();
 
-    // Responsivo (solo ancho). Altura fija para experiencia consistente.
+  
     const container = this.canvasRef.nativeElement.parentElement!;
     this.resizeObserver = new ResizeObserver(() => this.fitToContainer());
     this.resizeObserver.observe(container);
@@ -44,7 +44,7 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
 
   private initCanvas(): void {
     this.canvas = new fabric.Canvas(this.canvasRef.nativeElement, {
-      isDrawingMode: true,       // 🔹 aseguramos modo dibujo
+      isDrawingMode: true,       
       selection: false,
     });
     this.canvas.backgroundColor = '#FFFFFF';
@@ -57,11 +57,11 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
     const parent = this.canvasRef.nativeElement.parentElement!;
     const width = Math.floor(parent.clientWidth);
 
-    // Dimensiones reales del canvas (atributos), que Fabric usa internamente:
+   
     this.canvas.setWidth(width);
     this.canvas.setHeight(this.targetHeight);
 
-    // Asegura que la capa visual (canvas-container) coincida (por si CSS no cargó aún)
+    
     const container = this.canvas.getElement().parentElement as HTMLDivElement;
     if (container) {
       container.style.width = '100%';
