@@ -2,13 +2,18 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { CURATORIAL_DATA } from '../../data/curatorial-data';
+import { CuratorialArtwork } from '../../interfaces/curatorial-artwork.interface';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-museum',
   templateUrl: './museum.component.html',
-  styleUrls: ['./museum.component.css']
+  styleUrls: ['./museum.component.css'],
+  imports: [CommonModule]
 })
 export class MuseumComponent implements OnInit, OnDestroy {
+
   @ViewChild('museumContainer', { static: true }) museumContainer!: ElementRef<HTMLDivElement>;
 
   private scene!: THREE.Scene;
@@ -25,6 +30,18 @@ export class MuseumComponent implements OnInit, OnDestroy {
 
   private walls: THREE.Mesh[] = [];
 
+  private artFrames: THREE.Mesh[] = [];
+
+  private activeArtworkId: number | null = null;
+  private proximityDistance = 1.6;
+
+  public currentArtwork: CuratorialArtwork | null = null;
+  public isPopupVisible = false;
+
+  private textureLoader = new THREE.TextureLoader();
+
+  private artworkIndex = 0;
+
   ngOnInit(): void {
     this.initScene();
     this.animate();
@@ -37,247 +54,182 @@ export class MuseumComponent implements OnInit, OnDestroy {
     cancelAnimationFrame(0);
   }
 
+  private createArtworkFrame(
+    position: THREE.Vector3,
+    rotationY: number,
+    inner: boolean
+  ): void {
+    const size = inner ? 2.5 : 3;
+    const depth = 0.2;
+
+    const geometry = new THREE.BoxGeometry(size, size, depth);
+
+    const artwork: CuratorialArtwork | undefined = CURATORIAL_DATA[this.artworkIndex];
+    if (!artwork) return;
+
+    const texture = this.textureLoader.load(artwork.image);
+    const material = new THREE.MeshStandardMaterial({ map: texture });
+
+    const frame = new THREE.Mesh(geometry, material);
+    frame.position.copy(position);
+    frame.rotation.y = rotationY;
+
+    frame.userData['artId'] = artwork.id;
+
+    this.artFrames.push(frame);
+    this.scene.add(frame);
+
+    this.artworkIndex++;
+  }
+
   private initScene(): void {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
 
-    // cámara
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    this.camera.position.set(0, 1.7, 0); // altura humana
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.set(0, 1.7, 0);
 
-    // renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('museum-container')?.appendChild(this.renderer.domElement);
 
-    // controles tipo juego (pointer lock)
     this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
     this.scene.add(this.controls.object);
 
-    // click para capturar el mouse
     this.renderer.domElement.addEventListener('click', () => this.controls.lock());
 
-    // luces
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x888888, 1.0);
-    this.scene.add(hemiLight);
-
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x888888, 1));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(5, 10, 5);
     this.scene.add(dirLight);
 
-    // piso
-    const floorGeometry = new THREE.PlaneGeometry(20, 20);
-    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshStandardMaterial({ color: 0xdddddd })
+    );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     this.scene.add(floor);
 
-    // paredes blancas (con colisión)
     const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const wallGeometry = new THREE.BoxGeometry(20, 5, 0.2);
 
-    const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMaterial);
     backWall.position.set(0, 2.5, -10);
     this.scene.add(backWall);
-    this.walls.push(backWall);
 
-    const frontWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    const frontWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMaterial);
     frontWall.position.set(0, 2.5, 10);
     this.scene.add(frontWall);
-    this.walls.push(frontWall);
 
     const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
     leftWall.position.set(-10, 2.5, 0);
     this.scene.add(leftWall);
-    this.walls.push(leftWall);
 
     const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
     rightWall.position.set(10, 2.5, 0);
     this.scene.add(rightWall);
-    this.walls.push(rightWall);
 
-
-    // 🧱 Paredes interiores (centrales)
-    const innerWallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    // paredes interiores
     const innerWallGeometry = new THREE.BoxGeometry(0.5, 5, 8);
 
-    // Primera pared interior (alineada con cuadros de la izquierda)
-    const innerWall1 = new THREE.Mesh(innerWallGeometry, innerWallMaterial);
+    const innerWall1 = new THREE.Mesh(innerWallGeometry, wallMaterial);
     innerWall1.position.set(-3.3, 2.5, 0);
     this.scene.add(innerWall1);
-    this.walls.push(innerWall1);
 
-    // Segunda pared interior (alineada con cuadros de la derecha)
-    const innerWall2 = new THREE.Mesh(innerWallGeometry, innerWallMaterial);
+    const innerWall2 = new THREE.Mesh(innerWallGeometry, wallMaterial);
     innerWall2.position.set(3.3, 2.5, 0);
     this.scene.add(innerWall2);
-    this.walls.push(innerWall2);
 
+    // Displays interiores
+    this.createArtworkFrame(new THREE.Vector3(-3.55, 2.5, -2.5), Math.PI / 2, true);
+    this.createArtworkFrame(new THREE.Vector3(-3.55, 2.5, 2.5), Math.PI / 2, true);
 
-        // 🎨 Displays en paredes interiores (8 en total: 2 por cada cara)
-    const innerFrameMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-    const innerFrameGeometry = new THREE.BoxGeometry(2.5, 2.5, 0.2);
+    this.createArtworkFrame(new THREE.Vector3(-3.05, 2.5, -2.5), -Math.PI / 2, true);
+    this.createArtworkFrame(new THREE.Vector3(-3.05, 2.5, 2.5), -Math.PI / 2, true);
 
-    // ---------------------- PARED INTERIOR IZQUIERDA ----------------------
+    this.createArtworkFrame(new THREE.Vector3(3.55, 2.5, -2.5), -Math.PI / 2, true);
+    this.createArtworkFrame(new THREE.Vector3(3.55, 2.5, 2.5), -Math.PI / 2, true);
 
-    // Exterior (cara que mira al centro)
-    const leftOuterTop = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    leftOuterTop.position.set(-3.55, 2.5, -2.5);
-    leftOuterTop.rotation.y = Math.PI / 2;
-    this.scene.add(leftOuterTop);
+    this.createArtworkFrame(new THREE.Vector3(3.05, 2.5, -2.5), Math.PI / 2, true);
+    this.createArtworkFrame(new THREE.Vector3(3.05, 2.5, 2.5), Math.PI / 2, true);
 
-    const leftOuterBottom = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    leftOuterBottom.position.set(-3.55, 2.5, 2.5);
-    leftOuterBottom.rotation.y = Math.PI / 2;
-    this.scene.add(leftOuterBottom);
+    // Displays exteriores
+    this.createArtworkFrame(new THREE.Vector3(-6, 2.5, -9.9), 0, false);
+    this.createArtworkFrame(new THREE.Vector3(0, 2.5, -9.9), 0, false);
+    this.createArtworkFrame(new THREE.Vector3(6, 2.5, -9.9), 0, false);
 
-    // Interior (cara opuesta)
-    const leftInnerTop = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    leftInnerTop.position.set(-3.05, 2.5, -2.5);
-    leftInnerTop.rotation.y = -Math.PI / 2;
-    this.scene.add(leftInnerTop);
+    this.createArtworkFrame(new THREE.Vector3(-9.9, 2.5, -6), Math.PI / 2, false);
+    this.createArtworkFrame(new THREE.Vector3(-9.9, 2.5, 0), Math.PI / 2, false);
+    this.createArtworkFrame(new THREE.Vector3(-9.9, 2.5, 6), Math.PI / 2, false);
 
-    const leftInnerBottom = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    leftInnerBottom.position.set(-3.05, 2.5, 2.5);
-    leftInnerBottom.rotation.y = -Math.PI / 2;
-    this.scene.add(leftInnerBottom);
+    this.createArtworkFrame(new THREE.Vector3(9.9, 2.5, -6), -Math.PI / 2, false);
+    this.createArtworkFrame(new THREE.Vector3(9.9, 2.5, 0), -Math.PI / 2, false);
+    this.createArtworkFrame(new THREE.Vector3(9.9, 2.5, 6), -Math.PI / 2, false);
 
-    // ---------------------- PARED INTERIOR DERECHA ----------------------
-
-    // Exterior (cara que mira al centro)
-    const rightOuterTop = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    rightOuterTop.position.set(3.55, 2.5, -2.5);
-    rightOuterTop.rotation.y = -Math.PI / 2;
-    this.scene.add(rightOuterTop);
-
-    const rightOuterBottom = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    rightOuterBottom.position.set(3.55, 2.5, 2.5);
-    rightOuterBottom.rotation.y = -Math.PI / 2;
-    this.scene.add(rightOuterBottom);
-
-    // Interior (cara opuesta)
-    const rightInnerTop = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    rightInnerTop.position.set(3.05, 2.5, -2.5);
-    rightInnerTop.rotation.y = Math.PI / 2;
-    this.scene.add(rightInnerTop);
-
-    const rightInnerBottom = new THREE.Mesh(innerFrameGeometry, innerFrameMaterial);
-    rightInnerBottom.position.set(3.05, 2.5, 2.5);
-    rightInnerBottom.rotation.y = Math.PI / 2;
-    this.scene.add(rightInnerBottom);
-
-
-
-
-
-    // techo
-    const ceilingGeometry = new THREE.PlaneGeometry(20, 20);
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xfafafa });
-    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    const ceiling = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshStandardMaterial({ color: 0xfafafa })
+    );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = 5;
     this.scene.add(ceiling);
 
-    // cuadros café (futuros displays)
-    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-    const frameGeometry = new THREE.BoxGeometry(3, 3, 0.2);
-
-    for (let i = -6; i <= 6; i += 6) {
-      const frame = new THREE.Mesh(frameGeometry, frameMaterial);
-      frame.position.set(i, 2.5, -9.9);
-      this.scene.add(frame);
-    }
-
-    for (let i = -6; i <= 6; i += 6) {
-      const frameLeft = new THREE.Mesh(frameGeometry, frameMaterial);
-      frameLeft.position.set(-9.9, 2.5, i);
-      frameLeft.rotation.y = Math.PI / 2;
-      this.scene.add(frameLeft);
-
-      const frameRight = new THREE.Mesh(frameGeometry, frameMaterial);
-      frameRight.position.set(9.9, 2.5, i);
-      frameRight.rotation.y = -Math.PI / 2;
-      this.scene.add(frameRight);
-    }
-
-        //  Cargador GLTF
     const loader = new GLTFLoader();
 
-    // Banco (bench)
-    loader.load('/assets/models/bench.glb', (gltf) => {
-      const bench = gltf.scene;
+    loader.load('/assets/models/bench.glb', g => {
+      const bench = g.scene;
       bench.scale.set(0.5, 2, 6);
-      bench.position.set(0, 0, 0); // frente a la pared del fondo
+      bench.position.set(0, 0, 0);
       this.scene.add(bench);
     });
 
-    //Lámpara colgante 
-    loader.load('/assets/models/light.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/light.glb', g => {
+      const lamp = g.scene;
       lamp.scale.set(2, 2, 2);
-      lamp.position.set(0, 3.1, 0); // justo arriba del primer display
+      lamp.position.set(0, 3.1, 0);
       this.scene.add(lamp);
     });
 
-    //Lámpara de riel (en vertical en la mitad del pasillo)
-    loader.load('/assets/models/ceiling_lamp.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/ceiling_lamp.glb', g => {
+      const lamp = g.scene;
       lamp.scale.set(6, 6, 6);
-
-      // Posicionarla al centro del pasillo
       lamp.position.set(6.5, 4.8, 0);
-
-      // Rotarla 90 grados para ponerla "en vertical" (alineada al eje Z)
-      lamp.rotation.y = Math.PI / 2; // 🔄 giro de 90°
-
+      lamp.rotation.y = Math.PI / 2;
       this.scene.add(lamp);
     });
 
-    //Lámpara de riel (en vertical en la mitad del pasillo)
-    loader.load('/assets/models/ceiling_lamp.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/ceiling_lamp.glb', g => {
+      const lamp = g.scene;
       lamp.scale.set(6, 6, 6);
-
-      // Posicionarla al centro del pasillo
       lamp.position.set(-6.5, 4.8, 0);
-
-      // Rotarla 90 grados para ponerla "en vertical" (alineada al eje Z)
-      lamp.rotation.y = Math.PI / 2; // 🔄 giro de 90°
-
+      lamp.rotation.y = Math.PI / 2;
       this.scene.add(lamp);
     });
 
-     //Lámpara de mandera
-      loader.load('/assets/models/large.glb', (gltf) => {
-      console.log('✅ Lámpara cargada:', gltf);
-      const woodlamp = gltf.scene;
-
-      woodlamp.scale.set(5, 5, 5);
-
-      // Posicionarla al centro del pasillo
-      woodlamp.position.set(0, 0, 0);
-
-      // Rotarla 90 grados para ponerla "en vertical" (alineada al eje Z)
-      woodlamp.rotation.y = Math.PI / 2; // 🔄 giro de 90°
-
-      this.scene.add(woodlamp);
+    loader.load('/assets/models/large.glb', g => {
+      const wood = g.scene;
+      wood.scale.set(5, 5, 5);
+      wood.position.set(0, 0, 0);
+      wood.rotation.y = Math.PI / 2;
+      this.scene.add(wood);
     });
 
-
-    // planta
-    loader.load('/assets/models/plant.glb', (gltf) => {
-      const plant = gltf.scene;
+    loader.load('/assets/models/plant.glb', g => {
+      const plant = g.scene;
       plant.scale.set(1.2, 1.2, 1.2);
-      plant.position.set(-2, 0, 3); // lateral del museo
+      plant.position.set(-2, 0, 3);
       this.scene.add(plant);
     });
 
-     // planta
-    loader.load('/assets/models/plant.glb', (gltf) => {
-      const plant = gltf.scene;
+    loader.load('/assets/models/plant.glb', g => {
+      const plant = g.scene;
       plant.scale.set(1.5, 1.5, 1.5);
-      plant.position.set(2, 0, -3); // lateral del museo
+      plant.position.set(2, 0, -3);
       this.scene.add(plant);
     });
 
@@ -291,37 +243,68 @@ export class MuseumComponent implements OnInit, OnDestroy {
 
   private onKeyDown = (event: KeyboardEvent) => {
     switch (event.code) {
-      case 'KeyS':
-        this.moveForward = true;
-        break;
-      case 'KeyW':
-        this.moveBackward = true;
-        break;
-      case 'KeyD':
-        this.moveLeft = true;
-        break;
-      case 'KeyA':
-        this.moveRight = true;
-        break;
+      case 'KeyS': this.moveForward = true; break;
+      case 'KeyW': this.moveBackward = true; break;
+      case 'KeyD': this.moveLeft = true; break;
+      case 'KeyA': this.moveRight = true; break;
     }
   };
 
   private onKeyUp = (event: KeyboardEvent) => {
     switch (event.code) {
-      case 'KeyS':
-        this.moveForward = false;
-        break;
-      case 'KeyW':
-        this.moveBackward = false;
-        break;
-      case 'KeyD':
-        this.moveLeft = false;
-        break;
-      case 'KeyA':
-        this.moveRight = false;
-        break;
+      case 'KeyS': this.moveForward = false; break;
+      case 'KeyW': this.moveBackward = false; break;
+      case 'KeyD': this.moveLeft = false; break;
+      case 'KeyA': this.moveRight = false; break;
     }
   };
+
+  private checkArtworkProximity(): void {
+    let nearestId: number | null = null;
+    let nearestDistance = Infinity;
+
+    const cameraPos = this.camera.position.clone();
+
+    for (const frame of this.artFrames) {
+      const dist = cameraPos.distanceTo(frame.position);
+
+      if (dist < this.proximityDistance && dist < nearestDistance) {
+        nearestDistance = dist;
+        nearestId = frame.userData['artId'];
+      }
+    }
+
+    if (nearestId !== null) {
+      if (this.activeArtworkId !== nearestId) {
+        this.activeArtworkId = nearestId;
+        this.showArtworkPopup(nearestId);
+      }
+    } else {
+      if (this.activeArtworkId !== null) {
+        this.activeArtworkId = null;
+        this.hideArtworkPopup();
+      }
+    }
+  }
+
+  private showArtworkPopup(id: number): void {
+    const artwork = CURATORIAL_DATA.find(a => a.id === id) || null;
+    this.currentArtwork = artwork;
+    this.isPopupVisible = !!artwork;
+  }
+
+  private hideArtworkPopup(): void {
+    this.isPopupVisible = false;
+    this.currentArtwork = null;
+  }
+
+  public closePopup(): void {
+    this.hideArtworkPopup();
+  }
+
+  public onPopupBackdropClick(): void {
+    this.hideArtworkPopup();
+  }
 
   private animate = () => {
     requestAnimationFrame(this.animate);
@@ -341,16 +324,17 @@ export class MuseumComponent implements OnInit, OnDestroy {
     if (this.moveLeft || this.moveRight)
       this.velocity.x -= this.direction.x * speed * delta;
 
-    // aplicar movimiento
     const moveX = this.velocity.x * delta * 10;
     const moveZ = this.velocity.z * delta * 10;
 
     this.controls.moveRight(moveX);
     this.controls.moveForward(moveZ);
 
-    // limitar el movimiento dentro del museo (colisiones básicas)
+    this.checkArtworkProximity();
+
+
     const pos = this.controls.object.position;
-    const limit = 9.3; // distancia antes de pared
+    const limit = 9.3;
     pos.x = Math.max(-limit, Math.min(limit, pos.x));
     pos.z = Math.max(-limit, Math.min(limit, pos.z));
     pos.y = 1.7;

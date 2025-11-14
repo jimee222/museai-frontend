@@ -8,9 +8,12 @@ import { About } from './pages/about/about';
 import { NotFound } from './pages/not-found/not-found';
 import { Landing } from './pages/landing/landing';
 import { GuestGuard } from './guards/guest.guard';
-import { AuthGuard } from './guards/auth.guard';
+
 import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
+import { AuthGuard } from './guards/auth.guard';
+import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
+import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
 
 export const routes: Routes = [
   {
@@ -41,6 +44,10 @@ export const routes: Routes = [
     component: About,
   },
   {
+    path: 'create-canvas',
+    component: CreateCanvasComponent,
+  },
+  {
     path: 'app',
     canActivate: [AuthGuard],
     children: [
@@ -68,6 +75,10 @@ export const routes: Routes = [
       component: MuseumComponent,
       canActivate: [AuthGuard] 
     },  
+  {
+    path: 'sculptor',
+    component: SculptorPageComponent,
+  },
   {
     path: '**',
     component: NotFound,

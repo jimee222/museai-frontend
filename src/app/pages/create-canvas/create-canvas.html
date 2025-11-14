@@ -1,0 +1,102 @@
+<section class="creator-shell">
+  <header class="toolbar toolbar--black">
+    <div class="toolbar__inner">
+      <div class="tool-group">
+        <button
+          type="button"
+          class="btn btn--chip"
+          [class.active]="tool === 'pencil'"
+          (click)="setBrush('pencil')"
+        >
+           Pincel
+        </button>
+
+        <button
+          type="button"
+          class="btn btn--chip"
+          [class.active]="tool === 'eraser'"
+          (click)="setBrush('eraser')"
+        >
+           Borrador
+        </button>
+      </div>
+
+      <div class="tool-group">
+        <label class="lbl" for="color">Color</label>
+        <input
+          id="color"
+          type="color"
+          [disabled]="tool === 'eraser'"
+          [(ngModel)]="color"
+          (input)="setColor(color)"
+        />
+      </div>
+
+      <div class="tool-group">
+        <label class="lbl" for="width">Grosor: {{ lineWidth }} px</label>
+        <input
+          id="width"
+          type="range"
+          min="1"
+          max="60"
+          step="1"
+          [(ngModel)]="lineWidth"
+          (input)="setLineWidth(lineWidth)"
+        />
+      </div>
+
+      <div class="tool-group">
+        <button type="button" class="btn danger" (click)="clearCanvas()">
+           Limpiar
+        </button>
+      </div>
+    </div>
+  </header>
+  <main class="canvas-area">
+    <div class="canvas-card">
+      <canvas #fabricCanvas class="canvas-surface"></canvas>
+    </div>
+  </main>
+  <section class="meta">
+    <h3 class="meta__title">Información de la obra</h3>
+
+    <div class="meta__row">
+      <label for="titulo" class="meta__label">Título de la obra</label>
+      <div class="meta__title-wrap">
+        <input
+          id="titulo"
+          class="meta__input"
+          type="text"
+          placeholder="Título de la obra"
+          [(ngModel)]="artTitle"
+        />
+        <button type="button" class="btn btn--pill" (click)="autoDescribeAI()">
+          Auto descripción AI
+        </button>
+      </div>
+    </div>
+
+    <div class="meta__row">
+      <label for="desc" class="meta__label">Descripción de la obra</label>
+      <textarea
+        id="desc"
+        class="meta__textarea"
+        rows="5"
+        placeholder="Descripción de la obra"
+        [(ngModel)]="artDescription"
+      ></textarea>
+    </div>
+
+    <div class="meta__actions">
+      <button type="button" class="btn btn--dark" (click)="saveArtwork()">
+        GUARDAR MI OBRA DE ARTE
+      </button>
+
+      <button type="button" class="btn btn--dark" (click)="downloadArtwork()">
+        DESCARGAR OBRA DE ARTE
+      </button>
+    </div>
+
+    <a #downloadLink class="hidden" [href]="dataUrl" download="lienzo.png">descargar</a>
+  </section>
+</section>

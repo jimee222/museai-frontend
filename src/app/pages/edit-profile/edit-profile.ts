@@ -19,7 +19,20 @@ function samePassword(group: AbstractControl): ValidationErrors | null {
   return pwd && cpwd && pwd !== cpwd ? { mismatch: true } : null;
 }
 
-const PWD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PWD_PATTERN = /^(?=(?:.*[A-Z]){2,})(?=.*[a-z])(?=.*\d).{8,}$/;
+
+function minAgeValidator(minYears: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const birthDate = new Date(control.value);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    const d = today.getDate() - birthDate.getDate();
+    const isTooYoung = age < minYears || (age === minYears && (m < 0 || (m === 0 && d < 0)));
+    return isTooYoung ? { tooYoung: true } : null;
+  };
+}
 
 @Component({
   selector: 'app-edit-profile',
@@ -30,7 +43,11 @@ const PWD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 })
 export class EditProfile implements OnInit {
   form: FormGroup;
-  userData: any; // <-- guardará los datos del usuario logueado
+  userData: any; 
+
+  showPassword = signal(false);
+  showConfirm = signal(false);
+
 
   submitting = signal(false);
   apiError  = signal<string | null>(null);
@@ -92,10 +109,10 @@ export class EditProfile implements OnInit {
   field(name: string) { return this.form.get(name)!; }
   get passwords(): FormGroup { return this.form.get('passwords') as FormGroup; }
 
-  googleSignIn() {
-    console.log('Simulación: continuar con Google');
-    this.submitting.set(true);
-    setTimeout(() => this.submitting.set(false), 600);
+
+  toggleShow(field: 'password' | 'confirm') {
+    if (field === 'password') this.showPassword.set(!this.showPassword());
+    else this.showConfirm.set(!this.showConfirm());
   }
 
   submit() {
@@ -127,7 +144,7 @@ export class EditProfile implements OnInit {
 
     this.user.update(payload); 
     this.apiSuccess.set('Perfil editado correctamente.'); 
-    setTimeout(() => this.router.navigateByUrl('/profile'), 900); 
+    setTimeout(() => this.router.navigateByUrl('app/profile'), 900); 
     this.submitting.set(false);
   }
 }
