@@ -1,7 +1,7 @@
 export interface ILoginResponse {
   token: string;
   expiresIn: number
-  authUser: IUser;     
+  authUser: IUser;
 }
 
 export interface IResponse<T> {

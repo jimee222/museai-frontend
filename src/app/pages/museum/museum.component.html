@@ -1,1 +1,45 @@
-<div id="museum-container" class="museum-container"></div>
+<div
+  id="museum-container"
+  #museumContainer
+  class="museum-container">
+</div>
+
+<div
+  class="artwork-popup-backdrop"
+  *ngIf="isPopupVisible"
+  (click)="onPopupBackdropClick()"
+>
+  <div class="artwork-popup" (click)="$event.stopPropagation()">
+    <button class="popup-close" (click)="closePopup()">
+      ✕
+    </button>
+
+    <div class="popup-content" *ngIf="currentArtwork">
+      <div class="popup-image-wrapper">
+        <img
+          [src]="currentArtwork.image"
+          [alt]="currentArtwork.title"
+        />
+      </div>
+
+      <div class="popup-info">
+        <h2>{{ currentArtwork.title }}</h2>
+
+        <p class="popup-artist">
+          {{ currentArtwork.artist }}
+          <span *ngIf="currentArtwork.year">
+            , {{ currentArtwork.year }}
+          </span>
+        </p>
+
+        <p class="popup-technique" *ngIf="currentArtwork.technique">
+          {{ currentArtwork.technique }}
+        </p>
+
+        <p class="popup-description">
+          {{ currentArtwork.description }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
