@@ -1,11 +1,11 @@
-// Core sculpture metadata persisted through the backend Sculpture API.
+
 export interface Sculpture {
   id: string;
   name: string;
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  sceneJson: string; // Result of THREE.Scene.toJSON()
+  sceneJson: string; 
   slug?: string | null;
   materialPreset?: MaterialPreset;
   brushPreset?: SculptBrush;
@@ -13,7 +13,7 @@ export interface Sculpture {
   workspace?: SculptWorkspaceSettings;
 }
 
-// Scene display options that can be bound to toolbar toggles.
+
 export interface SculptorDisplayToggles {
   grid: boolean;
   axes: boolean;
@@ -21,7 +21,7 @@ export interface SculptorDisplayToggles {
   snapToGround?: boolean;
 }
 
-// Brush presets supported by the sandbox.
+
 export type SculptBrush =
   | 'none'
   | 'grab'
@@ -31,12 +31,12 @@ export type SculptBrush =
   | 'flatten'
   | 'crease';
 
-// Symmetry axes mirror strokes while sculpting.
+
 export type SculptSymmetry = 'none' | 'x' | 'y' | 'z' | 'xy' | 'xz' | 'yz';
 
 export type MaterialPreset = 'clay' | 'metal' | 'glass' | 'matte' | 'wireframe';
 
-// Workspace settings persisted per sculpture.
+
 export interface SculptWorkspaceSettings {
   activeBrush: SculptBrush;
   brushRadius: number;

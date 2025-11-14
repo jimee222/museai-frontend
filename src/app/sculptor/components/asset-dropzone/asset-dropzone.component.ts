@@ -3,7 +3,7 @@ import { Component, EventEmitter, HostListener, Output, signal } from '@angular/
 
 const ACCEPTED_EXTENSIONS = ['glb', 'gltf', 'obj', 'stl'];
 
-// Fullscreen drag-and-drop overlay that validates supported asset extensions.
+
 @Component({
   selector: 'app-asset-dropzone',
   standalone: true,

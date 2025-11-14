@@ -11,6 +11,7 @@ import { GuestGuard } from './guards/guest.guard';
 import { AuthGuard } from './guards/auth.guard';
 import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
+import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
 
 export const routes: Routes = [
   {
@@ -70,7 +71,7 @@ export const routes: Routes = [
     },  
   {
     path: 'sculptor',
-    loadChildren: () => import('./sculptor/sculptor.routes').then((m) => m.SCULPTOR_ROUTES),
+    component: SculptorPageComponent,
   },
   {
     path: '**',

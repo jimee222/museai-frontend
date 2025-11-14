@@ -1,6 +1,5 @@
 import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
 
-// Lightweight triangle subdivision helper. Splits each face into four smaller faces.
 export function subdivideGeometry(geometry: BufferGeometry): BufferGeometry {
   const source = geometry.toNonIndexed();
   const positionAttr = source.getAttribute('position');

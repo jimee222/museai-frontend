@@ -35,7 +35,7 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
   snapToGround: true,
 };
 
-// Sculptor page shell coordinating toolbar, viewport, dropzone, and gallery.
+
 @Component({
   selector: 'app-sculptor-page',
   standalone: true,
@@ -258,7 +258,7 @@ export class SculptorPageComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Apply initial toggles once the viewport is available.
+
     effect(() => {
       if (!this.viewport) {
         return;

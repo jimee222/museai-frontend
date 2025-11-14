@@ -15,7 +15,6 @@ import {
   WebGLRenderer,
 } from 'three';
 
-// Centralizes Three.js object creation to keep components lean.
 @Injectable({ providedIn: 'root' })
 export class ThreeFactoryService {
   createRenderer(canvas: HTMLCanvasElement): WebGLRenderer {

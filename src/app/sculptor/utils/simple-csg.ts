@@ -7,7 +7,6 @@ import {
   Vector3,
 } from 'three';
 
-// Minimal BSP-based CSG implementation adapted for Three.js meshes.
 class CSGVertex {
   constructor(public position: Vector3, public normal: Vector3) {}
 

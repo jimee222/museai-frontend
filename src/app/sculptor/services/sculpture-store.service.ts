@@ -27,7 +27,7 @@ interface SculptureRequestDto {
   slug?: string | null;
 }
 
-// Provides CRUD operations against the backend Sculpture API.
+
 @Injectable({ providedIn: 'root' })
 export class SculptureStoreService {
   private readonly http = inject(HttpClient);

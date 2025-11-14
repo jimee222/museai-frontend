@@ -56,7 +56,7 @@ const MATERIAL_PRESETS: Record<MaterialPreset, { color: string; metalness: numbe
     wireframe: { color: '#22d3ee', metalness: 0, roughness: 1, wireframe: true },
   };
 
-// Viewport hosting the Three.js renderer, OrbitControls, and TransformControls.
+
 const MAX_VERTEX_COUNT = 120_000;
 const PLANE_DRAG_ACTIVATION_PX = 8;
 const PLANE_DRAG_ACTIVATION_DISTANCE_SQ = PLANE_DRAG_ACTIVATION_PX * PLANE_DRAG_ACTIVATION_PX;

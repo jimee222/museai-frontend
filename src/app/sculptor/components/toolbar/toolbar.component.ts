@@ -6,7 +6,6 @@ import { MaterialPreset, SculptSymmetry } from '../../models/sculpture';
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
 
-// Side toolbar with primitive creation, toggles, and import/export actions.
 @Component({
   selector: 'app-sculptor-toolbar',
   standalone: true,

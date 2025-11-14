@@ -1,4 +1,3 @@
-// Utility download helper used by export actions.
 export function downloadBlob(blob: Blob, filename: string): void {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
