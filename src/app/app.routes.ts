@@ -69,6 +69,10 @@ export const routes: Routes = [
       canActivate: [AuthGuard] 
     },  
   {
+    path: 'sculptor',
+    loadChildren: () => import('./sculptor/sculptor.routes').then((m) => m.SCULPTOR_ROUTES),
+  },
+  {
     path: '**',
     component: NotFound,
   },
