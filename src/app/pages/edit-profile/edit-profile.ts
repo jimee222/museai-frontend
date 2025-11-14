@@ -144,7 +144,7 @@ export class EditProfile implements OnInit {
 
     this.user.update(payload); 
     this.apiSuccess.set('Perfil editado correctamente.'); 
-    setTimeout(() => this.router.navigateByUrl('/profile'), 900); 
+    setTimeout(() => this.router.navigateByUrl('app/profile'), 900); 
     this.submitting.set(false);
   }
 }

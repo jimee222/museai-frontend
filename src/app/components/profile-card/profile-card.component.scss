@@ -1,0 +1,125 @@
+/* ====== Tarjeta principal del perfil ====== */
+.profile-card {
+  background: var(--main-color);
+  color: var(--text);
+  border-radius: 18px;
+  padding: 28px 32px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  width: 100%;
+  max-width: 900px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* ====== Header dentro del card ====== */
+.reg-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.reg-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.reg-logo {
+  width: 48px;
+  height: auto;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
+/* ====== Información del usuario ====== */
+.profile-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  width: 100%;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  margin-top: 10px;
+}
+
+.info-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.info-value {
+  background: var(--secondary-color);
+  color:var(--primary-color) ;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+
+
+/* ====== Botón Editar ====== */
+.actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-primary {
+  background: var(--third-color);
+  color: var(--text);
+  padding: 0.9rem 1.4rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(201, 163, 59, 0.3);
+}
+
+.btn-primary:hover {
+  background: #d7b25a;
+  transform: translateY(-2px);
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 768px) {
+  .profile-info {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card {
+    padding: 24px;
+    max-width: 95%;
+  }
+
+  .reg-header h2 {
+    font-size: 1.4rem;
+  }
+}
