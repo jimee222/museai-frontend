@@ -1,0 +1,35 @@
+<section >
+
+
+
+
+  <main>
+
+    <div style="width: 100vw; height: 50px; background-color: #000; color: #ffff">
+      <label>
+        Herramienta
+        <select [(ngModel)]="brushType" (change)="onBrushTypeChange()">
+          <option value="Pencil">Pencil</option>
+          <option value="Circle">Circle</option>
+        </select>
+      </label>
+
+
+ 
+      <label>
+        Color
+        <input type="color" [(ngModel)]="color" (change)="onStyleChange()" />
+      </label>
+
+      <label>
+        Ancho: <span>{{ lineWidth }}</span>
+        <input type="range" min="1" max="60" [(ngModel)]="lineWidth" (input)="onStyleChange()" />
+      </label>
+            <button type="button" (click)="clearCanvas()">Limpiar lienzo</button>
+</div>
+<div class="canvas-container">
+    <canvas #fabricCanvas class="board"></canvas>
+</div>
+
+  </main>
+</section>

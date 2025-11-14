@@ -9,9 +9,14 @@ import { NotFound } from './pages/not-found/not-found';
 import { Landing } from './pages/landing/landing';
 import { GuestGuard } from './guards/guest.guard';
 import { AuthGuard } from './guards/auth.guard';
+<<<<<<< Updated upstream
 import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
+=======
+import { EditProfile } from './pages/edit-profile/edit-profile';
+import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
+>>>>>>> Stashed changes
 
 export const routes: Routes = [
   {
@@ -40,6 +45,10 @@ export const routes: Routes = [
   {
     path: 'about',
     component: About,
+  },
+  {
+    path: 'create-canvas',
+    component: CreateCanvasComponent,
   },
   {
     path: 'app',
