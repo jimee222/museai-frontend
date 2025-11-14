@@ -28,12 +28,8 @@
     "@angular/forms": "^20.3.0",
     "@angular/material": "^20.2.11",
     "@angular/platform-browser": "^20.3.0",
-<<<<<<< Updated upstream
     "@angular/router": "^20.3.9",
     "@types/google-one-tap": "^1.2.6",
-=======
-    "@angular/router": "^20.3.0",
->>>>>>> Stashed changes
     "fabric": "^6.9.0",
     "rxjs": "~7.8.0",
     "three": "^0.181.1",
