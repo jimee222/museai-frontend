@@ -23,8 +23,7 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
   private canvas!: fabric.Canvas;
   private resizeObserver?: ResizeObserver;
   private readonly fallbackEraseColor = '#FFFFFF';
-  private readonly targetHeight = 480; // 🔹 lienzo más pequeño
-
+  private readonly targetHeight = 480; 
   ngAfterViewInit(): void {
     this.initCanvas();
     this.applyBrush('pencil');
@@ -72,12 +71,11 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
 
-  // === Herramientas ===
   setBrush(tool: Tool): void {
     this.tool = tool;
     this.applyBrush(tool);
     this.applyBrushStyle();
-    this.canvas.isDrawingMode = true; // 🔹 por si algo lo cambia
+    this.canvas.isDrawingMode = true;
     this.canvas.renderAll();
   }
 
@@ -100,9 +98,7 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
       brush.shadow = undefined;
     } else {
       if ((fabric as any).EraserBrush && this.canvas.freeDrawingBrush instanceof (fabric as any).EraserBrush) {
-        // EraserBrush: solo respeta width
       } else {
-        // Fallback: “borra” pintando del color de fondo
         brush.color = this.fallbackEraseColor;
       }
     }
@@ -133,7 +129,6 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
     this.canvas.clear();
     this.canvas.backgroundColor = '#FFFFFF';
     this.canvas.renderAll();
-    // reactivar dibujo y reaplicar herramienta
     this.applyBrush(this.tool);
     this.applyBrushStyle();
     this.canvas.isDrawingMode = true;
@@ -149,7 +144,6 @@ export class CreateCanvasComponent implements AfterViewInit, OnDestroy {
     this.dataUrl = url;
   }
 
-  // ---- Info de la obra ----
   artTitle = '';
   artDescription = '';
 
