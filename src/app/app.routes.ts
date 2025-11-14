@@ -10,14 +10,9 @@ import { Landing } from './pages/landing/landing';
 import { GuestGuard } from './guards/guest.guard';
 import { AuthGuard } from './guards/auth.guard';
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
-=======
-import { EditProfile } from './pages/edit-profile/edit-profile';
-import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
->>>>>>> Stashed changes
 =======
 import { EditProfile } from './pages/edit-profile/edit-profile';
 import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
