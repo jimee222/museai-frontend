@@ -11,7 +11,7 @@ const ACCEPTED_EXTENSIONS = ['glb', 'gltf', 'obj', 'stl'];
   template: `
     <div class="overlay" [class.active]="active()" aria-hidden="true">
       <div class="panel">
-        <p>Drop GLB, GLTF, OBJ, or STL files to add them to the scene.</p>
+        <p>Suelta archivos GLB, GLTF, OBJ o STL para agregarlos a la escena.</p>
         <p class="hint">{{ hintMessage() }}</p>
       </div>
     </div>
@@ -59,7 +59,7 @@ export class AssetDropzoneComponent {
   @Output() invalidFiles = new EventEmitter<string>();
 
   readonly active = signal(false);
-  readonly hintMessage = signal('Drag files from your desktop');
+  readonly hintMessage = signal('Arrastra archivos desde tu escritorio');
   private dragDepth = 0;
 
   @HostListener('window:dragenter', ['$event'])
@@ -107,7 +107,7 @@ export class AssetDropzoneComponent {
     }
     const invalid = files.filter((file) => !this.isValidExtension(file.name));
     if (invalid.length) {
-      this.invalidFiles.emit(`Unsupported files: ${invalid.map((f) => f.name).join(', ')}`);
+      this.invalidFiles.emit(`Archivos no compatibles: ${invalid.map((f) => f.name).join(', ')}`);
       return;
     }
     this.filesDropped.emit(files);

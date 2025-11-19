@@ -2,6 +2,7 @@
 export interface Sculpture {
   id: string;
   name: string;
+  description?: string | null;
   tags: string[];
   createdAt: string;
   updatedAt: string;
