@@ -25,7 +25,7 @@
 
 .profile-header .title {
   margin: 0;
-  font-size: 2rem;
+  font-size: 4rem;
   font-weight: 800;
   color: #3b2b14;
 }
@@ -33,7 +33,7 @@
 .profile-header .subtitle {
   margin: 0;
   color: #6d552a;
-  font-size: 1rem;
+  font-size: 1.2rem;
   opacity: 0.85;
 }
 
@@ -151,3 +151,79 @@
     padding: 0 20px;
   }
 }
+
+/* ====== Wrapper con columnas ====== */
+.profile-content-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  width: 100%;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 0 40px;
+}
+
+/* ====== Columnas de ilustraciones ====== */
+.side-art {
+  width: 100%;
+  height: 420px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.75;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  animation: float 6s ease-in-out infinite;
+}
+
+
+.left-art {
+  margin-top: 80px;
+  width: 100%;
+  height: 420px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  animation: float 6s ease-in-out infinite;
+}
+.left-art lottie-player {
+  width: 100%;
+  height: 100%;
+}
+
+.right-art {
+  margin-top: 80px;
+  width: 100%;
+  height: 420px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  animation: float 6s ease-in-out infinite;
+}
+
+.right-art lottie-player {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+
+@media (max-width: 991px) {
+  .profile-content-wrapper {
+    grid-template-columns: 1fr;
+    padding: 0 20px;
+  }
+
+  .side-art {
+    display: none;
+  }
+}
+
+
