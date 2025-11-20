@@ -2,21 +2,31 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { CURATORIAL_DATA } from '../../data/curatorial-data';
-import { CuratorialArtwork } from '../../interfaces/curatorial-artwork.interface';
 import { CommonModule } from '@angular/common';
 import { CmaService } from '../../services/cma.service';
 
+// Datos que usa el popup de curaduría (todos vienen de la CMA API)
+interface ArtworkPopupData {
+  id: string;
+  title: string;
+  artist: string;
+  year?: string;
+  technique?: string;
+  description?: string;
+  image: string; // url (proxy) de la imagen
+}
+
 @Component({
   selector: 'app-museum',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './museum.component.html',
   styleUrls: ['./museum.component.css'],
-  imports: [CommonModule]
 })
 export class MuseumComponent implements OnInit, OnDestroy {
-
   @ViewChild('museumContainer', { static: true }) museumContainer!: ElementRef<HTMLDivElement>;
 
+  // === THREE.js core ===
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
@@ -29,27 +39,15 @@ export class MuseumComponent implements OnInit, OnDestroy {
   private moveLeft = false;
   private moveRight = false;
 
-  private leftFrames: THREE.Mesh[] = [];
-  private backFrames: THREE.Mesh[] = [];
-  private rightFrames: THREE.Mesh[] = [];
-  
-
-  private walls: THREE.Mesh[] = [];
-  
-
-  constructor(private cmaService: CmaService) {}
-
   private artFrames: THREE.Mesh[] = [];
 
-  private activeArtworkId: number | null = null;
-  private proximityDistance = 1.6;
+  private proximityDistance = 2.0;
+  private activeFrame: THREE.Mesh | null = null;
 
-  public currentArtwork: CuratorialArtwork | null = null;
+  public currentArtwork: ArtworkPopupData | null = null;
   public isPopupVisible = false;
 
-  private textureLoader = new THREE.TextureLoader();
-
-  private artworkIndex = 0;
+  constructor(private cmaService: CmaService) {}
 
   ngOnInit(): void {
     this.initScene();
@@ -60,406 +58,220 @@ export class MuseumComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
-    cancelAnimationFrame(0);
+    window.removeEventListener('resize', this.onResize);
   }
 
-// ===== Config marco / display =====
-private readonly FRAME_W = 2.5;
-private readonly FRAME_H = 2.5;
-private readonly FRAME_D = 0.04;
-private readonly GAP     = 0.01;
+  // ==========================
+  //   HELPERS DE CURADURÍA
+  // ==========================
 
-// SIN borde interno: la obra debe cubrir todo el display
-private readonly BORDER  = 0.0;
+  /** Mapea el JSON de CMA a la estructura del popup */
+  private mapCmaToPopup(data: any, imageUrl: string): ArtworkPopupData {
+    const id = String(data?.id ?? data?.objectID ?? data?.object_id ?? '');
 
-// Un sangrado MUY chico, solo para tapar artefactos de mipmaps
-private readonly BLEED   = 0.0015;
-private readonly SHOW_WRAP = false;  // ← APAGAR tiras de borde
+    const title: string = data?.title || 'Untitled';
+
+    let artist = 'Unknown artist';
+    if (Array.isArray(data?.creators) && data.creators.length > 0) {
+      artist =
+        data.creators[0].description ||
+        data.creators[0].name ||
+        artist;
+    } else if (typeof data?.creators === 'string') {
+      artist = data.creators;
+    } else if (data?.artist) {
+      artist = data.artist;
+    }
+
+    const year: string =
+      data?.creation_date ||
+      data?.creation_date_earliest ||
+      data?.creation_date_latest ||
+      data?.date ||
+      '';
+
+    const technique: string | undefined =
+      data?.technique ||
+      data?.work_type ||
+      data?.type ||
+      undefined;
+
+    const description: string | undefined =
+      data?.description ||
+      data?.wall_description ||
+      data?.didactic_text ||
+      undefined;
+
+    return {
+      id,
+      title,
+      artist,
+      year,
+      technique,
+      description,
+      image: imageUrl,
+    };
+  }
+
+  // ==========================
+  //   MARCOS / CUADROS
+  // ==========================
 
 
-// cambia la firma para devolver frame
-private makeFramedDisplay(x: number, y: number, z: number, rotY: number) {
-  const group = new THREE.Group();
-  group.position.set(x, y, z);
-  group.rotation.y = rotY;
+  private createFrame(position: THREE.Vector3, rotationY: number): THREE.Mesh {
+  const width = 2.8;
+  const height = 3;
+  const depth = 0.1;
 
-  const frameGeom = new THREE.BoxGeometry(this.FRAME_W, this.FRAME_H, this.FRAME_D);
-  const frameMat  = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-  const frame = new THREE.Mesh(frameGeom, frameMat);
+  const geometry = new THREE.BoxGeometry(width, height, depth);
 
-  // 🔽 si quieres que normalmente se vea el marco, déjalo en true
-  frame.visible = true; 
-  group.add(frame);
+  const materials = [
+    new THREE.MeshStandardMaterial({ color: 0x4a2c13 }), // right
+    new THREE.MeshStandardMaterial({ color: 0x4a2c13 }), // left
+    new THREE.MeshStandardMaterial({ color: 0x4a2c13 }), // top
+    new THREE.MeshStandardMaterial({ color: 0x4a2c13 }), // bottom
+    new THREE.MeshStandardMaterial({ color: 0xffffff }), // front reemplazado por imagen
+    new THREE.MeshStandardMaterial({ color: 0x4a2c13 }), // back
+  ];
 
-  const anchor = new THREE.Object3D();
-  anchor.position.set(0, 0, this.FRAME_D / 2 + this.GAP);
-  group.add(anchor);
-
-  this.scene.add(group);
-  return { group, anchor, frame };   // <-- ahora devuelve frame
-}
-// Rellena N anchors con los primeros resultados de una búsqueda CMA
-private fillAnchorsFromSearch(term: string, anchors: THREE.Object3D[], limit = anchors.length) {
-  this.cmaService.search(term, limit).subscribe({
-    next: (res: any) => {
-      const items = res?.data ?? res?.results ?? [];
-      items.slice(0, anchors.length).forEach((it: any, i: number) => {
-        // En CMA el id es numérico (ej: 124089). Puede venir como it.id
-        const id = String(it?.id ?? it?.objectID ?? it?.object_id);
-        if (id) this.addArtworkToAnchor(anchors[i], id);
-      });
-    },
-    error: (err) => console.error('Error buscando obras CMA', term, err)
-  });
-}
-
-// 1) CORRECCIÓN: este marco en la cara derecha debe mirar HACIA ADENTRO (−X).
-private placeFrameOnRightFace(
-  wall: THREE.Mesh,
-  zLocal: number,
-  yWorld: number,
-) {
-  const frameGeo = new THREE.BoxGeometry(3, 3, this.FRAME_D);
-  const frameMat = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-  const frame = new THREE.Mesh(frameGeo, frameMat);
-
-  // ancho (X local) de la pared
-  const w = (wall.geometry as THREE.BoxGeometry).parameters.width ?? 0.5;
-  const eps = 0.0; // si ves z-fighting, usa 0.001
-
-  // ⬇️ Centro del marco alineado con la cara derecha de la pared (medio embebido),
-  // igual que haces en las otras paredes (x = -9.9, 9.9, etc.).
-  const localPos = new THREE.Vector3(w / 2 + eps, 0, zLocal);
-
-  wall.updateMatrixWorld(true);
-  const worldPos = localPos.clone();
-  wall.localToWorld(worldPos);
-  worldPos.y = yWorld;
-
-  // Toma orientación de la pared y gira +90° para que el +Z del marco mire hacia la sala
-  const q = new THREE.Quaternion();
-  wall.getWorldQuaternion(q);
-
-  frame.position.copy(worldPos);
-  frame.setRotationFromQuaternion(q);
-  frame.rotateY(+Math.PI / 2);
+  const frame = new THREE.Mesh(geometry, materials);
+  frame.position.copy(position);
+  frame.rotation.y = rotationY;
 
   this.scene.add(frame);
-  return frame;
-}
+  this.artFrames.push(frame);
 
-// === NUEVO: marco en la CARA IZQUIERDA de la pared (mirando hacia +X, al pasillo)
-private placeFrameOnLeftFace(
-  wall: THREE.Mesh,   // ej. innerWall1
-  zLocal: number,     // posición a lo largo del eje Z local de la pared
-  yWorld: number,     // altura deseada en mundo
-) {
-  const frameGeo = new THREE.BoxGeometry(3, 3,  this.FRAME_D);
-  const frameMat = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-  const frame = new THREE.Mesh(frameGeo, frameMat);
-
-  const w = (wall.geometry as THREE.BoxGeometry).parameters.width ?? 0.5;
-  const eps = 0.0;
-
-  // Posición justo fuera de la CARA IZQUIERDA (X local negativa)
-  const localPos = new THREE.Vector3(-w / 2 - 0.2 / 2 - eps, 0, zLocal);
-
-  wall.updateMatrixWorld(true);
-  const worldPos = localPos.clone();
-  wall.localToWorld(worldPos);
-  worldPos.y = yWorld;
-
-  // Orienta el marco igual que la pared…
-  const q = new THREE.Quaternion();
-  wall.getWorldQuaternion(q);
-  frame.position.copy(worldPos);
-  frame.setRotationFromQuaternion(q);
-
-  // …y ahora gíralo -90° para que su +Z apunte hacia +X (hacia la sala)
-  frame.rotateY(-Math.PI / 2);
-
-  this.scene.add(frame);
   return frame;
 }
 
 
+  /**
+   * Llama al backend CMA para una obra por ID y la aplica sobre el marco,
+   * además de guardar la info de curaduría para el popup.
+   */
+  private addArtworkToFrame(frame: THREE.Mesh, artworkId: string): void {
+    this.cmaService.getById(artworkId).subscribe({
+      next: (resp: any) => {
+        const data = resp?.data ?? resp;
 
+        const imgUrl: string | undefined =
+          data?.images?.web?.url ||
+          data?.images?.print?.url ||
+          data?.images?.web?.url360 ||
+          data?.images?.primary?.url;
 
-// 2) Método para pegar la obra en el frente del marco (local +Z)
-private addArtworkToDisplayFrame(
-  frame: THREE.Mesh,
-  artworkId: string,
-  margin = 0.00,
-  bleed  = 0.0015
-) {
-  this.cmaService.getById(artworkId).subscribe({
-    next: (resp: any) => {
-      const data = resp?.data ?? resp;
-      const imgUrl =
-        data?.images?.web?.url ||
-        data?.images?.print?.url ||
-        data?.images?.web?.url360 ||
-        data?.images?.primary?.url;
-      if (!imgUrl) { console.warn('Obra sin imagen', artworkId); return; }
-
-      const url = `http://localhost:8080/api/cma/image?url=${encodeURIComponent(imgUrl)}`;
-      new THREE.TextureLoader().load(url, (texture) => {
-        (texture as any).colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-
-        // Tamaño visible del display (marco real – margen)
-        const box   = frame.geometry as THREE.BoxGeometry;
-        const fW    = (box?.parameters?.width  ?? 3);
-        const fH    = (box?.parameters?.height ?? 3);
-        const depth = (box?.parameters?.depth  ?? 0.2) * (frame.scale?.z ?? 1);
-        const eps   = 0.005; // ~1.5 cm hacia fuera del marco
-
-        const displayW = fW - 2 * margin;
-        const displayH = fH - 2 * margin;
-
-        // “cover” centrado con repeat/offset
-        const img         = texture.image as HTMLImageElement;
-        const aspect      = img.width / img.height;
-        const innerAspect = displayW / displayH;
-
-        let repX = 1, repY = 1, offX = 0, offY = 0;
-        if (aspect > innerAspect) { repX = innerAspect / aspect; offX = (1 - repX) / 2; }
-        else { repY = aspect / innerAspect; offY = (1 - repY) / 2; }
-
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.repeat.set(repX, repY);
-        texture.offset.set(offX, offY);
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-
-        // Plano ligeramente más grande (bleed)
-        const planeW = displayW + 2 * bleed;
-        const planeH = displayH + 2 * bleed;
-
-        const mat = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.FrontSide,
-          transparent: true,
-          polygonOffset: true,
-          polygonOffsetFactor: -1,
-          polygonOffsetUnits: -1,
-        });
-
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mat);
-        plane.renderOrder = 10;
-
-        // Anchor local al marco (SIEMPRE en el frente local +Z)
-        let anchor = frame.getObjectByName('frontAnchor') as THREE.Object3D | null;
-        if (!anchor) {
-          anchor = new THREE.Object3D();
-          anchor.name = 'frontAnchor';
-          anchor.position.set(0, 0, depth / 2 + eps); // delante del marco, respetando su rotación
-          frame.add(anchor);
+        if (!imgUrl) {
+          console.warn('Obra sin imagen en CMA', artworkId);
+          return;
         }
 
-        plane.position.set(0, 0, 0);
-        anchor.add(plane);
-      });
-    },
-    error: (err) => console.error('Error backend CMA', artworkId, err)
-  });
-}
+        // Usamos el proxy del backend para evitar CORS
+        const proxiedUrl = `http://localhost:8080/api/cma/image?url=${encodeURIComponent(
+          imgUrl
+        )}`;
 
+        const loader = new THREE.TextureLoader();
+        loader.load(
+          proxiedUrl,
+          (texture) => {
+            const img = texture.image as HTMLImageElement;
+            const aspect = img.width / img.height;
 
+            const box = frame.geometry as THREE.BoxGeometry;
+            const frameWidth = box.parameters.width ?? 2.2;
+            const frameHeight = box.parameters.height ?? 2.2;
+            const depth = box.parameters.depth ?? 0.15;
 
+            const innerW = frameWidth * 0.9;
+            const innerH = frameHeight * 0.9;
+            const innerAspect = innerW / innerH;
 
+            let artW: number;
+            let artH: number;
 
-private addArtworkToAnchor(anchor: THREE.Object3D, artworkId: string) {
-  this.cmaService.getById(artworkId).subscribe({
-    next: (resp: any) => {
-      const data = resp?.data ?? resp;
-      const imgUrl =
-        data?.images?.web?.url ||
-        data?.images?.print?.url ||
-        data?.images?.web?.url360 ||
-        data?.images?.primary?.url;
+            // Modo "cover": la imagen cubre todo el hueco, respetando aspecto.
+            if (aspect > innerAspect) {
+              artH = innerH;
+              artW = innerH * aspect;
+            } else {
+              artW = innerW;
+              artH = innerW / aspect;
+            }
 
-      if (!imgUrl) { console.warn('Obra sin imagen', artworkId); return; }
+            // "zoom" para tapar casi todo el marco café
+            const planeW = artW * 1.05;
+            const planeH = artH * 1.05;
 
-      const url = `http://localhost:8080/api/cma/image?url=${encodeURIComponent(imgUrl)}`;
-      new THREE.TextureLoader().load(url, (texture) => {
-        // calidad
-        (texture as any).colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+            const material = new THREE.MeshBasicMaterial({
+              map: texture,
+              side: THREE.FrontSide,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+              polygonOffsetUnits: -1,
+            });
 
-        const img    = texture.image as HTMLImageElement;
-        const aspect = img.width / img.height;
+            const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
+          // Reemplaza el material frontal del marco con la textura
+          const mesh = frame as THREE.Mesh;
+          const mats = mesh.material as THREE.MeshStandardMaterial[];
 
-        // El display completo (sin borde)
-        const innerW = this.FRAME_W;
-        const innerH = this.FRAME_H;
-        const innerAspect = innerW / innerH;
-
-        // COVER con la propia textura (recorte centrado)
-        let repX = 1, repY = 1, offX = 0, offY = 0;
-        if (aspect > innerAspect) {
-          repX = innerAspect / aspect;  offX = (1 - repX) / 2;
-        } else {
-          repY = aspect / innerAspect;  offY = (1 - repY) / 2;
-        }
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.repeat.set(repX, repY);
-        texture.offset.set(offX, offY);
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-
-        // Plano frontal exactamente del tamaño del display (+ micro BLEED)
-        const planeW = innerW + 2 * this.BLEED;
-        const planeH = innerH + 2 * this.BLEED;
-
-        const front = new THREE.Mesh(
-          new THREE.PlaneGeometry(planeW, planeH),
-          new THREE.MeshBasicMaterial({
+          mats[4] = new THREE.MeshStandardMaterial({
             map: texture,
             side: THREE.FrontSide,
-            transparent: true,
-            // puedes quitar polygonOffset porque ya no hay tiras detrás
-            polygonOffset: true,
-            polygonOffsetFactor: -1,
-            polygonOffsetUnits: -1,
-          })
+          });
+
+
+            // Guardamos la info de curaduría para el popup
+            const popupData = this.mapCmaToPopup(data, proxiedUrl);
+            frame.userData['popup'] = popupData;
+          },
+          undefined,
+          (err) => {
+            console.error('Error cargando textura de CMA para', artworkId, err);
+          }
         );
-        front.position.set(0, 0, 0);
-        front.renderOrder = 10;
-        anchor.add(front);
-
-        // --- SIN WRAP: no crear tiras laterales/superior/inferior ---
-        if (this.SHOW_WRAP) {
-          // (deja aquí el código del wrap por si lo quieres reactivar en el futuro)
-        }
-      });
-    },
-    error: (err) => console.error('Error backend CMA', artworkId, err)
-  });
-}
-  // ---------------------------------------------------
-  //  PINTAR UNA OBRA SOBRE UN DISPLAY MOCK (CON PROXY)
-  // ---------------------------------------------------
- private addArtworkToFrameMesh(frame: THREE.Mesh, artworkId: string) {
-  this.cmaService.getById(artworkId).subscribe({
-    next: (resp: any) => {
-      const data = resp?.data ?? resp;
-      const imgUrl: string | undefined =
-        data?.images?.web?.url ||
-        data?.images?.print?.url ||
-        data?.images?.web?.url360 ||
-        data?.images?.primary?.url;
-      if (!imgUrl) { console.warn('Obra sin imagen', artworkId); return; }
-
-      const url = `http://localhost:8080/api/cma/image?url=${encodeURIComponent(imgUrl)}`;
-      const loader = new THREE.TextureLoader();
-
-      loader.load(url, (texture) => {
-        const img = texture.image as HTMLImageElement;
-        const aspect = img.width / img.height;
-        const height = 2.0;                 // un pelín más chica que el marco (2.5)
-        const width  = height * aspect;
-
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.FrontSide,            // NO dibujar por detrás
-          polygonOffset: true,              // evita z-fighting con el marco
-          polygonOffsetFactor: -1,
-          polygonOffsetUnits: -1
-        });
-        // MUY IMPORTANTE: deja el Z-buffer normal:
-        // material.depthTest = true;  // (por defecto)
-        // material.depthWrite = true; // (por defecto)
-
-        const plane = new THREE.Mesh(
-          new THREE.PlaneGeometry(width, height),
-          material
-        );
-
-        // Grosor real del marco (con escala local aplicada)
-        const box   = frame.geometry as THREE.BoxGeometry;
-        const depth = (box?.parameters?.depth ?? 0.2) * (frame.scale?.z ?? 1);
-
-        // Empuja apenas hacia fuera del marco (1 cm)
-        const epsilon = 0.01;
-        let sign = 1;
-        const ry = frame.rotation.y;
-        if (Math.abs(ry - Math.PI / 2) < 1e-3) sign = -1;      // +π/2  -> -Z
-        else if (Math.abs(ry + Math.PI / 2) < 1e-3) sign = 1;  // -π/2  -> +Z
-
-        plane.position.set(0, 0, sign * (depth / 2 + epsilon));
-
-        // Deja el orden de render normal (si quieres, un pelito arriba del marco)
-        // plane.renderOrder = frame.renderOrder + 1;
-
-        frame.add(plane);
       },
-      undefined,
-      (err) => console.error('Error cargando textura CMA', artworkId, err));
-    },
-    error: (err) => console.error('Error backend CMA', artworkId, err)
-  });
-}
-
-private computeArtSize(
-  aspect: number,                  // width / height de la imagen
-  innerW: number,
-  innerH: number,
-  mode: 'contain' | 'cover' | 'stretch'
-) {
-  if (mode === 'stretch') return { w: innerW, h: innerH }; // llena, deforma
-
-  // Respeta aspecto:
-  const wFit = innerH * aspect;     // encajando por alto
-  const hFit = innerW / aspect;     // encajando por ancho
-
-  if (mode === 'contain') {
-    // quepa completa
-    return (wFit <= innerW) ? { w: wFit, h: innerH } : { w: innerW, h: hFit };
-  } else { // 'cover' → que cubra todo el hueco
-    return (wFit >= innerW) ? { w: wFit, h: innerH } : { w: innerW, h: hFit };
+      error: (err) => {
+        console.error('Error obteniendo obra de CMA', artworkId, err);
+      },
+    });
   }
-}
 
-private clearArtPlanes(frame: THREE.Mesh) {
-  frame.children
-    .filter(c => c instanceof THREE.Mesh && (c as THREE.Mesh).geometry instanceof THREE.PlaneGeometry)
-    .forEach(c => frame.remove(c));
-}
-
-
-
+  // ==========================
+  //    ESCENA 3D (init)
+  // ==========================
 
   private initScene(): void {
-    
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
 
-    // cámara
     this.camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
-    this.camera.position.set(0, 1.7, 0); // altura humana
+    this.camera.position.set(0, 1.7, 0);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('museum-container')?.appendChild(this.renderer.domElement);
+    document
+      .getElementById('museum-container')
+      ?.appendChild(this.renderer.domElement);
 
     this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
     this.scene.add(this.controls.object);
-
     this.renderer.domElement.addEventListener('click', () => this.controls.lock());
 
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x888888, 1));
+    // Luces
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x888888, 1.0);
+    this.scene.add(hemiLight);
+
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(5, 10, 5);
     this.scene.add(dirLight);
 
+    // Piso
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(20, 20),
       new THREE.MeshStandardMaterial({ color: 0xdddddd })
@@ -468,217 +280,199 @@ private clearArtPlanes(frame: THREE.Mesh) {
     floor.receiveShadow = true;
     this.scene.add(floor);
 
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    // Paredes exteriores
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
-    const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMaterial);
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMat);
     backWall.position.set(0, 2.5, -10);
     this.scene.add(backWall);
 
-    const frontWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMaterial);
+    const frontWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMat);
     frontWall.position.set(0, 2.5, 10);
     this.scene.add(frontWall);
 
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMat);
     leftWall.position.set(-10, 2.5, 0);
     this.scene.add(leftWall);
 
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMat);
     rightWall.position.set(10, 2.5, 0);
     this.scene.add(rightWall);
 
-    // 🧱 Paredes interiores (centrales)
-    const innerWallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const innerWallGeometry = new THREE.BoxGeometry(0.5, 5, 8);
-
-    const innerWall1 = new THREE.Mesh(innerWallGeometry, wallMaterial);
+    // Paredes interiores
+    const innerWallGeom = new THREE.BoxGeometry(0.5, 5, 8);
+    const innerWall1 = new THREE.Mesh(innerWallGeom, wallMat);
     innerWall1.position.set(-3.3, 2.5, 0);
     this.scene.add(innerWall1);
 
-    const innerWall2 = new THREE.Mesh(innerWallGeometry, wallMaterial);
+    const innerWall2 = new THREE.Mesh(innerWallGeom, wallMat);
     innerWall2.position.set(3.3, 2.5, 0);
     this.scene.add(innerWall2);
 
-   // IZQUIERDA: cara que mira al centro (rotY = +π/2)
+    // ==========================
+    //     DISPLAYS / MARCOS
+    // ==========================
 
 
-   
+    const innerIds = [
+      '380063', // leftOuterTop
+      '135614', // leftOuterBottom
+      '151298', // leftInnerTop
+      '135483', // leftInnerBottom
+      '125249', // rightOuterTop
+      '93014',  // rightOuterBottom
+      '141639', // rightInnerTop
+      '135428', // rightInnerBottom
+    ];
 
-    const FACE_L_TO_CENTER = -3.05;
-    const FACE_R_TO_CENTER =  3.05;
+    const backIds = ['170235', '111702', '115067']; // pared del fondo
+    const leftIds = ['132618', '127080', '151298']; // pared izquierda
+    const rightIds = ['135483', '93014', '125249']; // pared derecha
 
-    const X_LEFT  = FACE_L_TO_CENTER + (this.FRAME_D / 2 + this.GAP);
-    const X_RIGHT = FACE_R_TO_CENTER - (this.FRAME_D / 2 + this.GAP);
+    // -------- PAREDES INTERIORES (8) --------
+    let idx = 0;
 
-    const leftOuterTop = this.makeFramedDisplay(X_LEFT, 2.5, -2.5,  Math.PI / 2);
-    const leftOuterBot = this.makeFramedDisplay(X_LEFT, 2.5,  2.5,  Math.PI / 2);
+    // Pared interior izquierda (x = -3.55) – CARA HACIA EL CENTRO (+X)
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(-3.55, 2.5, -2.5), -Math.PI / 2),
+      innerIds[idx++]
+    );
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(-3.55, 2.5, 2.5), -Math.PI / 2),
+      innerIds[idx++]
+    );
 
-    // Ejemplo si quieres poner también del lado derecho:
-    // const rightOuterTop = this.makeFramedDisplay(X_RIGHT, 2.5, -2.5, -Math.PI / 2);
-    // const rightOuterBot = this.makeFramedDisplay(X_RIGHT, 2.5,  2.5, -Math.PI / 2);
-  
+    // Pared interior izquierda (x = -3.05) – CARA HACIA AFUERA (–X)
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(-3.05, 2.5, -2.5), Math.PI / 2),
+      innerIds[idx++]
+    );
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(-3.05, 2.5, 2.5), Math.PI / 2),
+      innerIds[idx++]
+    );
 
-    // Ahora: busca dos obras tipo “campo de flores” y pégalas
-   // this.fillAnchorsFromSearch('field of flowers OR flower field OR floral landscape',  
-   // [leftOuterTop.anchor, leftOuterBot.anchor], 
-   // 2);
+    // Pared interior derecha (x = 3.55) – CARA HACIA EL CENTRO (–X)
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(3.55, 2.5, -2.5), Math.PI / 2),
+      innerIds[idx++]
+    );
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(3.55, 2.5, 2.5), Math.PI / 2),
+      innerIds[idx++]
+    );
 
- // --- DISPLAYS EN LA PARED INTERIOR QUE MIRA A LA PARED DE FLORES ---
-// ---------- Marcos café en la pared interior que MIRA a la pared de flores ----------
-// --- DISPLAYS EN LA PARED INTERIOR QUE MIRA A LA PARED DE FLORES ---
-const yMid = 2.5;
-const zA = -2.2;
-const zB =  2.2;
+    // Pared interior derecha (x = 3.05) – CARA HACIA AFUERA (+X)
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(3.05, 2.5, -2.5), -Math.PI / 2),
+      innerIds[idx++]
+    );
+    this.addArtworkToFrame(
+      this.createFrame(new THREE.Vector3(3.05, 2.5, 2.5), -Math.PI / 2),
+      innerIds[idx++]
+    );
 
-const midFrameA = this.placeFrameOnRightFace(innerWall2, zA, yMid);
-const midFrameB = this.placeFrameOnRightFace(innerWall2, zB, yMid);
+    // -------- PAREDES EXTERIORES (9) --------
 
-// cuelga las obras
-this.addArtworkToDisplayFrame(midFrameA, '380063'); 
-this.addArtworkToDisplayFrame(midFrameB, '135614');
+    // Pared del fondo (z = -9.9), x = -6, 0, 6
+    for (let i = 0; i < 3; i++) {
+      const x = -6 + i * 6;
+      const frame = this.createFrame(new THREE.Vector3(x, 2.5, -9.9), 0);
+      this.addArtworkToFrame(frame, backIds[i]);
+    }
 
+    // Pared izquierda (x = -9.9), z = -6, 0, 6
+    for (let i = 0; i < 3; i++) {
+      const z = -6 + i * 6;
+      const frame = this.createFrame(
+        new THREE.Vector3(-9.9, 2.5, z),
+        Math.PI / 2
+      );
+      this.addArtworkToFrame(frame, leftIds[i]);
+    }
 
+    // Pared derecha (x = 9.9), z = -6, 0, 6
+    for (let i = 0; i < 3; i++) {
+      const z = -6 + i * 6;
+      const frame = this.createFrame(
+        new THREE.Vector3(9.9, 2.5, z),
+        -Math.PI / 2
+      );
+      this.addArtworkToFrame(frame, rightIds[i]);
+    }
 
-
-
-
-const yFront = 2.5;
-const z1 = -2.2;
-const z2 =  2.2;
-
-const leftFacingA = this.placeFrameOnLeftFace(innerWall1, z1, yFront);
-const leftFacingB = this.placeFrameOnLeftFace(innerWall1, z2, yFront);
-
-// cuelga las obras solicitadas
-this.addArtworkToDisplayFrame(leftFacingA, '151298');
-this.addArtworkToDisplayFrame(leftFacingB, '135483');
-
-
-    // techo
-    const ceilingGeometry = new THREE.PlaneGeometry(20, 20);
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xfafafa });
-    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    // Techo
+    const ceiling = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshStandardMaterial({ color: 0xfafafa })
+    );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = 5;
     this.scene.add(ceiling);
 
-    // cuadros café (displays existentes)
-    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3825 });
-    const frameGeometry = new THREE.BoxGeometry(3, 3, this.FRAME_D);
-
-    // PARED DEL FONDO (z = -9.9) en x = -6, 0, 6
-    this.backFrames = []; // Asegura que esté limpio
-    for (const x of [-6, 0, 6]) {
-      const frame = new THREE.Mesh(frameGeometry, frameMaterial);
-      frame.position.set(x, 2.5, -9.9);
-      this.scene.add(frame);
-      this.backFrames.push(frame);
-    }
-
-    // PARED IZQUIERDA (x = -9.9) en z = -6, 0, 6
-    for (let i = -6; i <= 6; i += 6) {
-      const frameLeft = new THREE.Mesh(frameGeometry, frameMaterial);
-      frameLeft.position.set(-9.9, 2.5, i);
-      frameLeft.rotation.y = Math.PI / 2;
-      this.scene.add(frameLeft);
-      this.leftFrames.push(frameLeft);       // 👈 guardar
-    }
-
-    //PARED DERECHA 
-
-    for (let i = -6; i <= 6; i += 6) {
-      const frameRight = new THREE.Mesh(frameGeometry, frameMaterial);
-      frameRight.position.set(9.9, 2.5, i);
-      frameRight.rotation.y = -Math.PI / 2;
-      this.scene.add(frameRight);
-      this.rightFrames.push(frameRight);
-    }
-
-  
-    const ids = ['125249', '93014', '141639', '135428', '170235', '111702', '115067', '132618', '127080'];  // 3 izquierda + 1 fondo
-
-    if (this.leftFrames.length >= 3) {
-      this.addArtworkToDisplayFrame(this.leftFrames[0], ids[0]); // izquierda 1 (z ≈ -6)
-      this.addArtworkToDisplayFrame(this.leftFrames[1], ids[1]); // izquierda 2 (z ≈ 0)
-      this.addArtworkToDisplayFrame(this.leftFrames[2], ids[2]); // izquierda 3 (z ≈ 6)
-    }
-
-    if (this.backFrames.length >= 1) {
-      this.addArtworkToDisplayFrame(this.backFrames[0], ids[3]); // fondo 1 (x ≈ -6)
-      this.addArtworkToDisplayFrame(this.backFrames[1], ids[4]);
-      this.addArtworkToDisplayFrame(this.backFrames[2], ids[5]);
-    }
-
-    
-    if (this.rightFrames.length >= 3) {
-      this.addArtworkToDisplayFrame(this.rightFrames[0], ids[6]); // derecha-1 (cerca del fondo)
-      this.addArtworkToDisplayFrame(this.rightFrames[1], ids[7]); // derecha-2 (centro)
-      this.addArtworkToDisplayFrame(this.rightFrames[2], ids[8]); // derecha-3 (cerca del frente)
-    }
-
-
-    //  Cargador GLTF
+    // ==========================
+    //      MODELOS GLTF
+    // ==========================
     const loader = new GLTFLoader();
 
-    loader.load('/assets/models/bench.glb', g => {
+    loader.load('/assets/models/bench.glb', (g) => {
       const bench = g.scene;
       bench.scale.set(0.5, 2, 6);
       bench.position.set(0, 0, 0);
       this.scene.add(bench);
     });
 
-    // Lámpara colgante
-    loader.load('/assets/models/light.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/light.glb', (g) => {
+      const lamp = g.scene;
       lamp.scale.set(2, 2, 2);
       lamp.position.set(0, 3.1, 0);
       this.scene.add(lamp);
     });
 
-    // Lámpara de riel (derecha)
-    loader.load('/assets/models/ceiling_lamp.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/ceiling_lamp.glb', (g) => {
+      const lamp = g.scene;
       lamp.scale.set(6, 6, 6);
       lamp.position.set(6.5, 4.8, 0);
       lamp.rotation.y = Math.PI / 2;
       this.scene.add(lamp);
     });
 
-    // Lámpara de riel (izquierda)
-    loader.load('/assets/models/ceiling_lamp.glb', (gltf) => {
-      const lamp = gltf.scene;
+    loader.load('/assets/models/ceiling_lamp.glb', (g) => {
+      const lamp = g.scene;
       lamp.scale.set(6, 6, 6);
       lamp.position.set(-6.5, 4.8, 0);
       lamp.rotation.y = Math.PI / 2;
       this.scene.add(lamp);
     });
 
-    // Lámpara de madera
-    loader.load('/assets/models/large.glb', (gltf) => {
-      const woodlamp = gltf.scene;
+    loader.load('/assets/models/large.glb', (g) => {
+      const woodlamp = g.scene;
       woodlamp.scale.set(5, 5, 5);
       woodlamp.position.set(0, 0, 0);
       woodlamp.rotation.y = Math.PI / 2;
       this.scene.add(woodlamp);
     });
 
-    // planta 1
-    loader.load('/assets/models/plant.glb', (gltf) => {
-      const plant = gltf.scene;
+    loader.load('/assets/models/plant.glb', (g) => {
+      const plant = g.scene;
       plant.scale.set(1.2, 1.2, 1.2);
       plant.position.set(-2, 0, 3);
       this.scene.add(plant);
     });
 
-    // planta 2
-    loader.load('/assets/models/plant.glb', (gltf) => {
-      const plant = gltf.scene;
+    loader.load('/assets/models/plant.glb', (g) => {
+      const plant = g.scene;
       plant.scale.set(1.5, 1.5, 1.5);
       plant.position.set(2, 0, -3);
       this.scene.add(plant);
     });
 
-    window.addEventListener('resize', this.onResize.bind(this));
+    window.addEventListener('resize', this.onResize);
   }
+
+  // ==========================
+  //   EVENTOS / CONTROLES
+  // ==========================
 
   private addEventListeners(): void {
     window.addEventListener('keydown', this.onKeyDown);
@@ -687,68 +481,86 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
 
   private onKeyDown = (event: KeyboardEvent) => {
     switch (event.code) {
-      case 'KeyS': this.moveForward = true; break;
-      case 'KeyW': this.moveBackward = true; break;
-      case 'KeyD': this.moveLeft = true; break;
-      case 'KeyA': this.moveRight = true; break;
+      case 'KeyS':
+        this.moveForward = true;
+        break;
+      case 'KeyW':
+        this.moveBackward = true;
+        break;
+      case 'KeyD':
+        this.moveLeft = true;
+        break;
+      case 'KeyA':
+        this.moveRight = true;
+        break;
     }
   };
 
   private onKeyUp = (event: KeyboardEvent) => {
     switch (event.code) {
-      case 'KeyS': this.moveForward = false; break;
-      case 'KeyW': this.moveBackward = false; break;
-      case 'KeyD': this.moveLeft = false; break;
-      case 'KeyA': this.moveRight = false; break;
+      case 'KeyS':
+        this.moveForward = false;
+        break;
+      case 'KeyW':
+        this.moveBackward = false;
+        break;
+      case 'KeyD':
+        this.moveLeft = false;
+        break;
+      case 'KeyA':
+        this.moveRight = false;
+        break;
     }
   };
 
-  private checkArtworkProximity(): void {
-    let nearestId: number | null = null;
-    let nearestDistance = Infinity;
+  // ==========================
+  //   PROXIMIDAD / POPUP
+  // ==========================
 
-    const cameraPos = this.camera.position.clone();
+  private checkArtworkProximity(): void {
+    let nearestFrame: THREE.Mesh | null = null;
+    let nearestDistance = Infinity;
+    const camPos = this.camera.position.clone();
 
     for (const frame of this.artFrames) {
-      const dist = cameraPos.distanceTo(frame.position);
+      const worldPos = new THREE.Vector3();
+      frame.getWorldPosition(worldPos);
+      const dist = camPos.distanceTo(worldPos);
 
       if (dist < this.proximityDistance && dist < nearestDistance) {
-        nearestDistance = dist;
-        nearestId = frame.userData['artId'];
+        if (frame.userData['popup']) {
+          nearestDistance = dist;
+          nearestFrame = frame;
+        }
       }
     }
 
-    if (nearestId !== null) {
-      if (this.activeArtworkId !== nearestId) {
-        this.activeArtworkId = nearestId;
-        this.showArtworkPopup(nearestId);
-      }
-    } else {
-      if (this.activeArtworkId !== null) {
-        this.activeArtworkId = null;
-        this.hideArtworkPopup();
-      }
+    if (nearestFrame && nearestFrame !== this.activeFrame) {
+      // Entramos a una nueva obra
+      this.activeFrame = nearestFrame;
+      this.currentArtwork = nearestFrame.userData['popup'] as ArtworkPopupData;
+      this.isPopupVisible = true;
+    } else if (!nearestFrame && this.activeFrame) {
+      // Nos alejamos de todas
+      this.activeFrame = null;
+      this.currentArtwork = null;
+      this.isPopupVisible = false;
     }
-  }
-
-  private showArtworkPopup(id: number): void {
-    const artwork = CURATORIAL_DATA.find(a => a.id === id) || null;
-    this.currentArtwork = artwork;
-    this.isPopupVisible = !!artwork;
-  }
-
-  private hideArtworkPopup(): void {
-    this.isPopupVisible = false;
-    this.currentArtwork = null;
   }
 
   public closePopup(): void {
-    this.hideArtworkPopup();
+    this.isPopupVisible = false;
+    this.currentArtwork = null;
+    this.activeFrame = null;
   }
 
   public onPopupBackdropClick(): void {
-    this.hideArtworkPopup();
+    this.closePopup();
   }
+
+  // ==========================
+  //    LOOP DE ANIMACIÓN
+  // ==========================
 
   private animate = () => {
     requestAnimationFrame(this.animate);
@@ -763,10 +575,12 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
     this.direction.x = Number(this.moveRight) - Number(this.moveLeft);
     this.direction.normalize();
 
-    if (this.moveForward || this.moveBackward)
+    if (this.moveForward || this.moveBackward) {
       this.velocity.z -= this.direction.z * speed * delta;
-    if (this.moveLeft || this.moveRight)
+    }
+    if (this.moveLeft || this.moveRight) {
       this.velocity.x -= this.direction.x * speed * delta;
+    }
 
     const moveX = this.velocity.x * delta * 10;
     const moveZ = this.velocity.z * delta * 10;
@@ -780,12 +594,14 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
     pos.z = Math.max(-limit, Math.min(limit, pos.z));
     pos.y = 1.7;
 
+    this.checkArtworkProximity();
+
     this.renderer.render(this.scene, this.camera);
   };
 
   private onResize = () => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
-  this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
   };
 }
