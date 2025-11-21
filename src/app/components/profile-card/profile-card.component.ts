@@ -19,6 +19,17 @@ export class ProfileCardComponent {
     this.router.navigateByUrl('/app/edit-profile');
   }
 
+  getInitials(): string {
+  if (!this.user) return '';
+
+  const f = this.user.firstName?.charAt(0) ?? '';
+  const l = this.user.lastName1?.charAt(0) ?? '';
+
+  return (f + l).toUpperCase();
+  }
+
+
+
  getArtLevelLabel(level: string | undefined) {
   if (!level) return 'No especificado';
   const normalized = level.trim().toLowerCase();

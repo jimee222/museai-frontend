@@ -11,26 +11,26 @@ type ExportFormat = 'glb' | 'stl';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="toolbar" aria-label="Sculptor toolbar">
-      <header>Primitives</header>
+    <section class="toolbar" aria-label="Barra de herramientas de esculpido">
+      <header>Primitivas</header>
       <div class="button-group">
-        <button type="button" (click)="onPrimitive('box')" title="Add Box (B)" aria-label="Add box">Box</button>
-        <button type="button" (click)="onPrimitive('sphere')" title="Add Sphere" aria-label="Add sphere">Sphere</button>
-        <button type="button" (click)="onPrimitive('cylinder')" title="Add Cylinder" aria-label="Add cylinder">Cylinder</button>
+        <button type="button" (click)="onPrimitive('box')" title="Añadir cubo (B)" aria-label="Añadir cubo">Cubo</button>
+        <button type="button" (click)="onPrimitive('sphere')" title="Añadir esfera" aria-label="Añadir esfera">Esfera</button>
+        <button type="button" (click)="onPrimitive('cylinder')" title="Añadir cilindro" aria-label="Añadir cilindro">Cilindro</button>
       </div>
 
-      <header>Brushes</header>
+      <header>Pinceles</header>
       <div class="button-group">
-        <button type="button" (click)="selectBrush('none')" [class.active]="activeBrush === 'none'" aria-label="Default cursor">Cursor</button>
-        <button type="button" (click)="selectBrush('grab')" [class.active]="activeBrush === 'grab'" aria-label="Grab brush">Grab</button>
-        <button type="button" (click)="selectBrush('inflate')" [class.active]="activeBrush === 'inflate'" aria-label="Inflate brush">Inflate</button>
-        <button type="button" (click)="selectBrush('smooth')" [class.active]="activeBrush === 'smooth'" aria-label="Smooth brush">Smooth</button>
+        <button type="button" (click)="selectBrush('none')" [class.active]="activeBrush === 'none'" aria-label="Cursor por defecto">Cursor</button>
+        <button type="button" (click)="selectBrush('grab')" [class.active]="activeBrush === 'grab'" aria-label="Pincel mover">Mover</button>
+        <button type="button" (click)="selectBrush('inflate')" [class.active]="activeBrush === 'inflate'" aria-label="Pincel inflar">Inflar</button>
+        <button type="button" (click)="selectBrush('smooth')" [class.active]="activeBrush === 'smooth'" aria-label="Pincel suavizar">Suavizar</button>
       </div>
 
-      <header>Brush Settings</header>
+      <header>Configuración de pincel</header>
       <div class="selection-controls">
         <label>
-          Radius
+          Radio
           <input
             type="range"
             min="0.1"
@@ -41,7 +41,7 @@ type ExportFormat = 'glb' | 'stl';
           />
         </label>
         <label>
-          Strength
+          Fuerza
           <input
             type="range"
             min="0.05"
@@ -53,19 +53,19 @@ type ExportFormat = 'glb' | 'stl';
         </label>
       </div>
 
-      <header>Scene</header>
+      <header>Escena</header>
       <div class="button-group toggles">
         <label>
           <input type="checkbox" [checked]="gridEnabled" (change)="toggleGrid.emit($event.target.checked)" />
-          Grid
+          Cuadrícula
         </label>
         <label>
           <input type="checkbox" [checked]="axesEnabled" (change)="toggleAxes.emit($event.target.checked)" />
-          Axes
+          Ejes
         </label>
         <label>
           <input type="checkbox" [checked]="lightsEnabled" (change)="toggleLights.emit($event.target.checked)" />
-          Lights
+          Luces
         </label>
         <label>
           <input
@@ -73,13 +73,13 @@ type ExportFormat = 'glb' | 'stl';
             [checked]="snapToGround"
             (change)="snapToGroundChange.emit($event.target.checked)"
           />
-          Snap
+          A tierra
         </label>
       </div>
 
-      <header>Symmetry</header>
+      <header>Simetría</header>
       <div class="button-group">
-        <button type="button" (click)="selectSymmetry('none')" [class.active]="symmetry === 'none'">None</button>
+        <button type="button" (click)="selectSymmetry('none')" [class.active]="symmetry === 'none'">Ninguna</button>
         <button type="button" (click)="selectSymmetry('x')" [class.active]="symmetry === 'x'">X</button>
         <button type="button" (click)="selectSymmetry('y')" [class.active]="symmetry === 'y'">Y</button>
         <button type="button" (click)="selectSymmetry('z')" [class.active]="symmetry === 'z'">Z</button>
@@ -90,20 +90,20 @@ type ExportFormat = 'glb' | 'stl';
 
       <header>Material</header>
       <div class="button-group">
-        <button type="button" (click)="selectMaterial('clay')" [class.active]="materialPreset === 'clay'">Clay</button>
+        <button type="button" (click)="selectMaterial('clay')" [class.active]="materialPreset === 'clay'">Arcilla</button>
         <button type="button" (click)="selectMaterial('metal')" [class.active]="materialPreset === 'metal'">Metal</button>
-        <button type="button" (click)="selectMaterial('glass')" [class.active]="materialPreset === 'glass'">Glass</button>
-        <button type="button" (click)="selectMaterial('matte')" [class.active]="materialPreset === 'matte'">Matte</button>
-        <button type="button" (click)="selectMaterial('wireframe')" [class.active]="materialPreset === 'wireframe'">Wire</button>
+        <button type="button" (click)="selectMaterial('glass')" [class.active]="materialPreset === 'glass'">Vidrio</button>
+        <button type="button" (click)="selectMaterial('matte')" [class.active]="materialPreset === 'matte'">Mate</button>
+        <button type="button" (click)="selectMaterial('wireframe')" [class.active]="materialPreset === 'wireframe'">Alambre</button>
       </div>
 
-      <header>Selection</header>
+      <header>Selección</header>
       <div class="selection-controls">
-        <button type="button" (click)="duplicateSelection.emit()" [disabled]="!selectionAvailable" aria-label="Duplicate selection">
-          Duplicate
+        <button type="button" (click)="duplicateSelection.emit()" [disabled]="!selectionAvailable" aria-label="Duplicar selección">
+          Duplicar
         </button>
         <label>
-          Scale
+          Escala
           <input
             type="range"
             min="0.2"
@@ -115,7 +115,7 @@ type ExportFormat = 'glb' | 'stl';
           />
         </label>
         <label>
-          Y Offset
+          Desplazamiento Y
           <input
             type="range"
             min="-5"
@@ -128,29 +128,29 @@ type ExportFormat = 'glb' | 'stl';
         </label>
       </div>
 
-      <header>Actions</header>
+      <header>Acciones</header>
       <div class="button-group">
-        <button type="button" (click)="triggerImport()" aria-label="Import model">Import</button>
-        <button type="button" (click)="resetCamera.emit()" aria-label="Reset camera">Frame Scene</button>
-        <button type="button" (click)="saveScene.emit()" aria-label="Save sculpture">Save</button>
+        <button type="button" (click)="triggerImport()" aria-label="Importar modelo">Importar</button>
+        <button type="button" (click)="resetCamera.emit()" aria-label="Reiniciar cámara">Centrar escena</button>
+        <button type="button" (click)="saveScene.emit()" aria-label="Guardar escultura">Guardar</button>
       </div>
 
-      <header>Export</header>
+      <header>Exportar</header>
       <div class="button-group">
-        <button type="button" (click)="onExport('glb')" aria-label="Export GLB">GLB</button>
-        <button type="button" (click)="onExport('stl')" aria-label="Export STL">STL</button>
+        <button type="button" (click)="onExport('glb')" aria-label="Exportar GLB">GLB</button>
+        <button type="button" (click)="onExport('stl')" aria-label="Exportar STL">STL</button>
       </div>
 
-      <header>Boolean</header>
+      <header>Booleanas</header>
       <div class="button-group">
-        <button type="button" (click)="onBoolean('union')" [class.active]="booleanMode === 'union'" aria-label="Union boolean">Union</button>
-        <button type="button" (click)="onBoolean('subtract')" [class.active]="booleanMode === 'subtract'" aria-label="Subtract boolean">Subtract</button>
+        <button type="button" (click)="onBoolean('union')" [class.active]="booleanMode === 'union'" aria-label="Operación unión">Unión</button>
+        <button type="button" (click)="onBoolean('subtract')" [class.active]="booleanMode === 'subtract'" aria-label="Operación restar">Restar</button>
       </div>
 
-      <header>Modifiers</header>
+      <header>Modificadores</header>
       <div class="button-group">
-        <button type="button" (click)="modifierAction.emit('subdivide')" aria-label="Subdivision modifier">Subdivide</button>
-        <button type="button" (click)="modifierAction.emit('bevel')" aria-label="Bevel modifier">Bevel</button>
+        <button type="button" (click)="modifierAction.emit('subdivide')" aria-label="Modificador de subdivisión">Subdividir</button>
+        <button type="button" (click)="modifierAction.emit('bevel')" aria-label="Modificador de bisel">Bisel</button>
       </div>
 
       <input

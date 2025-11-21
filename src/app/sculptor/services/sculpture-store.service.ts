@@ -11,6 +11,7 @@ import {
 interface SculptureResponseDto {
   id: string;
   name: string;
+  description?: string | null;
   slug?: string | null;
   tags: string[] | null;
   metadata: string | null;
@@ -21,6 +22,7 @@ interface SculptureResponseDto {
 
 interface SculptureRequestDto {
   name: string;
+  description?: string | null;
   sceneJson: string;
   metadata: string;
   tags: string[];
@@ -57,8 +59,9 @@ export class SculptureStoreService {
     name: string,
     tags: string[] = [],
     workspace?: SculptWorkspaceSettings,
+    description = '',
   ): Promise<Sculpture> {
-    const payload = this.buildRequestPayload(name, tags, scene, workspace);
+    const payload = this.buildRequestPayload(name, tags, scene, workspace, description);
     try {
       const dto = await firstValueFrom(this.http.post<SculptureResponseDto>(this.baseUrl, payload));
       const sculpture = this.fromDto(dto);
@@ -76,8 +79,9 @@ export class SculptureStoreService {
     name: string,
     tags: string[] = [],
     workspace?: SculptWorkspaceSettings,
+    description = '',
   ): Promise<Sculpture> {
-    const payload = this.buildRequestPayload(name, tags, scene, workspace);
+    const payload = this.buildRequestPayload(name, tags, scene, workspace, description);
     try {
       const dto = await firstValueFrom(
         this.http.put<SculptureResponseDto>(`${this.baseUrl}/${id}`, payload),
@@ -112,13 +116,15 @@ export class SculptureStoreService {
     tags: string[],
     scene: Scene,
     workspace?: SculptWorkspaceSettings,
+    description = '',
   ): SculptureRequestDto {
     const metadata: SculptureMetadataPayload = {
       version: 1,
       workspace,
     };
     return {
-      name: name.trim() || 'Untitled Sculpture',
+      name: name.trim() || 'Escultura sin título',
+      description: description?.trim() || '',
       tags: tags.map((tag) => tag.trim()).filter(Boolean),
       sceneJson: JSON.stringify(scene.toJSON()),
       metadata: JSON.stringify(metadata),
@@ -130,6 +136,7 @@ export class SculptureStoreService {
     return {
       id: dto.id,
       name: dto.name,
+      description: dto.description ?? null,
       slug: dto.slug,
       tags: dto.tags ?? [],
       createdAt: dto.createdAt,

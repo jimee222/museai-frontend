@@ -22,6 +22,7 @@ import {
   SculptorDisplayToggles,
 } from '../models/sculpture';
 import { BooleanMode, ModifierAction, SculptBrush } from '../models/sculpt-tools';
+import { FormsModule } from '@angular/forms';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
@@ -39,7 +40,7 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
 @Component({
   selector: 'app-sculptor-page',
   standalone: true,
-  imports: [CommonModule, ToolbarComponent, ViewportComponent, AssetDropzoneComponent],
+  imports: [CommonModule, FormsModule, ToolbarComponent, ViewportComponent, AssetDropzoneComponent],
   template: `
     <section class="sculptor-layout">
       <app-sculptor-toolbar
@@ -93,12 +94,12 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
           <div class="banner" *ngIf="bannerMessage() as banner" [class.error]="banner.type === 'error'">
             {{ banner.text }}
           </div>
-        </div>
+    </div>
 
         <section class="gallery">
           <header>
-            <h3>Local Gallery</h3>
-            <small>{{ sculptures().length }} saved</small>
+            <h3>Galería local</h3>
+            <small>{{ sculptures().length }} guardadas</small>
           </header>
           <ul>
             <li *ngFor="let sculpture of sculptures(); trackBy: trackById">
@@ -107,8 +108,8 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
                 <small>{{ sculpture.updatedAt | date: 'short' }}</small>
               </div>
               <div class="actions">
-                <button type="button" (click)="loadSculpture(sculpture)" aria-label="Load sculpture">Load</button>
-                <button type="button" (click)="deleteSculpture(sculpture)" aria-label="Delete sculpture">✕</button>
+                <button type="button" (click)="loadSculpture(sculpture)" aria-label="Cargar escultura">Cargar</button>
+                <button type="button" (click)="deleteSculpture(sculpture)" aria-label="Eliminar escultura">✕</button>
               </div>
             </li>
           </ul>
@@ -116,10 +117,53 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
       </div>
     </section>
 
+    <div class="save-dialog-overlay" *ngIf="saveDialogVisible()">
+      <form class="save-dialog" (ngSubmit)="submitSaveDialog($event)">
+        <h4>{{ isUpdatingExisting() ? 'Actualizar escultura' : 'Guardar escultura' }}</h4>
+        <label>
+          <span>Nombre</span>
+          <input
+            type="text"
+            name="sculptureName"
+            required
+            [(ngModel)]="saveDialogModel.name"
+            placeholder="Mi escultura"
+          />
+        </label>
+        <label>
+          <span>Etiquetas</span>
+          <input
+            type="text"
+            name="sculptureTags"
+            [(ngModel)]="saveDialogModel.tags"
+            placeholder="fantasía, criatura"
+          />
+          <small>Separa las etiquetas con comas</small>
+        </label>
+        <label>
+          <span>Descripción</span>
+          <textarea
+            name="sculptureDescription"
+            rows="3"
+            [(ngModel)]="saveDialogModel.description"
+            placeholder="Describe tu escultura (opcional)"
+          ></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" (click)="closeSaveDialog()" [disabled]="isSavingScene()">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="isSavingScene()">
+            {{ isSavingScene() ? 'Guardando...' : isUpdatingExisting() ? 'Actualizar' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
     <footer class="status-bar">
       <span>FPS: {{ stats().fps }}</span>
-      <span>Triangles: {{ stats().triangles | number }}</span>
-      <span>Shortcuts: G-move · R-rotate · S-scale · Delete-remove · Esc-clear</span>
+      <span>Triángulos: {{ stats().triangles | number }}</span>
+      <span>Atajos: G-mover · R-rotar · S-escalar · Delete-eliminar · Esc-limpiar</span>
     </footer>
   `,
   styles: [
@@ -228,6 +272,75 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
       button {
         font: inherit;
       }
+      .save-dialog-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        z-index: 10;
+      }
+      .save-dialog {
+        background: #0c0d13;
+        border-radius: 12px;
+        padding: 1.5rem;
+        width: min(90vw, 360px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .save-dialog h4 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .save-dialog label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+      }
+      .save-dialog input {
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+      }
+      .save-dialog textarea {
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+        resize: vertical;
+        min-height: 80px;
+        font: inherit;
+      }
+      .save-dialog small {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.75rem;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .dialog-actions button {
+        padding: 0.45rem 0.9rem;
+      }
+      .dialog-actions button[type='submit'] {
+        background: rgba(34, 197, 94, 0.15);
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        color: #a3ffcc;
+      }
+      .dialog-actions button[type='submit']:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
     `,
   ],
 })
@@ -250,6 +363,22 @@ export class SculptorPageComponent implements AfterViewInit {
     y: 0,
   });
   readonly workspaceSettings = signal<SculptWorkspaceSettings>({ ...DEFAULT_WORKSPACE });
+  readonly saveDialogVisible = signal(false);
+  readonly isSavingScene = signal(false);
+  saveDialogModel: { name: string; tags: string; description: string } = {
+    name: 'Nueva escultura',
+    tags: '',
+    description: '',
+  };
+  private readonly brushLabels: Record<SculptBrush, string> = {
+    none: 'transformación',
+    grab: 'mover',
+    inflate: 'inflar',
+    smooth: 'suavizar',
+    pinch: 'pellizcar',
+    flatten: 'aplanar',
+    crease: 'surcar',
+  };
 
   private bannerTimeout: number | null = null;
 
@@ -278,7 +407,11 @@ export class SculptorPageComponent implements AfterViewInit {
   onBrushSelected(tool: SculptBrush): void {
     this.activeBrush.set(tool);
     this.updateWorkspace({ activeBrush: tool });
-    const label = tool === 'none' ? 'Transform tools enabled' : `${tool.charAt(0).toUpperCase()}${tool.slice(1)} brush ready`;
+    const brushName = this.brushLabels[tool] ?? tool;
+    const label =
+      tool === 'none'
+        ? 'Herramientas de transformación activadas'
+        : `Pincel ${brushName} listo`;
     this.showBanner('success', label);
   }
 
@@ -356,33 +489,62 @@ export class SculptorPageComponent implements AfterViewInit {
     this.viewport?.resetCamera();
   }
 
-  async onSaveScene(): Promise<void> {
+  onSaveScene(): void {
     if (!this.viewport) {
       return;
     }
-    const name = prompt('Sculpture name', 'New Sculpture');
-    if (!name) {
+    const selected = this.getSelectedSculpture();
+    const nextName = selected?.name ?? (this.saveDialogModel.name || 'Nueva escultura');
+    const nextTags = selected?.tags?.join(', ') ?? this.saveDialogModel.tags;
+    const nextDescription = selected?.description ?? this.saveDialogModel.description;
+    this.saveDialogModel = { name: nextName, tags: nextTags, description: nextDescription ?? '' };
+    this.saveDialogVisible.set(true);
+  }
+
+  async submitSaveDialog(event?: Event): Promise<void> {
+    event?.preventDefault();
+    if (!this.viewport || this.isSavingScene()) {
       return;
     }
-    const tagsInput = prompt('Tags (comma separated)', '') ?? '';
-    const tags = tagsInput
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean);
-
+    const trimmedName = this.saveDialogModel.name.trim();
+    if (!trimmedName) {
+      this.showBanner('error', 'Se requiere un nombre para la escultura');
+      return;
+    }
+    const tags = this.parseTags(this.saveDialogModel.tags);
+    const description = this.saveDialogModel.description.trim();
+    const scene = this.viewport.getScene();
+    const workspace = this.workspaceSettings();
+    const updateId = this.selectedSculptureId() ?? this.findSculptureIdByName(trimmedName);
+    this.isSavingScene.set(true);
     try {
-      const existingId = this.selectedSculptureId();
-      const scene = this.viewport.getScene();
-      const workspace = this.workspaceSettings();
-      const saved = existingId
-        ? await this.store.updateScene(existingId, scene, name, tags, workspace)
-        : await this.store.saveFromScene(scene, name, tags, workspace);
+      const saved = updateId
+        ? await this.store.updateScene(updateId, scene, trimmedName, tags, workspace, description)
+        : await this.store.saveFromScene(scene, trimmedName, tags, workspace, description);
       this.selectedSculptureId.set(saved.id);
-      this.showBanner('success', existingId ? 'Sculpture updated' : 'Sculpture saved');
+      this.closeSaveDialog();
+      this.showBanner('success', updateId ? 'Escultura actualizada' : 'Escultura guardada');
     } catch (error) {
       console.error(error);
-      this.showBanner('error', 'Unable to save sculpture');
+      this.showBanner('error', 'No se pudo guardar la escultura');
+    } finally {
+      this.isSavingScene.set(false);
     }
+  }
+
+  closeSaveDialog(): void {
+    this.saveDialogVisible.set(false);
+  }
+
+  isUpdatingExisting(): boolean {
+    if (this.selectedSculptureId()) {
+      return true;
+    }
+    const trimmedName = this.saveDialogModel.name.trim();
+    if (!trimmedName) {
+      return false;
+    }
+    return this.findSculptureIdByName(trimmedName) !== null;
   }
 
   async onExport(format: ExportFormat): Promise<void> {
@@ -392,10 +554,10 @@ export class SculptorPageComponent implements AfterViewInit {
     try {
       const blob = await this.viewport.exportScene(format);
       downloadBlob(blob, `sculpture-${Date.now()}.${format}`);
-      this.showBanner('success', `Exported ${format.toUpperCase()}`);
+      this.showBanner('success', `${format.toUpperCase()} exportado`);
     } catch (error) {
       console.error(error);
-      this.showBanner('error', `Failed to export ${format.toUpperCase()}`);
+      this.showBanner('error', `Error al exportar ${format.toUpperCase()}`);
     }
   }
 
@@ -426,16 +588,16 @@ export class SculptorPageComponent implements AfterViewInit {
   }
 
   async deleteSculpture(sculpture: Sculpture): Promise<void> {
-    if (confirm(`Delete "${sculpture.name}"?`)) {
+    if (confirm(`¿Eliminar "${sculpture.name}"?`)) {
       try {
         await this.store.remove(sculpture.id);
         if (this.selectedSculptureId() === sculpture.id) {
           this.selectedSculptureId.set(null);
         }
-        this.showBanner('success', 'Sculpture removed');
+        this.showBanner('success', 'Escultura eliminada');
       } catch (error) {
         console.error(error);
-        this.showBanner('error', 'Failed to delete sculpture');
+        this.showBanner('error', 'No se pudo eliminar la escultura');
       }
     }
   }
@@ -500,5 +662,28 @@ export class SculptorPageComponent implements AfterViewInit {
     this.viewport.setMaterialPreset(ws.material, false);
     this.viewport.setSnapToGround(ws.snapToGround);
     this.viewport.setBrush(ws.activeBrush);
+  }
+
+  private getSelectedSculpture(): Sculpture | undefined {
+    const selectedId = this.selectedSculptureId();
+    if (!selectedId) {
+      return undefined;
+    }
+    return this.sculptures().find((item) => item.id === selectedId);
+  }
+
+  private parseTags(raw: string): string[] {
+    return raw
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  private findSculptureIdByName(name: string): string | null {
+    const target = name.trim().toLowerCase();
+    if (!target) {
+      return null;
+    }
+    return this.sculptures().find((item) => item.name.trim().toLowerCase() === target)?.id ?? null;
   }
 }

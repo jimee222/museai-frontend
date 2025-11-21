@@ -1,10 +1,17 @@
 <div class="profile-card" *ngIf="user">
-  <div class="header text-center">
+  
+ 
+  <div class="profile-header">
+    
+ <div class="avatar">{{ getInitials() }}</div>
+
     <h3 class="name">{{ user.firstName }} {{ user.lastName1 }} {{ user.lastName2 }}</h3>
     <p class="email">{{ user.email }}</p>
   </div>
 
+
   <div class="info-grid">
+    
     <div class="info-item">
       <span class="info-label">Fecha de Nacimiento:</span>
       <span class="info-value">{{ user.birthDate | date:'longDate' }}</span>
@@ -19,13 +26,16 @@
       <span class="info-label">Nivel de conocimiento en arte:</span>
       <span class="info-value">{{ getArtLevelLabel(user.artLevel) }}</span>
     </div>
+
   </div>
+
 
   <div class="actions">
     <button class="btn btn-primary submit" (click)="goToEditProfile()">
       Editar Perfil
     </button>
   </div>
+
 </div>
 
 <div *ngIf="!user" class="no-user">

@@ -94,7 +94,6 @@
   text-align: justify;
 }
 
-/* Responsive para pantallas pequeñas */
 @media (max-width: 768px) {
   .artwork-popup {
     flex-direction: column;
