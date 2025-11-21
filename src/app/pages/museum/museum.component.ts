@@ -315,19 +315,19 @@ export class MuseumComponent implements OnInit, OnDestroy {
 
 
     const innerIds = [
-      '380063', // leftOuterTop
-      '135614', // leftOuterBottom
-      '151298', // leftInnerTop
-      '135483', // leftInnerBottom
-      '125249', // rightOuterTop
-      '93014',  // rightOuterBottom
-      '141639', // rightInnerTop
-      '135428', // rightInnerBottom
+      '125249', // leftOuterTop   
+      '151298', // leftOuterBottom  
+      '2009.157', // leftInnerTop
+      '1921.1239', // leftInnerBottom
+      '380063', // rightOuterTop
+      '135614',  // rightOuterBottom
+      '1921.428', // rightInnerTop 
+      '1942.638', // rightInnerBottom 
     ];
 
-    const backIds = ['170235', '111702', '115067']; // pared del fondo
-    const leftIds = ['132618', '127080', '151298']; // pared izquierda
-    const rightIds = ['135483', '93014', '125249']; // pared derecha
+    const backIds = ['170235', '111702', '135428']; // pared del fondo
+    const leftIds = ['135483', '93014', '141639']; // pared izquierda
+    const rightIds = ['132618', '115067', '127080']; // pared derecha
 
     // -------- PAREDES INTERIORES (8) --------
     let idx = 0;
