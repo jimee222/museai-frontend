@@ -23,6 +23,12 @@ export class MuseumComponent implements OnInit, OnDestroy {
   private moveBackward = false;
   private moveLeft = false;
   private moveRight = false;
+  private readonly PLAYER_RADIUS = 0.35;  // radio “cintura” del jugador
+    // ----- CONFIG PARA LÍMITES DE MOVIMIENTO (añade arriba con el resto de campos) -----
+  private minX = -9.3; private maxX =  9.3;
+  private minZ = -9.3; private maxZ =  9.3;
+  private playerRadius = 0.35;        // “grosor” del jugador
+  private colliders: THREE.Box3[] = []; // cajas de colisión estáticas
 
   private leftFrames: THREE.Mesh[] = [];
   private backFrames: THREE.Mesh[] = [];
@@ -58,6 +64,25 @@ private readonly BORDER  = 0.0;
 // Un sangrado MUY chico, solo para tapar artefactos de mipmaps
 private readonly BLEED   = 0.0015;
 private readonly SHOW_WRAP = false;  // ← APAGAR tiras de borde
+
+private resolveCollisions(attempt: THREE.Vector3) {
+  const out = attempt.clone();
+  const playerTop = 1.8; // altura de la cabeza aprox
+
+  for (const wall of this.walls) {
+    const box = new THREE.Box3().setFromObject(wall);
+
+    // ⬇️ Si TODO el collider está por encima de la cabeza, ignóralo (ej. dinteles)
+    if (box.min.y > playerTop) continue;
+
+    const min = box.min, max = box.max;
+    this.pushOutFromAABBXZ(out, min.x, max.x, min.z, max.z);
+  }
+
+  return out;
+}
+
+
 
 
 // cambia la firma para devolver frame
@@ -165,6 +190,59 @@ private placeFrameOnLeftFace(
   return frame;
 }
 
+// Colgar glb del techo: centra por AABB y posiciona bajo y=5
+private addCeilingLamp(path: string, x: number, z: number, opts?: {clear?: number, scale?: number, rotY?: number}) {
+  const loader = new GLTFLoader();
+  const clear = opts?.clear ?? 0.12;         // separación del techo
+  const scl   = opts?.scale ?? 1.0;
+  const rotY  = opts?.rotY ?? 0;
+
+  loader.load(path, (gltf) => {
+    const lamp = gltf.scene;
+
+    // 1) Wrapper para mover el modelo al centro sin perder el pivote
+    const wrap = new THREE.Group();
+
+    // 2) Calcular AABB y centrar el modelo dentro del wrapper
+    const box = new THREE.Box3().setFromObject(lamp);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+
+    // Mueve el modelo para que su centro quede en (0,0,0) y la base quede en y=0
+    lamp.position.sub(center);
+    lamp.position.y -= (-size.y / 2);  // sube el modelo medio alto → base en y=0
+
+    // Sombra opcional
+    lamp.traverse(o => {
+      if ((o as THREE.Mesh).isMesh) {
+        const m = o as THREE.Mesh;
+        m.castShadow = true;
+        m.receiveShadow = false;
+      }
+    });
+
+    wrap.add(lamp);
+
+    // 3) Escala el WRAPPER (evita mover offsets internos)
+    wrap.scale.setScalar(scl);
+
+    // 4) Recalcular alto final (con la escala aplicada)
+    const box2 = new THREE.Box3().setFromObject(wrap);
+    const size2 = new THREE.Vector3(); box2.getSize(size2);
+    const lampH = size2.y;
+
+    // 5) Posicionar bajo el techo (y=5)
+    const ceilingY = 5;
+    wrap.position.set(x, ceilingY - clear - lampH, z);
+    wrap.rotation.y = rotY;
+
+    this.scene.add(wrap);
+  },
+  undefined,
+  (e) => console.error('No se pudo cargar lámpara:', path, e));
+}
+
+
 
 
 
@@ -249,6 +327,32 @@ private addArtworkToDisplayFrame(
   });
 }
 
+
+// Empuja un círculo (jugador) fuera de un AABB en XZ
+private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: number, maxZ: number) {
+  const r = this.PLAYER_RADIUS;
+
+  // Si NO hay intersección, nada que hacer
+  if (pos.x + r <= minX || pos.x - r >= maxX || pos.z + r <= minZ || pos.z - r >= maxZ) {
+    return pos;
+  }
+
+  // Penetraciones en cada lado (positivas = empuje necesario)
+  const penLeft   = (maxX - (pos.x - r)); // choca por la izquierda del AABB -> empujar +x
+  const penRight  = ((pos.x + r) - minX); // choca por la derecha del AABB  -> empujar -x
+  const penTop    = (maxZ - (pos.z - r)); // choca por arriba (en -z/+z depende) -> empujar +z
+  const penBottom = ((pos.z + r) - minZ); // choca por abajo -> empujar -z
+
+  // Elegimos el eje con menor empuje necesario
+  const minPen = Math.min(penLeft, penRight, penTop, penBottom);
+
+  if (minPen === penLeft)      pos.x += penLeft;
+  else if (minPen === penRight) pos.x -= penRight;
+  else if (minPen === penTop)   pos.z += penTop;
+  else                          pos.z -= penBottom;
+
+  return pos;
+}
 
 
 
@@ -416,6 +520,13 @@ private clearArtPlanes(frame: THREE.Mesh) {
 
 
   private initScene(): void {
+
+    // Color azul rey
+    const WALL_COLOR = 0xEEEAE6 //0xFAFAFA  //0xDCD4CB  //0xEEEAE6   //0xB0BEC5  //0xCFD8DC    // 0xF5F5F5  //0x2B2B2B
+; // royal blue
+
+    // Un SOLO material para TODAS las paredes
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: WALL_COLOR });
     
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
@@ -458,7 +569,6 @@ private clearArtPlanes(frame: THREE.Mesh) {
     this.scene.add(floor);
 
     // paredes blancas (con colisión)
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const wallGeometry = new THREE.BoxGeometry(20, 5, 0.2);
 
     const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
@@ -471,10 +581,155 @@ private clearArtPlanes(frame: THREE.Mesh) {
     this.scene.add(frontWall);
     this.walls.push(frontWall);
 
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
-    leftWall.position.set(-10, 2.5, 0);
-    this.scene.add(leftWall);
-    this.walls.push(leftWall);
+    // —— Construye cajas AABB de todas las paredes ——
+    // (las hacemos un poco “infinitas” en Y para no preocuparnos por la altura)
+    this.colliders = this.walls.map(w => {
+      const box = new THREE.Box3().setFromObject(w);
+      box.min.y = -9999;
+      box.max.y = +9999;
+      return box;
+    });
+
+ // ====== PUERTA PEGADA A LA ÚLTIMA OBRA DE LA PARED IZQUIERDA ======
+{
+  const wallThick = 0.2;
+  const wallH     = 5;
+  const wallLen   = 20;
+  const wallX     = -10;
+
+  // Usa los marcos ya creados; si no hay, asume que el último está en z=6
+  const lfZs = this.leftFrames.map(f => f.position.z);
+  const lastLeftZ = lfZs.length ? Math.max(...lfZs) : 6;
+  const doorW = 2.0;
+  const doorZ = -10 + doorW / 2 + 0.05;
+  const doorH = 3.0;
+  const doorYBottom = 0;
+
+  const zMin = -10;
+  const zMax =  10;
+  const zStart = doorZ - doorW / 2;
+  const zEnd   = doorZ + doorW / 2;
+
+  // Segmento izquierdo
+  const leftLen = (zStart - zMin);
+  if (leftLen > 0) {
+    const leftSeg = new THREE.Mesh(
+      new THREE.BoxGeometry(wallThick, wallH, leftLen),
+      wallMaterial
+    );
+    leftSeg.position.set(wallX, wallH / 2, (zMin + zStart) / 2);
+    this.scene.add(leftSeg); this.walls.push(leftSeg);
+  }
+
+  // Segmento derecho
+  const rightLen = (zMax - zEnd);
+  if (rightLen > 0) {
+    const rightSeg = new THREE.Mesh(
+      new THREE.BoxGeometry(wallThick, wallH, rightLen),
+      wallMaterial
+    );
+    rightSeg.position.set(wallX, wallH / 2, (zEnd + zMax) / 2);
+    this.scene.add(rightSeg); this.walls.push(rightSeg);
+  }
+
+  // Dintel
+  const lintelH = wallH - doorH;
+  if (lintelH > 0) {
+    const lintel = new THREE.Mesh(
+      new THREE.BoxGeometry(wallThick, lintelH, doorW),
+      wallMaterial
+    );
+    const lintelYCenter = doorYBottom + doorH + lintelH / 2;
+    lintel.position.set(wallX, lintelYCenter, doorZ);
+    this.scene.add(lintel); this.walls.push(lintel);
+  }
+
+  // ====== SALA 2 ALINEADA ======
+  const room2Width = 8, room2Depth = 12, room2H = 5, gap = 0.01;
+  const room2CenterX = wallX - wallThick/2 - room2Width/2 - gap;
+  const room2CenterZ = doorZ;
+
+  const floor2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(room2Width, room2Depth),
+    new THREE.MeshStandardMaterial({ color: 0xdddddd })
+  );
+  floor2.rotation.x = -Math.PI / 2;
+  floor2.position.set(room2CenterX, 0, room2CenterZ);
+  this.scene.add(floor2);
+
+  const ceil2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(room2Width, room2Depth),
+    new THREE.MeshStandardMaterial({ color: 0xfafafa })
+  );
+  ceil2.rotation.x = Math.PI / 2;
+  ceil2.position.set(room2CenterX, room2H, room2CenterZ);
+  this.scene.add(ceil2);
+
+  const west2  = new THREE.Mesh(new THREE.BoxGeometry(0.2, room2H, room2Depth), wallMaterial);
+  west2.position.set(room2CenterX - room2Width/2, room2H/2, room2CenterZ);
+  this.scene.add(west2); this.walls.push(west2);
+
+  const north2 = new THREE.Mesh(new THREE.BoxGeometry(room2Width, room2H, 0.2), wallMaterial);
+  north2.position.set(room2CenterX, room2H/2, room2CenterZ - room2Depth/2);
+  this.scene.add(north2); this.walls.push(north2);
+
+  const south2 = new THREE.Mesh(new THREE.BoxGeometry(room2Width, room2H, 0.2), wallMaterial);
+  south2.position.set(room2CenterX, room2H/2, room2CenterZ + room2Depth/2);
+  this.scene.add(south2); this.walls.push(south2);
+
+
+  // === PARED ESTE de la sala 2, con el MISMO hueco de puerta ===
+{
+  const east2X = room2CenterX + room2Width / 2;  // cara Este de la sala 2
+  const thick  = 0.2;                            // igual que las demás
+  const ezMin  = room2CenterZ - room2Depth / 2;
+  const ezMax  = room2CenterZ + room2Depth / 2;
+  const ezStart = doorZ - doorW / 2;             // inicio del hueco (Z)
+  const ezEnd   = doorZ + doorW / 2;             // fin del hueco (Z)
+
+  // Jamba izquierda (desde zMin hasta el inicio del hueco)
+  const leftLen = ezStart - ezMin;
+  if (leftLen > 0) {
+    const eastLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(thick, room2H, leftLen),
+      wallMaterial
+    );
+    eastLeft.position.set(east2X, room2H / 2, (ezMin + ezStart) / 2);
+    this.scene.add(eastLeft); this.walls.push(eastLeft);
+  }
+
+  // Jamba derecha (desde el fin del hueco hasta zMax)
+  const rightLen = ezMax - ezEnd;
+  if (rightLen > 0) {
+    const eastRight = new THREE.Mesh(
+      new THREE.BoxGeometry(thick, room2H, rightLen),
+      wallMaterial
+    );
+    eastRight.position.set(east2X, room2H / 2, (ezEnd + ezMax) / 2);
+    this.scene.add(eastRight); this.walls.push(eastRight);
+  }
+
+  // Dintel (por encima de la puerta)
+  const lintelH = room2H - doorH;
+  if (lintelH > 0) {
+    const eastLintel = new THREE.Mesh(
+      new THREE.BoxGeometry(thick, lintelH, doorW),
+      wallMaterial
+    );
+    eastLintel.position.set(east2X, doorH + lintelH / 2, doorZ);
+    this.scene.add(eastLintel); this.walls.push(eastLintel);
+  }
+}
+
+  // límites de movimiento
+  this.minX = Math.min(this.minX, room2CenterX - room2Width/2 - 0.5);
+  this.maxX = Math.max(this.maxX,  10);
+  this.minZ = Math.min(this.minZ, -10, room2CenterZ - room2Depth/2 - 0.5);
+  this.maxZ = Math.max(this.maxZ,  10, room2CenterZ + room2Depth/2 + 0.5);
+}
+
+
+
 
     const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 20), wallMaterial);
     rightWall.position.set(10, 2.5, 0);
@@ -482,7 +737,7 @@ private clearArtPlanes(frame: THREE.Mesh) {
     this.walls.push(rightWall);
 
     // 🧱 Paredes interiores (centrales)
-    const innerWallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const innerWallMaterial = wallMaterial;
     const innerWallGeometry = new THREE.BoxGeometry(0.5, 5, 8);
 
     // Primera pared interior (alineada con cuadros de la izquierda)
@@ -613,7 +868,7 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
       this.addArtworkToDisplayFrame(this.rightFrames[1], ids[7]); // derecha-2 (centro)
       this.addArtworkToDisplayFrame(this.rightFrames[2], ids[8]); // derecha-3 (cerca del frente)
     }
-
+   this.addCeilingLamp('/assets/models/large.glb', 0, -7.8, { scale: 2, rotY: 0, clear: -0.8 });
 
     //  Cargador GLTF
     const loader = new GLTFLoader();
@@ -652,15 +907,6 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
       this.scene.add(lamp);
     });
 
-    // Lámpara de madera
-    loader.load('/assets/models/large.glb', (gltf) => {
-      const woodlamp = gltf.scene;
-      woodlamp.scale.set(5, 5, 5);
-      woodlamp.position.set(0, 0, 0);
-      woodlamp.rotation.y = Math.PI / 2;
-      this.scene.add(woodlamp);
-    });
-
     // planta 1
     loader.load('/assets/models/plant.glb', (gltf) => {
       const plant = gltf.scene;
@@ -686,71 +932,78 @@ this.addArtworkToDisplayFrame(leftFacingB, '135483');
   }
 
   private onKeyDown = (event: KeyboardEvent) => {
-    switch (event.code) {
-      case 'KeyS':
-        this.moveForward = true;
-        break;
-      case 'KeyW':
-        this.moveBackward = true;
-        break;
-      case 'KeyD':
-        this.moveLeft = true;
-        break;
-      case 'KeyA':
-        this.moveRight = true;
-        break;
-    }
-  };
+  switch (event.code) {
+    case 'KeyW': this.moveForward = true;  break;
+    case 'KeyS': this.moveBackward = true; break;
+    case 'KeyA': this.moveLeft = true;     break;
+    case 'KeyD': this.moveRight = true;    break;
+  }
+};
 
-  private onKeyUp = (event: KeyboardEvent) => {
-    switch (event.code) {
-      case 'KeyS':
-        this.moveForward = false;
-        break;
-      case 'KeyW':
-        this.moveBackward = false;
-        break;
-      case 'KeyD':
-        this.moveLeft = false;
-        break;
-      case 'KeyA':
-        this.moveRight = false;
-        break;
-    }
-  };
+private onKeyUp = (event: KeyboardEvent) => {
+  switch (event.code) {
+    case 'KeyW': this.moveForward = false;  break;
+    case 'KeyS': this.moveBackward = false; break;
+    case 'KeyA': this.moveLeft = false;     break;
+    case 'KeyD': this.moveRight = false;    break;
+  }
+};
 
-  private animate = () => {
-    requestAnimationFrame(this.animate);
+ private animate = () => {
+  requestAnimationFrame(this.animate);
 
-    const delta = this.clock.getDelta();
-    const speed = 4.0;
+  const delta = this.clock.getDelta();
+  const speed = 4.0;
 
-    this.velocity.x -= this.velocity.x * 10.0 * delta;
-    this.velocity.z -= this.velocity.z * 10.0 * delta;
+  this.velocity.x -= this.velocity.x * 10.0 * delta;
+  this.velocity.z -= this.velocity.z * 10.0 * delta;
 
-    this.direction.z = Number(this.moveForward) - Number(this.moveBackward);
-    this.direction.x = Number(this.moveRight) - Number(this.moveLeft);
-    this.direction.normalize();
+  this.direction.z = Number(this.moveForward) - Number(this.moveBackward);
+  this.direction.x = Number(this.moveRight)  - Number(this.moveLeft);
+  this.direction.normalize();
 
-    if (this.moveForward || this.moveBackward)
-      this.velocity.z -= this.direction.z * speed * delta;
-    if (this.moveLeft || this.moveRight)
-      this.velocity.x -= this.direction.x * speed * delta;
+  if (this.moveForward || this.moveBackward)
+    this.velocity.z -= this.direction.z * speed * delta;
+  if (this.moveLeft || this.moveRight)
+    this.velocity.x -= this.direction.x * speed * delta;
 
-    const moveX = this.velocity.x * delta * 10;
-    const moveZ = this.velocity.z * delta * 10;
+  // ===== A PARTIR DE AQUÍ, NUEVO BLOQUE =====
+  const moveRightAmt  = -this.velocity.x * delta * 10;
+  const moveForwardAmt = this.velocity.z * delta * 10;
 
-    this.controls.moveRight(moveX);
-    this.controls.moveForward(moveZ);
+  // direcciones según hacia dónde mira la cámara
+  const forward = new THREE.Vector3();
+  this.camera.getWorldDirection(forward);
+  forward.y = 0;
+  forward.normalize();
 
-    const pos = this.controls.object.position;
-    const limit = 9.3;
-    pos.x = Math.max(-limit, Math.min(limit, pos.x));
-    pos.z = Math.max(-limit, Math.min(limit, pos.z));
-    pos.y = 1.7;
+  const right = new THREE.Vector3()
+    .crossVectors(forward, new THREE.Vector3(0, 1, 0))
+    .normalize();
 
-    this.renderer.render(this.scene, this.camera);
-  };
+  // delta en mundo (adelante es -moveForwardAmt)
+  const moveVec = new THREE.Vector3()
+    .addScaledVector(forward, -moveForwardAmt)
+    .addScaledVector(right,    moveRightAmt);
+
+  // intento de posición y resolución de colisiones
+  // intento de nueva posición
+    const attempt = this.controls.object.position.clone().add(moveVec);
+
+    // colisión + clamps
+    const resolved = this.resolveCollisions(attempt);
+
+    // ⬇️ Usa los límites dinámicos, no -10/10 fijos
+    resolved.x = Math.max(this.minX, Math.min(this.maxX, resolved.x));
+    resolved.z = Math.max(this.minZ, Math.min(this.maxZ, resolved.z));
+
+    this.controls.object.position.copy(resolved);
+    this.controls.object.position.y = 1.7;
+
+  // ===== FIN DEL BLOQUE NUEVO =====
+
+  this.renderer.render(this.scene, this.camera);
+};
 
   private onResize = () => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
