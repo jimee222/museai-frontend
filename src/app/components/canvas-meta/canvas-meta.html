@@ -1,0 +1,144 @@
+<div class="meta-card">
+  <div>
+    <h3 class="meta__title">Información de la obra</h3>
+    <p class="meta__subtitle">
+      Completa estos datos para guardar o descargar tu creación.
+    </p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert--error">
+    {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="alert alert--success">
+    {{ successMessage }}
+  </div>
+
+  <!-- TÍTULO -->
+  <div class="meta__row">
+    <label for="titulo" class="meta__label">Título de la obra</label>
+    <input
+      id="titulo"
+      class="meta__input"
+      type="text"
+      placeholder="Título de la obra"
+      [ngModel]="title"
+      (ngModelChange)="onTitleInput($event)"
+    />
+    <small class="field-error" *ngIf="validationErrors.title">
+      {{ validationErrors.title }}
+    </small>
+  </div>
+
+  <!-- DESCRIPCIÓN -->
+  <div class="meta__row">
+    <div class="meta__label-row">
+      <label for="desc" class="meta__label">Descripción de la obra</label>
+      <!-- TODO: hook IA después -->
+        <button type="button" class="btn btn--ghost">
+          <span class="btn__icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3L13.5 8.5L19 10L13.5 11.5L12 17L10.5 11.5L5 10L10.5 8.5L12 3Z"
+                stroke="#22d3ee"
+                stroke-width="1.6"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>Auto descripción AI</span>
+        </button>
+    </div>
+
+    <textarea
+      id="desc"
+      class="meta__textarea"
+      rows="5"
+      placeholder="Describe tu obra, estilo, emociones, etc."
+      [ngModel]="description"
+      (ngModelChange)="onDescriptionInput($event)"
+    ></textarea>
+    <small class="field-error" *ngIf="validationErrors.description">
+      {{ validationErrors.description }}
+    </small>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="meta__actions">
+    <button type="button" class="btn btn--primary" (click)="save.emit()" [disabled]="isSaving">
+      <span class="btn__icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M7 4H15L19 8V19H7V4Z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M10 4V9H15"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span>{{ isSaving ? 'Guardando...' : 'Guardar mi obra de arte' }}</span>
+    </button>
+
+    <button type="button" class="btn btn--ghost" (click)="download.emit()">
+      <span class="btn__icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 4V14"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+          <path
+            d="M8.5 10.5L12 14L15.5 10.5"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M6 18H18"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <span>Descargar obra de arte</span>
+    </button>
+
+    <button
+      *ngIf="canDelete"
+      type="button"
+      class="btn danger"
+      (click)="deleteCurrent.emit()"
+    >
+      <span class="btn__icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 8L7 19H17L18 8"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M9 8V5H15V8"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+          <path
+            d="M5 8H19"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <span>Eliminar obra</span>
+    </button>
+  </div>
+</div>

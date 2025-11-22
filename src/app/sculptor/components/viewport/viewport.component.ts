@@ -186,9 +186,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
           this.scene.add(child);
         });
       this.resetCamera();
-      this.banner.emit({ type: 'success', text: 'Sculpture loaded' });
+      this.banner.emit({ type: 'success', text: 'Escultura cargada' });
     } catch (error) {
-      this.banner.emit({ type: 'error', text: 'Unable to load sculpture' });
+      this.banner.emit({ type: 'error', text: 'No se pudo cargar la escultura' });
       console.error(error);
     }
   }
@@ -197,7 +197,8 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     const mesh = this.buildPrimitive(type);
     this.scene.add(mesh);
     this.setSelection(mesh);
-    this.banner.emit({ type: 'success', text: `${type} added` });
+    const primitiveLabel = this.getPrimitiveLabel(type);
+    this.banner.emit({ type: 'success', text: `Se agregó ${primitiveLabel}` });
   }
 
   setBrush(brush: SculptBrush): void {
@@ -248,12 +249,15 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   setBooleanMode(mode: BooleanMode): boolean {
     if (mode === 'none') {
       this.cancelBooleanMode();
-      this.banner.emit({ type: 'success', text: 'Boolean mode cleared' });
+      this.banner.emit({ type: 'success', text: 'Modo booleano desactivado' });
       return true;
     }
     const mesh = this.getEditableMesh(this.selected);
     if (!mesh) {
-      this.banner.emit({ type: 'error', text: 'Select a mesh before using boolean tools' });
+      this.banner.emit({
+        type: 'error',
+        text: 'Selecciona una malla antes de usar las herramientas booleanas',
+      });
       return false;
     }
     this.booleanSource = mesh;
@@ -261,7 +265,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.booleanModeChange.emit(this.booleanMode);
     this.banner.emit({
       type: 'success',
-      text: `Select another mesh to ${mode === 'union' ? 'union' : 'subtract'}`,
+      text: `Selecciona otra malla para ${mode === 'union' ? 'unir' : 'restar'}`,
     });
     return true;
   }
@@ -269,7 +273,10 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   async applyModifier(action: ModifierAction): Promise<void> {
     const mesh = this.getEditableMesh(this.selected);
     if (!mesh) {
-      this.banner.emit({ type: 'error', text: 'Select a mesh before applying modifiers' });
+      this.banner.emit({
+        type: 'error',
+        text: 'Selecciona una malla antes de aplicar modificadores',
+      });
       return;
     }
     try {
@@ -288,10 +295,10 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       }
       this.banner.emit({
         type: 'success',
-        text: `${action === 'subdivide' ? 'Subdivision' : 'Bevel'} applied`,
+        text: `${action === 'subdivide' ? 'Subdivisión' : 'Bisel'} aplicado`,
       });
     } catch (error) {
-      this.banner.emit({ type: 'error', text: 'Modifier failed' });
+      this.banner.emit({ type: 'error', text: 'El modificador falló' });
       console.error(error);
     }
   }
@@ -299,7 +306,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   duplicateSelection(): void {
     const mesh = this.getEditableMesh(this.selected);
     if (!mesh) {
-      this.banner.emit({ type: 'error', text: 'Select a mesh to duplicate' });
+      this.banner.emit({ type: 'error', text: 'Selecciona una malla para duplicar' });
       return;
     }
     const clone = mesh.clone(true);
@@ -316,7 +323,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     this.prepareObject(clone);
     this.scene.add(clone);
     this.setSelection(clone);
-    this.banner.emit({ type: 'success', text: 'Selection duplicated' });
+    this.banner.emit({ type: 'success', text: 'Selección duplicada' });
   }
 
   setSelectionScale(scale: number): void {
@@ -385,9 +392,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     for (const file of files) {
       try {
         await this.loadFile(file);
-        this.banner.emit({ type: 'success', text: `${file.name} loaded` });
+        this.banner.emit({ type: 'success', text: `${file.name} cargado` });
       } catch (error) {
-        this.banner.emit({ type: 'error', text: `Error loading ${file.name}` });
+        this.banner.emit({ type: 'error', text: `Error al cargar ${file.name}` });
         console.error(error);
       }
     }
@@ -609,7 +616,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     if (this.exceedsVertexBudget(mesh.geometry as BufferGeometry)) {
       this.banner.emit({
         type: 'error',
-        text: 'Mesh has become too dense; reduce subdivisions before sculpting more',
+        text: 'La malla es demasiado densa; reduce las subdivisiones antes de seguir esculpiendo',
       });
       return;
     }
@@ -856,9 +863,9 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
       this.scene.remove(targetMesh);
       this.scene.add(resultMesh);
       this.setSelection(resultMesh);
-      this.banner.emit({ type: 'success', text: 'Boolean operation applied' });
+      this.banner.emit({ type: 'success', text: 'Operación booleana aplicada' });
     } catch (error) {
-      this.banner.emit({ type: 'error', text: 'Boolean operation failed' });
+      this.banner.emit({ type: 'error', text: 'Operación booleana fallida' });
       console.error(error);
     } finally {
       this.cancelBooleanMode();
@@ -882,7 +889,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     if (this.exceedsVertexBudget(geometry)) {
       this.banner.emit({
         type: 'error',
-        text: 'Mesh exceeds safe vertex count; exports may be unstable',
+        text: 'La malla supera el conteo seguro de vértices; las exportaciones pueden ser inestables',
       });
     }
   }
@@ -992,6 +999,19 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     return mesh;
   }
 
+  private getPrimitiveLabel(type: PrimitiveType): string {
+    switch (type) {
+      case 'box':
+        return 'un cubo';
+      case 'sphere':
+        return 'una esfera';
+      case 'cylinder':
+        return 'un cilindro';
+      default:
+        return 'una figura';
+    }
+  }
+
   private getAspect(): number {
     const container = this.containerRef.nativeElement;
     return container.clientWidth / container.clientHeight || 1;
@@ -1054,7 +1074,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
     } else if (event.key === 'Delete' || event.key === 'Backspace') {
       if (this.selected) {
         this.scene.remove(this.selected);
-        this.banner.emit({ type: 'success', text: 'Mesh deleted' });
+        this.banner.emit({ type: 'success', text: 'Malla eliminada' });
         this.clearSelection();
       }
     } else if (event.key === 'Escape') {
@@ -1083,7 +1103,7 @@ export class ViewportComponent implements AfterViewInit, OnDestroy {
   private async loadFile(file: File): Promise<void> {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!ext) {
-      throw new Error('Missing extension');
+      throw new Error('Extensión ausente');
     }
     switch (ext) {
       case 'glb':

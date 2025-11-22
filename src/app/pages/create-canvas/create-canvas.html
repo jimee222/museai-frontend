@@ -1,102 +1,83 @@
 <section class="creator-shell">
-  <header class="toolbar toolbar--black">
-    <div class="toolbar__inner">
-      <div class="tool-group">
-        <button
-          type="button"
-          class="btn btn--chip"
-          [class.active]="tool === 'pencil'"
-          (click)="setBrush('pencil')"
-        >
-           Pincel
-        </button>
-
-        <button
-          type="button"
-          class="btn btn--chip"
-          [class.active]="tool === 'eraser'"
-          (click)="setBrush('eraser')"
-        >
-           Borrador
-        </button>
-      </div>
-
-      <div class="tool-group">
-        <label class="lbl" for="color">Color</label>
-        <input
-          id="color"
-          type="color"
-          [disabled]="tool === 'eraser'"
-          [(ngModel)]="color"
-          (input)="setColor(color)"
-        />
-      </div>
-
-      <div class="tool-group">
-        <label class="lbl" for="width">Grosor: {{ lineWidth }} px</label>
-        <input
-          id="width"
-          type="range"
-          min="1"
-          max="60"
-          step="1"
-          [(ngModel)]="lineWidth"
-          (input)="setLineWidth(lineWidth)"
-        />
-      </div>
-
-      <div class="tool-group">
-        <button type="button" class="btn danger" (click)="clearCanvas()">
-           Limpiar
-        </button>
-      </div>
-    </div>
+  <!-- TOOLBAR -->
+  <header class="toolbar">
+    <app-canvas-toolbar
+      [tool]="tool"
+      [color]="color"
+      [lineWidth]="lineWidth"
+      (toolChange)="onToolChange($event)"
+      (colorChange)="onColorChange($event)"
+      (lineWidthChange)="onLineWidthChange($event)"
+      (clearRequested)="onClearRequested()"
+    ></app-canvas-toolbar>
   </header>
-  <main class="canvas-area">
-    <div class="canvas-card">
-      <canvas #fabricCanvas class="canvas-surface"></canvas>
-    </div>
-  </main>
-  <section class="meta">
-    <h3 class="meta__title">Información de la obra</h3>
 
-    <div class="meta__row">
-      <label for="titulo" class="meta__label">Título de la obra</label>
-      <div class="meta__title-wrap">
-        <input
-          id="titulo"
-          class="meta__input"
-          type="text"
-          placeholder="Título de la obra"
-          [(ngModel)]="artTitle"
-        />
-        <button type="button" class="btn btn--pill" (click)="autoDescribeAI()">
-          Auto descripción AI
+  <!-- CANVAS -->
+  <main class="canvas-area">
+    <app-canvas-board
+      [tool]="tool"
+      [color]="color"
+      [lineWidth]="lineWidth"
+    ></app-canvas-board>
+  </main>
+
+  <!-- META INFO -->
+  <section class="meta">
+    <app-canvas-meta
+      [(title)]="artTitle"
+      [(description)]="artDescription"
+      [validationErrors]="validationErrors"
+      [errorMessage]="errorMessage"
+      [successMessage]="successMessage"
+      [isSaving]="isSaving"
+      [canDelete]="!!currentPaintingId"
+      (save)="saveArtwork()"
+      (download)="downloadArtwork()"
+      (deleteCurrent)="deleteCurrentPainting()"
+    ></app-canvas-meta>
+  </section>
+
+  <!-- GALERÍA -->
+  <section class="gallery" *ngIf="gallery.length">
+    <app-canvas-gallery
+      [paintings]="gallery"
+      (loadPainting)="onLoadPaintingFromGallery($event)"
+      (deletePainting)="onDeletePaintingFromGallery($event)"
+    ></app-canvas-gallery>
+  </section>
+
+  <!-- MODAL LIMPIAR / ELIMINAR (mismo diseño que la captura oscura) -->
+  <div class="modal-backdrop" *ngIf="confirmModal.visible">
+    <div class="modal-dialog">
+      <h2 class="modal-dialog__title">
+        {{ confirmModal.mode === 'clear' ? 'Limpiar lienzo' : 'Eliminar lienzo' }}
+      </h2>
+
+      <p class="modal-dialog__text">
+        {{
+          confirmModal.mode === 'clear'
+            ? '¿Seguro que quieres limpiar el lienzo? Esta acción eliminará tu dibujo actual y no se puede deshacer.'
+            : '¿Seguro que quieres eliminar esta obra? Se quitará de tu galería y no se puede deshacer.'
+        }}
+      </p>
+
+      <div class="modal-dialog__actions">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          (click)="cancelConfirmModal()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn btn--danger"
+          (click)="confirmModalAction()"
+        >
+          {{ confirmModal.mode === 'clear' ? 'Limpiar lienzo' : 'Eliminar' }}
         </button>
       </div>
     </div>
-
-    <div class="meta__row">
-      <label for="desc" class="meta__label">Descripción de la obra</label>
-      <textarea
-        id="desc"
-        class="meta__textarea"
-        rows="5"
-        placeholder="Descripción de la obra"
-        [(ngModel)]="artDescription"
-      ></textarea>
-    </div>
-
-    <div class="meta__actions">
-      <button type="button" class="btn btn--dark" (click)="saveArtwork()">
-        GUARDAR MI OBRA DE ARTE
-      </button>
-
-      <button type="button" class="btn btn--dark" (click)="downloadArtwork()">
-        DESCARGAR OBRA DE ARTE
-      </button>
-    </div>
-
-    <a #downloadLink class="hidden" [href]="dataUrl" download="lienzo.png">descargar</a>
-  </section>
+  </div>
 </section>
