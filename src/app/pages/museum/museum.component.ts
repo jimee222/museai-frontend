@@ -1,9 +1,11 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, effect } from '@angular/core';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { CommonModule } from '@angular/common';
 import { CmaService } from '../../services/cma.service';
+import { DescriptionTranslationService } from '../../services/description-translation.service';
+import { LanguagePreferenceService } from '../../services/language-preference.service';
 
 // Datos que usa el popup de curaduría (todos vienen de la CMA API)
 interface ArtworkPopupData {
@@ -53,8 +55,22 @@ export class MuseumComponent implements OnInit, OnDestroy {
 
   public currentArtwork: ArtworkPopupData | null = null;
   public isPopupVisible = false;
+  public translatedDescription: string | null = null;
+  public translationError: string | null = null;
+  public isTranslating = false;
 
-  constructor(private cmaService: CmaService) {}
+  constructor(
+    private cmaService: CmaService,
+    private readonly translationService: DescriptionTranslationService,
+    private readonly languagePreference: LanguagePreferenceService
+  ) {
+    effect(() => {
+      const lang = this.languagePreference.language();
+      if (this.isPopupVisible && this.currentArtwork?.description && lang) {
+        this.translateCurrentArtwork();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initScene();
@@ -817,6 +833,7 @@ private onKeyUp = (event: KeyboardEvent) => {
       // Entramos a una nueva obra
       this.activeFrame = nearestFrame;
       this.currentArtwork = nearestFrame.userData['popup'] as ArtworkPopupData;
+      this.translateCurrentArtwork();
       this.isPopupVisible = true;
     } else if (!nearestFrame && this.activeFrame) {
       // Nos alejamos de todas
@@ -830,10 +847,45 @@ private onKeyUp = (event: KeyboardEvent) => {
     this.isPopupVisible = false;
     this.currentArtwork = null;
     this.activeFrame = null;
+    this.translatedDescription = null;
+    this.translationError = null;
+    this.isTranslating = false;
   }
 
   public onPopupBackdropClick(): void {
     this.closePopup();
+  }
+
+  private translateCurrentArtwork(): void {
+    if (!this.currentArtwork?.description) {
+      this.translatedDescription = null;
+      this.translationError = null;
+      return;
+    }
+
+    const targetLanguage = this.languagePreference.language();
+    const description = this.currentArtwork.description;
+
+    this.isTranslating = true;
+    this.translationError = null;
+
+    this.translationService
+      .translate({
+        artworkId: this.currentArtwork.id,
+        originalText: description,
+        sourceLanguage: 'auto',
+        targetLanguage,
+      })
+      .subscribe({
+        next: (res) => {
+          this.translatedDescription = res.translatedText;
+          this.isTranslating = false;
+        },
+        error: () => {
+          this.translationError = 'Error al traducir, intente nuevamente';
+          this.isTranslating = false;
+        },
+      });
   }
 
   // ==========================

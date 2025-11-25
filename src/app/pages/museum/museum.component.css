@@ -92,6 +92,19 @@
   margin-top: 8px;
   line-height: 1.4;
   text-align: justify;
+  white-space: pre-wrap;
+}
+
+.translation-status {
+  color: #555;
+  font-style: italic;
+  margin: 0;
+}
+
+.translation-error {
+  color: #b00020;
+  font-weight: 600;
+  margin: 0;
 }
 
 @media (max-width: 768px) {

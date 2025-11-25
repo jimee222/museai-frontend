@@ -2,12 +2,13 @@ import { Component } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {NgOptimizedImage , CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
 
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, CommonModule],
+  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, CommonModule, LanguageSelectorComponent],
   templateUrl: './header.html',
   styleUrls: ['./header.css']
 })

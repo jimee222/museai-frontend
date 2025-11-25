@@ -36,9 +36,17 @@
           {{ currentArtwork.technique }}
         </p>
 
-        <p class="popup-description">
-          {{ currentArtwork.description }}
-        </p>
+        <div class="popup-description">
+          <p class="translation-status" *ngIf="isTranslating">
+            Traduciendo...
+          </p>
+          <p class="translation-error" *ngIf="translationError">
+            {{ translationError }}
+          </p>
+          <p *ngIf="!translationError && !isTranslating">
+            {{ translatedDescription || currentArtwork.description }}
+          </p>
+        </div>
       </div>
     </div>
   </div>
