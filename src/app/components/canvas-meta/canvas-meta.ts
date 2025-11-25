@@ -26,10 +26,12 @@ export class CanvasMetaComponent {
   @Input() successMessage: string | null = null;
   @Input() isSaving = false;
   @Input() canDelete = false;
+  @Input() isGeneratingDescription = false;
 
   @Output() save = new EventEmitter<void>();
   @Output() download = new EventEmitter<void>();
   @Output() deleteCurrent = new EventEmitter<void>();
+  @Output() generateDescription = new EventEmitter<void>();
 
   onTitleInput(value: string) {
     this.titleChange.emit(value);
@@ -37,5 +39,9 @@ export class CanvasMetaComponent {
 
   onDescriptionInput(value: string) {
     this.descriptionChange.emit(value);
+  }
+
+  onGenerateDescription(): void {
+    this.generateDescription.emit();
   }
 }

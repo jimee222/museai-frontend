@@ -31,9 +31,11 @@
       [successMessage]="successMessage"
       [isSaving]="isSaving"
       [canDelete]="!!currentPaintingId"
+      [isGeneratingDescription]="isGeneratingDescription"
       (save)="saveArtwork()"
       (download)="downloadArtwork()"
       (deleteCurrent)="deleteCurrentPainting()"
+      (generateDescription)="generateDescriptionFromImage()"
     ></app-canvas-meta>
   </section>
 

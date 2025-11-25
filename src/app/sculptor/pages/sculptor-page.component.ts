@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ToolbarComponent } from '../components/toolbar/toolbar.component';
 import { ViewportComponent } from '../components/viewport/viewport.component';
@@ -23,6 +24,8 @@ import {
 } from '../models/sculpture';
 import { BooleanMode, ModifierAction, SculptBrush } from '../models/sculpt-tools';
 import { FormsModule } from '@angular/forms';
+import { AiDescriptionsService } from '../../services/ai-descriptions.service';
+import { LanguagePreferenceService } from '../../services/language-preference.service';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
@@ -140,8 +143,17 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
           />
           <small>Separa las etiquetas con comas</small>
         </label>
-        <label>
-          <span>Descripción</span>
+        <label class="description-field">
+          <div class="label-row">
+            <span>Descripción</span>
+            <button
+              type="button"
+              (click)="generateSculptureDescription()"
+              [disabled]="isGeneratingDescription()"
+            >
+              {{ isGeneratingDescription() ? 'Generando...' : 'Generar descripción' }}
+            </button>
+          </div>
           <textarea
             name="sculptureDescription"
             rows="3"
@@ -302,6 +314,30 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
         gap: 0.35rem;
         font-size: 0.9rem;
       }
+      .save-dialog .description-field {
+        gap: 0.5rem;
+      }
+      .save-dialog .label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .save-dialog .label-row button {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 0.35rem 0.7rem;
+        color: inherit;
+        cursor: pointer;
+      }
+      .save-dialog .label-row button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .save-dialog .label-row button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
       .save-dialog input {
         border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.12);
@@ -349,6 +385,8 @@ export class SculptorPageComponent implements AfterViewInit {
 
   private readonly store = inject(SculptureStoreService);
   private readonly route = inject(ActivatedRoute);
+  private readonly aiDescriptions = inject(AiDescriptionsService);
+  private readonly languagePreference = inject(LanguagePreferenceService);
 
   readonly sculptures = toSignal(this.store.sculptures$, { initialValue: [] as Sculpture[] });
   readonly stats = signal({ fps: 0, triangles: 0 });
@@ -365,6 +403,7 @@ export class SculptorPageComponent implements AfterViewInit {
   readonly workspaceSettings = signal<SculptWorkspaceSettings>({ ...DEFAULT_WORKSPACE });
   readonly saveDialogVisible = signal(false);
   readonly isSavingScene = signal(false);
+  readonly isGeneratingDescription = signal(false);
   saveDialogModel: { name: string; tags: string; description: string } = {
     name: 'Nueva escultura',
     tags: '',
@@ -499,6 +538,39 @@ export class SculptorPageComponent implements AfterViewInit {
     const nextDescription = selected?.description ?? this.saveDialogModel.description;
     this.saveDialogModel = { name: nextName, tags: nextTags, description: nextDescription ?? '' };
     this.saveDialogVisible.set(true);
+  }
+
+  async generateSculptureDescription(): Promise<void> {
+    if (this.isGeneratingDescription()) {
+      return;
+    }
+    const name = this.saveDialogModel.name.trim();
+    const labels = this.parseTags(this.saveDialogModel.tags);
+    if (!name && labels.length === 0) {
+      this.showBanner('error', 'Agrega un nombre o etiquetas para generar una descripción');
+      return;
+    }
+    this.isGeneratingDescription.set(true);
+    try {
+      const language = this.languagePreference.language();
+      const description = await firstValueFrom(
+        this.aiDescriptions.generateSculptureDescription({
+          name: name || 'Escultura sin título',
+          labels,
+          language,
+        }),
+      );
+      if (!description) {
+        throw new Error('Descripción vacía');
+      }
+      this.saveDialogModel.description = description;
+      this.showBanner('success', 'Descripción generada');
+    } catch (error) {
+      console.error('Failed to generate sculpture description', error);
+      this.showBanner('error', 'No se pudo generar la descripción');
+    } finally {
+      this.isGeneratingDescription.set(false);
+    }
   }
 
   async submitSaveDialog(event?: Event): Promise<void> {
