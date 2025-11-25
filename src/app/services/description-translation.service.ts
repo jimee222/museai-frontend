@@ -4,11 +4,13 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import {
   TranslationRequest,
   TranslationResponse,
+  RawTranslationResponse,
 } from '../interfaces/translation';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class DescriptionTranslationService {
-  private readonly url = '/ai/translations/description';
+  private readonly url = `${environment.apiUrl.replace(/\/+$/, '')}/api/ai/translations/description`;
   private readonly cache = new Map<string, TranslationResponse>();
   private readonly supportedLanguages: Array<TranslationRequest['targetLanguage']> = ['es', 'en', 'fr'];
 
@@ -25,12 +27,14 @@ export class DescriptionTranslationService {
       return of(cached);
     }
 
-    return this.http.post<TranslationResponse>(this.url, request).pipe(
+    return this.http.post<RawTranslationResponse>(this.url, request).pipe(
       map((res) => {
+        const payload: RawTranslationResponse = (res as any)?.data ?? res;
+        const translatedText = payload.translatedText ?? payload.translation ?? '';
         const response: TranslationResponse = {
-          artworkId: res.artworkId,
-          targetLanguage: res.targetLanguage,
-          translatedText: res.translatedText,
+          artworkId: payload.artworkId,
+          targetLanguage: payload.targetLanguage,
+          translatedText,
         };
         this.cache.set(cacheKey, response);
         return response;

@@ -856,6 +856,13 @@ private onKeyUp = (event: KeyboardEvent) => {
     this.closePopup();
   }
 
+  get translationStatusText(): string {
+    const lang = this.languagePreference.language();
+    if (lang === 'fr') return 'Traduction en cours...';
+    if (lang === 'en') return 'Translating...';
+    return 'Traduciendo...';
+  }
+
   private translateCurrentArtwork(): void {
     if (!this.currentArtwork?.description) {
       this.translatedDescription = null;
@@ -866,6 +873,14 @@ private onKeyUp = (event: KeyboardEvent) => {
     const targetLanguage = this.languagePreference.language();
     const description = this.currentArtwork.description;
 
+    if (targetLanguage === 'en') {
+      this.translatedDescription = description;
+      this.translationError = null;
+      this.isTranslating = false;
+      return;
+    }
+
+    this.translatedDescription = null;
     this.isTranslating = true;
     this.translationError = null;
 

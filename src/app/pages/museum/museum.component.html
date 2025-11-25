@@ -38,7 +38,7 @@
 
         <div class="popup-description">
           <p class="translation-status" *ngIf="isTranslating">
-            Traduciendo...
+            {{ translationStatusText }}
           </p>
           <p class="translation-error" *ngIf="translationError">
             {{ translationError }}

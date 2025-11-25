@@ -10,3 +10,11 @@ export interface TranslationResponse {
   targetLanguage: TranslationRequest['targetLanguage'];
   translatedText: string;
 }
+
+export interface RawTranslationResponse {
+  artworkId: string;
+  targetLanguage: TranslationRequest['targetLanguage'];
+  translatedText?: string;
+  translation?: string;
+  data?: RawTranslationResponse;
+}
