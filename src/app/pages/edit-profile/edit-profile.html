@@ -1,125 +1,240 @@
-<section class="register-wrap">
-  <aside class="register-media">
-    <div class="panel__img-wrap">
-      <img
-        ngSrc="assets/robotcomputer.webp"
-        width="1" height="1"
-      alt="Robot Editor"
-      class="panel__img"
-      />
-    </div>
-  </aside>
+<div class="register-shell">
+  <section class="register-wrap">
+    <aside class="register-media">
+      <div class="register-media__inner">
+        <div class="register-media__chip">Perfil</div>
 
-  <form class="register-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <header class="reg-header">
-      <img
-        ngSrc="assets/brand/museai-logo.png"
-        width="497" height="497"
-      alt="Muse AI"
-      class="reg-logo"
-      />
-      <h2>Editar Perfil</h2>
-    </header>
+        <div class="register-media__copy">
+          <h2>Actualiza tu perfil creativo.</h2>
+          <p>
+            Modifica tus datos personales y mantén tu experiencia en MuseAI siempre a tu medida.
+          </p>
+        </div>
 
-    <div class="grid">
-      <label>
-        <span>Nombre</span>
-        <input type="text" formControlName="firstName" placeholder="Nombre"/>
-        <small class="error" *ngIf="field('firstName').touched && field('firstName').invalid">
-          Requerido (máx. 60)
-        </small>
-      </label>
+        <ul class="register-media__list">
+          <li>Sincroniza tu información en todos tus dispositivos.</li>
+          <li>Ajusta tus datos de contacto y preferencias.</li>
+          <li>Mantén tu nivel de arte actualizado para mejores recomendaciones.</li>
+        </ul>
 
-      <label>
-        <span>Primer Apellido</span>
-        <input type="text" formControlName="lastName1" placeholder="Primer Apellido"/>
-        <small class="error" *ngIf="field('lastName1').touched && field('lastName1').invalid">
-          Requerido (máx. 60)
-        </small>
-      </label>
+        <!-- Anillo IA, igual al de registro -->
+        <div
+          class="ai-ring"
+          #aiRing
+          (mousemove)="onRingMouseMove($event)"
+          (mouseleave)="onRingMouseLeave()"
+        >
+          <div class="ai-ring-layer outer"></div>
+          <div class="ai-ring-layer mid"></div>
+          <div class="ai-ring-layer inner"></div>
+        </div>
+      </div>
+    </aside>
 
-      <label>
-        <span>Segundo Apellido</span>
-        <input type="text" formControlName="lastName2" placeholder="Segundo Apellido"/>
-      </label>
+    <form
+      class="register-card"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      <header class="reg-header">
+        <img
+          ngSrc="assets/brand/museai-logo.png"
+          width="497"
+          height="497"
+          alt="Muse AI"
+          class="reg-logo"
+        />
+        <div class="titles">
+          <h2>Editar perfil</h2>
+          <p class="subtitle">
+            Modifique sus datos para mantener su perfil actualizado.
+          </p>
+        </div>
+      </header>
 
-      <label>
-        <span>Fecha de Nacimiento</span>
-        <input type="date" formControlName="birthDate"/>
-        <small class="error" *ngIf="field('birthDate').touched && field('birthDate').invalid">
-          Requerida
-        </small>
-      </label>
+      <p class="banner banner--success" *ngIf="apiSuccess()">
+        {{ apiSuccess() }}
+      </p>
+      <p class="banner banner--error" *ngIf="apiError()">
+        {{ apiError() }}
+      </p>
 
-      <label>
-        <span>Correo</span>
-        <input type="email" formControlName="email" placeholder="correo@ejemplo.com"/>
-        <small class="error" *ngIf="field('email').touched && field('email').invalid">
-          Correo válido requerido
-        </small>
-      </label>
-
-      <label>
-        <span>Teléfono</span>
-        <input type="tel" formControlName="phone" placeholder="+506 8888 8888"/>
-        <small class="error" *ngIf="field('phone').touched && field('phone').invalid">
-          Solo números, +, -, espacios (7–20)
-        </small>
-      </label>
-
-    <div class="pwcol" [formGroup]="passwords">
-        <label class="pwfield">
-          <span>Contraseña</span>
-          <div class="pw-input">
-            <input
-              [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
-              placeholder="Mínimo 8 caracteres"
-              autocomplete="new-password"
-            />
-            <button type="button" (click)="toggleShow('password')" class="eye-btn">
-              👁
-            </button>
-          </div>
-          <small class="error" *ngIf="passwords.get('password')?.touched && passwords.get('password')?.invalid">
-            Debe tener mínimo 8 caracteres, 2 mayúsculas, minúsculas y números
+      <div class="grid">
+        <label class="field">
+          <span class="field__label">Nombre</span>
+          <input
+            class="field__input"
+            type="text"
+            formControlName="firstName"
+            placeholder="Nombre"
+          />
+          <small
+            class="error"
+            *ngIf="field('firstName').touched && field('firstName').invalid"
+          >
+            Requerido (máx. 60)
           </small>
         </label>
 
-        <label class="pwfield">
-          <span>Confirmar contraseña</span>
-          <div class="pw-input">
-            <input
-              [type]="showConfirm() ? 'text' : 'password'"
-              formControlName="confirm"
-              placeholder="Repite la contraseña"
-            />
-            <button type="button" (click)="toggleShow('confirm')" class="eye-btn">
-              👁
-            </button>
-          </div>
-          <small class="error" *ngIf="passwords.errors?.['mismatch']">
-            Las contraseñas no coinciden
+        <label class="field">
+          <span class="field__label">Primer apellido</span>
+          <input
+            class="field__input"
+            type="text"
+            formControlName="lastName1"
+            placeholder="Primer apellido"
+          />
+          <small
+            class="error"
+            *ngIf="field('lastName1').touched && field('lastName1').invalid"
+          >
+            Requerido (máx. 60)
+          </small>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Segundo apellido</span>
+          <input
+            class="field__input"
+            type="text"
+            formControlName="lastName2"
+            placeholder="Segundo apellido"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Fecha de nacimiento</span>
+          <input
+            class="field__input"
+            type="date"
+            formControlName="birthDate"
+          />
+          <small
+            class="error"
+            *ngIf="
+              field('birthDate').touched &&
+              field('birthDate').errors?.['required']
+            "
+          >
+            Requerida
+          </small>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Correo</span>
+          <input
+            class="field__input"
+            type="email"
+            formControlName="email"
+            placeholder="correo@ejemplo.com"
+          />
+          <small
+            class="error"
+            *ngIf="field('email').touched && field('email').invalid"
+          >
+            Correo válido requerido
+          </small>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Teléfono</span>
+          <input
+            class="field__input"
+            type="tel"
+            formControlName="phone"
+            placeholder="+506 8888 8888"
+          />
+          <small
+            class="error"
+            *ngIf="field('phone').touched && field('phone').invalid"
+          >
+            Solo números, +, -, espacios (7–20)
+          </small>
+        </label>
+
+        <div class="pwcol" [formGroup]="passwords">
+          <label class="field pwfield">
+            <span class="field__label">Contraseña</span>
+            <div class="pw-input">
+              <input
+                class="field__input"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Mínimo 8 caracteres"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                (click)="toggleShow('password')"
+                class="eye-btn"
+                aria-label="Mostrar u ocultar contraseña"
+              >
+                👁
+              </button>
+            </div>
+            <small
+              class="error"
+              *ngIf="
+                passwords.get('password')?.touched &&
+                passwords.get('password')?.invalid
+              "
+            >
+              Debe tener mínimo 8 caracteres, 2 mayúsculas, minúsculas y números.
+            </small>
+          </label>
+
+          <label class="field pwfield">
+            <span class="field__label">Confirmar contraseña</span>
+            <div class="pw-input">
+              <input
+                class="field__input"
+                [type]="showConfirm() ? 'text' : 'password'"
+                formControlName="confirm"
+                placeholder="Repite la contraseña"
+              />
+              <button
+                type="button"
+                (click)="toggleShow('confirm')"
+                class="eye-btn"
+                aria-label="Mostrar u ocultar confirmación de contraseña"
+              >
+                👁
+              </button>
+            </div>
+            <small class="error" *ngIf="passwords.errors?.['mismatch']">
+              Las contraseñas no coinciden
+            </small>
+          </label>
+        </div>
+
+        <label class="field level">
+          <span class="field__label">Nivel de conocimiento en arte</span>
+          <select
+            class="field__input field__input--select"
+            formControlName="artLevel"
+          >
+            <option value="" disabled>Selecciona…</option>
+            <option *ngFor="let lv of levels" [value]="lv.value">
+              {{ lv.label }}
+            </option>
+          </select>
+          <small
+            class="error"
+            *ngIf="field('artLevel').touched && field('artLevel').invalid"
+          >
+            Selecciona un nivel
           </small>
         </label>
       </div>
 
-      <label class="level">
-        <span>Nivel de conocimiento en arte</span>
-        <select formControlName="artLevel">
-          <option value="" disabled>Selecciona…</option>
-          <option *ngFor="let lv of levels" [value]="lv.value">{{ lv.label }}</option>
-        </select>
-        <small class="error" *ngIf="field('artLevel').touched && field('artLevel').invalid">
-          Selecciona un nivel
-        </small>
-      </label>
-    </div>
-    <button class="btn btn-primary submit"
+      <button
+        class="btn btn-primary submit"
         type="submit"
-        [disabled]="form.invalid || submitting()">
-      {{ submitting() ? 'Editando Perfil...' : 'Editar' }}
-    </button>
-    
-  </form>
-</section>
+        [disabled]="!canSubmit()"
+      >
+        {{ submitting() ? 'Editando perfil…' : 'Guardar cambios' }}
+      </button>
+    </form>
+  </section>
+</div>
