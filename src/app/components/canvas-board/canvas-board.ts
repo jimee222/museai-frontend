@@ -48,8 +48,13 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
 
   private canvas!: fabric.Canvas;
   private resizeObserver?: ResizeObserver;
+
+  // para fallback del borrador si no existe EraserBrush nativo
   private readonly fallbackEraseColor = '#FFFFFF';
-  private readonly targetHeight = 520;
+
+  // proporción tipo lienzo (3:2) con topes
+  private readonly minHeight = 420;
+  private readonly maxHeight = 720;
 
   private drawingShape = false;
   private shapeOriginX = 0;
@@ -69,7 +74,6 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver.observe(container);
     this.fitToContainer();
 
-    // aplicar tool inicial
     this.applyTool();
     this.applyBrushStyle();
   }
@@ -85,7 +89,7 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /* ───────── API pública para el parent ───────── */
+  /* ───────── API pública ───────── */
 
   clearCanvas() {
     if (!this.canvas) return;
@@ -99,25 +103,15 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
   }
 
   getPreviewDataUrl(multiplier = 0.35): string {
-    return this.canvas.toDataURL({
-      format: 'png',
-      quality: 0.85,
-      multiplier,
-    });
+    return this.canvas.toDataURL({ format: 'png', quality: 0.85, multiplier });
   }
 
   getExportPng(): string {
-    return this.canvas.toDataURL({
-      format: 'png',
-      quality: 1.0,
-      multiplier: 2,
-    });
+    return this.canvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 2 });
   }
 
   loadFromSceneJson(sceneJson: string) {
-    this.canvas.loadFromJSON(sceneJson, () => {
-      this.canvas.renderAll();
-    });
+    this.canvas.loadFromJSON(sceneJson, () => this.canvas.renderAll());
   }
 
   /* ───────── Fabric init ───────── */
@@ -141,17 +135,29 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     this.canvas.on('path:created', this.handlePathCreated);
   }
 
+  /**
+   * Ajusta el tamaño del Canvas para que:
+   * - Tenga el mismo ancho máximo que la toolbar (var --creator-max-width)
+   * - Mantenga proporción 3:2 (alto = ancho*2/3)
+   * - Respete topes de altura para pantallas extremas
+   */
   private fitToContainer(): void {
-    const parent = this.canvasRef.nativeElement.parentElement!;
-    const width = Math.floor(parent.clientWidth);
+    const parent = this.canvasRef.nativeElement.parentElement!; // .canvas-card
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--creator-max-width').trim();
+    const maxWidth = cssVar ? parseInt(cssVar) : 1100;
+
+    const width = Math.min(parent.clientWidth, maxWidth);
+
+    let height = Math.floor(width * 0.45); 
+    height = Math.max(360, Math.min(height, 600));
 
     this.canvas.setWidth(width);
-    this.canvas.setHeight(this.targetHeight);
+    this.canvas.setHeight(height);
 
     const container = this.canvas.getElement().parentElement as HTMLDivElement;
     if (container) {
       container.style.width = '100%';
-      container.style.height = `${this.targetHeight}px`;
+      container.style.height = `${height}px`;
       container.style.margin = '0 auto';
     }
 
@@ -243,9 +249,7 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
       }
     } else if (this._tool === 'eraser') {
       const anyFabric = fabric as any;
-      const hasNative =
-        !!anyFabric.EraserBrush && brush instanceof anyFabric.EraserBrush;
-
+      const hasNative = !!anyFabric.EraserBrush && brush instanceof anyFabric.EraserBrush;
       if (!hasNative) {
         brush.color = this.fallbackEraseColor;
         brush.opacity = 1;
@@ -270,49 +274,23 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     if (this._tool === 'line') {
       this.currentShape = new fabric.Line(
         [this.shapeOriginX, this.shapeOriginY, this.shapeOriginX, this.shapeOriginY],
-        {
-          stroke: strokeColor,
-          strokeWidth: this._lineWidth,
-          selectable: false,
-          evented: false,
-          erasable: true,
-        }
+        { stroke: strokeColor, strokeWidth: this._lineWidth, selectable: false, evented: false, erasable: true }
       );
     } else if (this._tool === 'rect') {
       this.currentShape = new fabric.Rect({
-        left: this.shapeOriginX,
-        top: this.shapeOriginY,
-        width: 1,
-        height: 1,
-        fill: 'rgba(0,0,0,0)',
-        stroke: strokeColor,
-        strokeWidth: this._lineWidth,
-        originX: 'left',
-        originY: 'top',
-        selectable: false,
-        evented: false,
-        erasable: true,
+        left: this.shapeOriginX, top: this.shapeOriginY, width: 1, height: 1,
+        fill: 'rgba(0,0,0,0)', stroke: strokeColor, strokeWidth: this._lineWidth,
+        originX: 'left', originY: 'top', selectable: false, evented: false, erasable: true,
       });
     } else if (this._tool === 'circle') {
       this.currentShape = new fabric.Ellipse({
-        left: this.shapeOriginX,
-        top: this.shapeOriginY,
-        rx: 1,
-        ry: 1,
-        fill: 'rgba(0,0,0,0)',
-        stroke: strokeColor,
-        strokeWidth: this._lineWidth,
-        originX: 'center',
-        originY: 'center',
-        selectable: false,
-        evented: false,
-        erasable: true,
+        left: this.shapeOriginX, top: this.shapeOriginY, rx: 1, ry: 1,
+        fill: 'rgba(0,0,0,0)', stroke: strokeColor, strokeWidth: this._lineWidth,
+        originX: 'center', originY: 'center', selectable: false, evented: false, erasable: true,
       });
     }
 
-    if (this.currentShape) {
-      this.canvas.add(this.currentShape);
-    }
+    if (this.currentShape) this.canvas.add(this.currentShape);
   }
 
   private onMouseMove(opt: any): void {
@@ -350,15 +328,14 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     this.canvas.renderAll();
   }
 
-  /* ───────── path created (pinceles) ───────── */
+  /* ───────── Pinceles (path creado) ───────── */
 
   private onPathCreated(e: any): void {
     const path = e?.path as fabric.Object | undefined;
     if (!path) return;
 
     const brush: any = this.canvas.freeDrawingBrush;
-    const isFallbackEraser =
-      this._tool === 'eraser' && brush && brush.isFallbackEraser;
+    const isFallbackEraser = this._tool === 'eraser' && brush && brush.isFallbackEraser;
 
     if (isFallbackEraser) {
       const objectsToRemove = this.canvas
@@ -373,10 +350,7 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     path.set({ erasable: true });
 
     if (this._tool === 'eraser') {
-      path.set({
-        selectable: false,
-        evented: false,
-      });
+      path.set({ selectable: false, evented: false });
     }
   }
 }

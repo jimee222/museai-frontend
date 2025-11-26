@@ -1,74 +1,121 @@
+:host {
+  font-family: 'Montserrat', system-ui, sans-serif;
+}
+
+/* ====== NAVBAR GLASS AUTOMÁTICO IA ====== */
 .nav {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 99;
   display: flex;
   align-items: center;
-  padding: 8px 20px;
-  background: var(--secondary-color);
-  color: var(--text);
+  width: 100%;
+  padding: 10px 22px;
+
+  /* Transparencia pura (se mezcla con el fondo real del componente) */
+  background: rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(14px) saturate(1.45);
+  -webkit-backdrop-filter: blur(14px) saturate(1.45);
+
+  /* SIN bordes ni sombras */
+  border: none;
+  box-shadow: none;
+  transition: background .22s ease, backdrop-filter .22s ease;
 }
 
+/* ====== ESTADO SCROLLED (IA REACTIVA) ====== */
+.nav.nav--scrolled {
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+
+  /* Glow dorado suave */
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.85),
+    0 1px 0 rgba(255, 214, 120, 0.45);
+}
+
+/* ====== MARCA ====== */
 .brand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: inherit;
+  color: #fff5d9;
   font-weight: 800;
+  letter-spacing: 0.4px;
 }
 
 .brand__logo {
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 112, 0.35));
 }
 
 .brand__name {
-  font-size: 1rem;
+  font-size: 1.02rem;
+  color: #e3e3e3;
 }
 
+/* ====== LINKS ====== */
 .links {
   margin-left: auto;
-  display: flex;              
+  display: flex;
   align-items: center;
-  gap: 36px;                  
+  gap: 32px;
 }
 
 .links a {
   text-decoration: none;
-  color: inherit;
   font-weight: 700;
-  opacity: 0.95;
-  transition: opacity 0.2s ease, text-decoration 0.2s ease;
+  color: rgba(255, 245, 217, 0.82);
+  font-size: 0.92rem;
+  opacity: 0.75;
+  padding: 3px 0;
+  transition: opacity .2s ease, color .2s ease;
 }
 
 .links a:hover,
 .links a.active {
   opacity: 1;
-  text-decoration: underline;
+  color: #fff9ed;
 }
 
-
-.links .guest-links,
-.links .auth-links {
-  display: flex;
-  align-items: center;
-  gap: 20px;  
+/* ====== BOTÓN CERRAR SESIÓN ====== */
+.logout-btn {
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(255,255,255,0.05);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #fff8df;
+  font-weight: 700;
+  transition: background .18s ease, border-color .18s ease;
 }
 
-[hidden] {
-  display: none !important;
-}.logout-btn{
-  border:1px solid rgba(255,255,255,.65);
-  background:transparent;
-  color:inherit;
-  font-weight:700;
-  padding:6px 14px;
-  border-radius:999px;
-  cursor:pointer;
-  transition:background .2s ease, opacity .2s ease;
+.logout-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,.75);
 }
-.logout-btn:hover{
-  background:rgba(255,255,255,.15);
-  opacity:1;
+
+/* ====== MOBILE ====== */
+@media (max-width: 768px) {
+  .nav {
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.08);
+  }
+
+  .brand__name {
+    display: none;
+  }
+
+  .links {
+    gap: 16px;
+  }
+
+  .links a {
+    font-size: 0.85rem;
+  }
 }

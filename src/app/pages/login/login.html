@@ -1,89 +1,131 @@
-<section class="login-wrap">
-  <aside class="login-media">
-    <div class="panel__img-wrap">
-      <img
-        ngSrc="assets/arteiaVertical.webp"
-        width="768" height="768"
-        priority
-        alt="Arte e IA"
-        class="panel__img"
-      />
-    </div>
-  </aside>
+<div class="login-shell">
+  <section class="login-wrap">
+    <aside class="login-media">
+      <div class="login-media__inner">
+        <div class="login-media__chip">MUSEO CREATIVO . IA</div>
 
-  <form
-    class="login-card"
-    #loginNgForm="ngForm"
-    (ngSubmit)="handleLogin($event)"
-    novalidate
-  >
-    <header class="log-header">
-      <img ngSrc="assets/brand/museai-logo.png" width="497" height="497" alt="Muse AI" class="log-logo" />
-      <div class="titles">
-        <h3>Iniciar Sesión</h3>
+        <div class="login-media__copy">
+          <h2>Diseñe su museo 3D con inteligencia artificial.</h2>
+          <p>
+            Inicie sesión para continuar explorando sus galerías y obras
+            generadas con IA.
+          </p>
+        </div>
+        <div
+  #aiRing
+  class="ai-ring recover-orb"
+  (mousemove)="onRingMouseMove($event)"
+  (mouseleave)="onRingMouseLeave()"
+>
+  <div class="ai-ring-layer outer"></div>
+  <div class="ai-ring-layer mid"></div>
+  <div class="ai-ring-layer inner"></div>
+</div>
+
+
       </div>
+    </aside>
+
+    <form
+      class="login-card"
+      #loginNgForm="ngForm"
+      (ngSubmit)="handleLogin($event)"
+      novalidate
+    >
+      <header class="log-header">
+        <div class="log-header__brand">
+          <img
+            ngSrc="assets/brand/museai-logo.png"
+            width="497"
+            height="497"
+            alt="Muse AI"
+            class="log-logo"
+          />
+          <div class="titles">
+            <h3>Iniciar sesión</h3>
+          </div>
+        </div>
+        <p class="log-header__subtitle">
+          Acceda a su panel creativo y continúe donde dejó su última obra.
+        </p>
+      </header>
+
       <div class="oauth-sep"></div>
-    </header>
 
-    <label>
-      <span>Usuario</span>
-      <input
-        type="email"
-        name="email"
-        required
-        email
-        placeholder="correo@ejemplo.com"
-        autocomplete="username"
-        [(ngModel)]="loginForm.email"
-        #email="ngModel"
-      />
-      <small class="error" *ngIf="email.touched && email.invalid">
-        Ingrese un correo válido.
-      </small>
-    </label>
+      <div class="form-grid">
+        <label class="field">
+          <span class="field__label">Usuario</span>
+          <input
+            class="field__input"
+            type="email"
+            name="email"
+            required
+            email
+            placeholder="correo@ejemplo.com"
+            autocomplete="username"
+            [(ngModel)]="loginForm.email"
+            #email="ngModel"
+          />
+          <small class="error" *ngIf="email.touched && email.invalid">
+            Ingrese un correo válido.
+          </small>
+        </label>
 
-    <label>
-      <span>Contraseña</span>
-      <input
-        type="password"
-        name="password"
-        required
-        minlength="8"
-        placeholder="••••••••"
-        autocomplete="current-password"
-        [(ngModel)]="loginForm.password"
-        #password="ngModel"
-      />
-      <small class="error" *ngIf="password.touched && password.invalid">
-        Contraseña requerida (mínimo 8 caracteres).
-      </small>
-    </label>
+        <label class="field">
+          <span class="field__label">Contraseña</span>
+          <input
+            class="field__input"
+            type="password"
+            name="password"
+            required
+            minlength="8"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            [(ngModel)]="loginForm.password"
+            #password="ngModel"
+          />
+          <small class="error" *ngIf="password.touched && password.invalid">
+            Contraseña requerida (mínimo 8 caracteres).
+          </small>
+        </label>
+      </div>
 
-    <div class="row">
-      <label class="remember">
-        <input
-          type="checkbox"
-          name="remember"
-          [(ngModel)]="loginForm.remember"
-        />
-        <span>Recordarme</span>
-      </label>
-      <button type="button" class="link link-button" (click)="goToRecover()">¿Olvidó su contraseña?</button>
-    </div>
+      <div class="row row--aux">
+        <label class="remember">
+          <input
+            type="checkbox"
+            name="remember"
+            [(ngModel)]="loginForm.remember"
+          />
+          <span>Recordarme</span>
+        </label>
+        <button
+          type="button"
+          class="link link-button"
+          (click)="goToRecover()"
+        >
+          ¿Olvidó su contraseña?
+        </button>
+      </div>
 
-    <p class="error" *ngIf="loginError">
-      {{ loginError }}
-    </p>
+      <p class="error error--global" *ngIf="loginError">
+        {{ loginError }}
+      </p>
 
-    <button class="btn btn-primary submit" type="submit">
-      {{ isSubmitting ? 'Ingresando…' : 'Iniciar Sesión' }}
-    </button>
+      <button
+        class="btn btn-primary submit"
+        type="submit"
+        [disabled]="isSubmitting"
+      >
+        {{ isSubmitting ? 'Ingresando…' : 'Iniciar Sesión' }}
+      </button>
 
-    <p class="hint">
-      ¿No tiene cuenta? <a routerLink="/register" class="link">Regístrese</a>
-    </p>
+      <p class="hint">
+        ¿No tiene cuenta?
+        <a routerLink="/register" class="link">Regístrese</a>
+      </p>
 
-    <!-- 🔹 Botón oficial de Google renderizado por el SDK -->
-    <div id="googleButtonDiv" style="margin-top: 10px; display: flex; justify-content: center;"></div>
-  </form>
-</section>
+      <div id="googleButtonDiv"></div>
+    </form>
+  </section>
+</div>

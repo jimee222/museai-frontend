@@ -1,171 +1,229 @@
-<section class="recover-wrap">
-  <aside class="recover-media">
-    <div class="panel__img-wrap">
-      <img
-        ngSrc="assets/arteiaVertical.webp"
-        width="768"
-        height="768"
-        priority
-        alt="Arte e IA"
-        class="panel__img"
-      />
-    </div>
-  </aside>
+<div class="recover-shell">
+  <section class="recover-wrap">
+    <aside class="recover-media">
+      <div class="recover-media__inner">
+        <div class="recover-media__chip">Recuperar acceso</div>
 
-  <div class="recover-card">
-    <header class="rec-header">
-      <img
-        ngSrc="assets/brand/museai-logo.png"
-        width="497"
-        height="497"
-        alt="Muse AI"
-        class="rec-logo"
-      />
-      <div class="titles">
-        <h3>Recuperar contraseña</h3>
-        <p class="subtitle" *ngIf="step() === 'request'">
-          Ingrese el correo asociado a su cuenta para recibir un código de verificación.
-        </p>
-        <p class="subtitle" *ngIf="step() === 'reset'">
-          Introduzca el código recibido y defina una nueva contraseña segura.
-        </p>
+        <div class="recover-media__copy">
+          <h2>¿Olvidó su contraseña?</h2>
+          <p>
+            Le enviaremos un código seguro a su correo para que pueda restablecer su acceso y
+            continuar explorando MuseAI.
+          </p>
+        </div>
+        <div
+          class="ai-ring"
+          #aiRing
+          (mousemove)="onRingMouseMove($event)"
+          (mouseleave)="onRingMouseLeave()"
+        >
+          <div class="ai-ring-layer outer"></div>
+          <div class="ai-ring-layer mid"></div>
+          <div class="ai-ring-layer inner"></div>
+        </div>
       </div>
-    </header>
+    </aside>
 
-    <form
-      *ngIf="step() === 'request'; else resetStep"
-      class="recover-form"
-      [formGroup]="requestForm"
-      (ngSubmit)="submitRequest()"
-      novalidate
-    >
-      <p class="banner success" *ngIf="requestSuccess()">
-        {{ requestSuccess() }}
-      </p>
-      <p class="banner error" *ngIf="requestError()">
-        {{ requestError() }}
-      </p>
-
-      <label>
-        <span>Correo electrónico</span>
-        <input
-          type="email"
-          formControlName="email"
-          placeholder="correo@ejemplo.com"
-          autocomplete="username"
+    <div class="recover-card">
+      <header class="rec-header">
+        <img
+          ngSrc="assets/brand/museai-logo.png"
+          width="497"
+          height="497"
+          alt="Muse AI"
+          class="rec-logo"
         />
-        <small class="hint error" *ngIf="field(requestForm, 'email').touched && field(requestForm, 'email').invalid">
-          Ingrese un correo válido.
-        </small>
-      </label>
+        <div class="titles">
+          <h3>Recuperar contraseña</h3>
+          <p class="subtitle" *ngIf="step() === 'request'">
+            Ingrese el correo asociado a su cuenta para recibir un código de verificación.
+          </p>
+          <p class="subtitle" *ngIf="step() === 'reset'">
+            Introduzca el código recibido y defina una nueva contraseña segura.
+          </p>
+        </div>
+      </header>
 
-      <button class="btn btn-primary submit" type="submit" [disabled]="requesting()">
-        {{ requesting() ? 'Enviando…' : 'Enviar código' }}
-      </button>
-
-      <p class="hint link-row">
-        ¿Ya recordó su contraseña?
-        <a routerLink="/login" class="link">Volver a iniciar sesión</a>
-      </p>
-    </form>
-
-    <ng-template #resetStep>
-      <form class="recover-form" [formGroup]="resetForm" (ngSubmit)="submitReset()" novalidate>
-        <p class="banner success" *ngIf="resetSuccess()">
-          {{ resetSuccess() }}
+      <form
+        *ngIf="step() === 'request'; else resetStep"
+        class="recover-form"
+        [formGroup]="requestForm"
+        (ngSubmit)="submitRequest()"
+        novalidate
+      >
+        <p class="banner banner--success" *ngIf="requestSuccess()">
+          {{ requestSuccess() }}
         </p>
-        <p class="banner error" *ngIf="resetError()">
-          {{ resetError() }}
+        <p class="banner banner--error" *ngIf="requestError()">
+          {{ requestError() }}
         </p>
 
-        <label>
-          <span>Correo electrónico</span>
+        <label class="field">
+          <span class="field__label">Correo electrónico</span>
           <input
+            class="field__input"
             type="email"
             formControlName="email"
-            readonly
+            placeholder="correo@ejemplo.com"
             autocomplete="username"
           />
-          <small class="hint error" *ngIf="field(resetForm, 'email').touched && field(resetForm, 'email').invalid">
-            El correo es obligatorio.
+          <small
+            class="hint error"
+            *ngIf="
+              field(requestForm, 'email').touched &&
+              field(requestForm, 'email').invalid
+            "
+          >
+            Ingrese un correo válido.
           </small>
         </label>
 
-        <label>
-          <span>Código de verificación</span>
-          <input
-            type="text"
-            formControlName="code"
-            maxlength="6"
-            placeholder="ABC123"
-          />
-          <small class="hint error" *ngIf="field(resetForm, 'code').touched && field(resetForm, 'code').invalid">
-            Ingresa el código de 6 caracteres enviado a tu correo.
-          </small>
-        </label>
-
-        <div formGroupName="passwords" class="passwords-group">
-          <label>
-            <span>Nueva contraseña</span>
-            <input
-              type="password"
-              formControlName="password"
-              placeholder="••••••••"
-              autocomplete="new-password"
-            />
-            <small
-              class="hint error"
-              *ngIf="
-                passwordsGroup().get('password')?.touched &&
-                passwordsGroup().get('password')?.invalid
-              "
-            >
-              Debe contener al menos 8 caracteres, una mayúscula, una minúscula y un número.
-            </small>
-          </label>
-
-          <label>
-            <span>Confirmar contraseña</span>
-            <input
-              type="password"
-              formControlName="confirm"
-              placeholder="••••••••"
-              autocomplete="new-password"
-            />
-            <small
-              class="hint error"
-              *ngIf="
-                passwordsGroup().get('confirm')?.touched &&
-                passwordsGroup().get('confirm')?.invalid
-              "
-            >
-              Confirme su contraseña.
-            </small>
-          </label>
-        </div>
-
-        <small
-          class="hint error"
-          *ngIf="passwordsGroup().touched && passwordsGroup().errors?.['mismatch']"
+        <button
+          class="btn btn-primary submit"
+          type="submit"
+          [disabled]="requesting()"
         >
-          Las contraseñas no coinciden.
-        </small>
-
-        <button class="btn btn-primary submit" type="submit" [disabled]="resetting()">
-          {{ resetting() ? 'Actualizando…' : 'Restablecer contraseña' }}
+          {{ requesting() ? 'Enviando…' : 'Enviar código' }}
         </button>
 
         <p class="hint link-row">
-          ¿Necesita reenviar el código?
-          <button class="link link-button" type="button" (click)="backToRequest()" [disabled]="resetting()">
-            Solicitar uno nuevo
-          </button>
-        </p>
-        <p class="hint">
-          ¿Recordó su contraseña?
+          ¿Ya recordó su contraseña?
           <a routerLink="/login" class="link">Volver a iniciar sesión</a>
         </p>
       </form>
-    </ng-template>
-  </div>
-</section>
+
+      <ng-template #resetStep>
+        <form
+          class="recover-form"
+          [formGroup]="resetForm"
+          (ngSubmit)="submitReset()"
+          novalidate
+        >
+          <p class="banner banner--success" *ngIf="resetSuccess()">
+            {{ resetSuccess() }}
+          </p>
+          <p class="banner banner--error" *ngIf="resetError()">
+            {{ resetError() }}
+          </p>
+
+          <label class="field">
+            <span class="field__label">Correo electrónico</span>
+            <input
+              class="field__input"
+              type="email"
+              formControlName="email"
+              readonly
+              autocomplete="username"
+            />
+            <small
+              class="hint error"
+              *ngIf="
+                field(resetForm, 'email').touched &&
+                field(resetForm, 'email').invalid
+              "
+            >
+              El correo es obligatorio.
+            </small>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Código de verificación</span>
+            <input
+              class="field__input"
+              type="text"
+              formControlName="code"
+              maxlength="6"
+              placeholder="ABC123"
+            />
+            <small
+              class="hint error"
+              *ngIf="
+                field(resetForm, 'code').touched &&
+                field(resetForm, 'code').invalid
+              "
+            >
+              Ingresa el código de 6 caracteres enviado a tu correo.
+            </small>
+          </label>
+
+          <div formGroupName="passwords" class="passwords-group">
+            <label class="field">
+              <span class="field__label">Nueva contraseña</span>
+              <input
+                class="field__input"
+                type="password"
+                formControlName="password"
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              <small
+                class="hint error"
+                *ngIf="
+                  passwordsGroup().get('password')?.touched &&
+                  passwordsGroup().get('password')?.invalid
+                "
+              >
+                Debe contener al menos 8 caracteres, una mayúscula, una
+                minúscula y un número.
+              </small>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Confirmar contraseña</span>
+              <input
+                class="field__input"
+                type="password"
+                formControlName="confirm"
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              <small
+                class="hint error"
+                *ngIf="
+                  passwordsGroup().get('confirm')?.touched &&
+                  passwordsGroup().get('confirm')?.invalid
+                "
+              >
+                Confirme su contraseña.
+              </small>
+            </label>
+          </div>
+
+          <small
+            class="hint error"
+            *ngIf="
+              passwordsGroup().touched &&
+              passwordsGroup().errors?.['mismatch']
+            "
+          >
+            Las contraseñas no coinciden.
+          </small>
+
+          <button
+            class="btn btn-primary submit"
+            type="submit"
+            [disabled]="resetting()"
+          >
+            {{ resetting() ? 'Actualizando…' : 'Restablecer contraseña' }}
+          </button>
+
+          <p class="hint link-row">
+            ¿Necesita reenviar el código?
+            <button
+              class="link link-button"
+              type="button"
+              (click)="backToRequest()"
+              [disabled]="resetting()"
+            >
+              Solicitar uno nuevo
+            </button>
+          </p>
+          <p class="hint">
+            ¿Recordó su contraseña?
+            <a routerLink="/login" class="link">Volver a iniciar sesión</a>
+          </p>
+        </form>
+      </ng-template>
+    </div>
+  </section>
+</div>

@@ -1,32 +1,34 @@
-<nav class="nav">
-  <a class="brand" routerLink="/" aria-label="Ir a inicio">
-    <img ngSrc="/assets/brand/museai-logo.png" width="40" height="40" alt="Muse AI" />
-    <span class="brand__name">Muse AI</span>
+<nav class="nav" [class.nav--scrolled]="scrolled">
+  <a class="brand" routerLink="/" aria-label="Ir al inicio">
+    <img
+      ngSrc="/assets/brand/museai-logo-solo.png"
+      width="40"
+      height="40"
+      alt="Muse AI"
+      class="brand__logo"
+    />
+    <span class="brand__name">MuseAI</span>
   </a>
 
   <div class="links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Inicio
+    </a>
 
-   
-   <div class="guest-links" *ngIf="!isAuthenticated">
-  <a routerLink="/login" routerLinkActive="active">Login</a>
-  <a routerLink="/register" routerLinkActive="active">Registro</a>
-</div>
+    <ng-container *ngIf="!isAuthenticated">
+      <a routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
+      <a routerLink="/register" routerLinkActive="active">Crear cuenta</a>
+    </ng-container>
 
-    
-<!-- <a *ngIf="isAuthenticated" routerLink="/app/menu" routerLinkActive="active">Menú</a> -->
-<a *ngIf="isAuthenticated" routerLink="/museum" routerLinkActive="active">Explora 3D</a>
-<a *ngIf="isAuthenticated" routerLink="/create-canvas" routerLinkActive="active">Lienzo</a>
-<!-- <a *ngIf="isAuthenticated" routerLink="/quiz" routerLinkActive="active">Quiz</a> -->
-<a *ngIf="isAuthenticated" routerLink="/app/profile" routerLinkActive="active">Perfil</a>
+    <ng-container *ngIf="isAuthenticated">
+      <a routerLink="/museum" routerLinkActive="active">Explora 3D</a>
+      <a routerLink="/create-canvas" routerLinkActive="active">Lienzo</a>
+      <a routerLink="/app/profile" routerLinkActive="active">Perfil</a>
+    </ng-container>
 
     <app-language-selector></app-language-selector>
-    <button
-      type="button"
-      class="logout-btn"
-      *ngIf="isAuthenticated"
-      (click)="logout()"
-    >
+
+    <button type="button" class="logout-btn" *ngIf="isAuthenticated" (click)="logout()">
       Cerrar sesión
     </button>
   </div>

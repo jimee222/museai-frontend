@@ -6,14 +6,11 @@
     </p>
   </div>
 
-  <div *ngIf="errorMessage" class="alert alert--error">
-    {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage" class="alert alert--success">
-    {{ successMessage }}
-  </div>
+  <!-- Mensajes -->
+  <div *ngIf="errorMessage" class="alert alert--error">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert--success">{{ successMessage }}</div>
 
-  <!-- TÍTULO -->
+  <!-- 🖋️ TÍTULO -->
   <div class="meta__row">
     <label for="titulo" class="meta__label">Título de la obra</label>
     <input
@@ -29,23 +26,28 @@
     </small>
   </div>
 
-  <!-- DESCRIPCIÓN -->
+  <!-- 🧠 DESCRIPCIÓN + BOTÓN IA -->
   <div class="meta__row">
     <div class="meta__label-row">
       <label for="desc" class="meta__label">Descripción de la obra</label>
-      <!-- TODO: hook IA después -->
-        <button type="button" class="btn btn--ghost">
-          <span class="btn__icon">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 3L13.5 8.5L19 10L13.5 11.5L12 17L10.5 11.5L5 10L10.5 8.5L12 3Z"
-                stroke="#22d3ee"
-                stroke-width="1.6"
-                stroke-linejoin="round" />
-            </svg>
-          </span>
-          <span>Auto descripción AI</span>
-        </button>
+
+      <button type="button" class="btn--ai" (click)="requestAIDescription.emit()">
+        <span class="btn__icon">
+          <!-- 🌟 Estrella IA celeste -->
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2L13.5 8L19 9L13.5 10L12 16L10.5 10L5 9L10.5 8L12 2Z"
+              stroke="#71cfff"
+              stroke-width="1.6"
+              stroke-linejoin="round"
+            />
+            <circle cx="12" cy="12" r="3" fill="#71cfff">
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </span>
+        <span>Auto descripción IA</span>
+      </button>
     </div>
 
     <textarea
@@ -61,7 +63,7 @@
     </small>
   </div>
 
-  <!-- ACCIONES -->
+  <!-- 🎨 ACCIONES -->
   <div class="meta__actions">
     <button type="button" class="btn btn--primary" (click)="save.emit()" [disabled]="isSaving">
       <span class="btn__icon">
@@ -110,12 +112,7 @@
       <span>Descargar obra de arte</span>
     </button>
 
-    <button
-      *ngIf="canDelete"
-      type="button"
-      class="btn danger"
-      (click)="deleteCurrent.emit()"
-    >
+    <button *ngIf="canDelete" type="button" class="btn danger" (click)="deleteCurrent.emit()">
       <span class="btn__icon">
         <svg viewBox="0 0 24 24" fill="none">
           <path

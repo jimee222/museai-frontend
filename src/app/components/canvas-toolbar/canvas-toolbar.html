@@ -3,39 +3,24 @@
   <div class="tool-group">
     <span class="lbl">Modo</span>
 
-    <button
-      type="button"
-      class="btn btn--ghost"
-      [class.active]="tool === 'select'"
-      (click)="setTool('select')"
-    >
+    <button type="button" class="btn btn--ghost"
+            [class.active]="tool === 'select'" (click)="setTool('select')">
       <span class="btn__icon">
         <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M6 4L18 12L11.5 13.5L10 20L6 4Z"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
+          <path d="M6 4L18 12L11.5 13.5L10 20L6 4Z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </span>
       <span>Cursor</span>
     </button>
 
-    <button
-      type="button"
-      class="btn btn--ghost"
-      [class.active]="isBrushTool(tool) && tool !== 'eraser'"
-      (click)="setTool('pencil')"
-    >
+    <button type="button" class="btn btn--ghost"
+            [class.active]="isBrushTool(tool) && tool !== 'eraser'"
+            (click)="setTool('pencil')">
       <span class="btn__icon">
         <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M4 17.5L15.5 6L18 8.5L6.5 20L4 20L4 17.5Z"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
+          <path d="M4 17.5L15.5 6L18 8.5L6.5 20L4 20L4 17.5Z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </span>
       <span>Dibujo libre</span>
@@ -49,50 +34,30 @@
     <span class="lbl">Pinceles</span>
 
     <div class="brush-strip">
-      <button
-        type="button"
-        class="btn btn--chip"
-        [class.active]="tool === 'pencil'"
-        (click)="setTool('pencil')"
-      >
+      <button type="button" class="btn btn--chip"
+              [class.active]="tool === 'pencil'" (click)="setTool('pencil')">
         <span class="btn__icon">
           <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 17.5L15.5 6L18 8.5L6.5 20L4 20L4 17.5Z"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linejoin="round"
-            />
+            <path d="M4 17.5L15.5 6L18 8.5L6.5 20L4 20L4 17.5Z"
+                  stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
           </svg>
         </span>
         <span>Pincel</span>
       </button>
 
-      <button
-        type="button"
-        class="btn btn--chip"
-        [class.active]="tool === 'marker'"
-        (click)="setTool('marker')"
-      >
+      <button type="button" class="btn btn--chip"
+              [class.active]="tool === 'marker'" (click)="setTool('marker')">
         <span class="btn__icon">
           <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M8 15L16 7L18 9L10 17L7 18L8 15Z"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linejoin="round"
-            />
+            <path d="M8 15L16 7L18 9L10 17L7 18L8 15Z"
+                  stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
           </svg>
         </span>
         <span>Marcador</span>
       </button>
 
-      <button
-        type="button"
-        class="btn btn--chip"
-        [class.active]="tool === 'spray'"
-        (click)="setTool('spray')"
-      >
+      <button type="button" class="btn btn--chip"
+              [class.active]="tool === 'spray'" (click)="setTool('spray')">
         <span class="btn__icon">
           <svg viewBox="0 0 24 24" fill="none">
             <circle cx="10" cy="8" r="1.4" fill="currentColor"></circle>
@@ -106,20 +71,12 @@
       </button>
     </div>
 
-    <button
-      type="button"
-      class="btn"
-      [class.active]="tool === 'eraser'"
-      (click)="setTool('eraser')"
-    >
+    <button type="button" class="btn"
+            [class.active]="tool === 'eraser'" (click)="setTool('eraser')">
       <span class="btn__icon">
         <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M8 18L5 15L13 7L17 11L11 18H8Z"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
+          <path d="M8 18L5 15L13 7L17 11L11 18H8Z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </span>
       <span>Borrador</span>
@@ -132,35 +89,29 @@
   <div class="tool-group">
     <label class="lbl" for="color">Color</label>
 
-    <input
-      id="color"
-      type="color"
-      [disabled]="tool === 'eraser'"
-      [ngModel]="color"
-      (ngModelChange)="setColor($event)"
-    />
+    <input id="color" type="color"
+           [disabled]="tool === 'eraser'"
+           [ngModel]="color" (ngModelChange)="setColor($event)" />
 
     <div class="swatch-row">
-      <div class="swatch" style="background:#000000" (click)="quickColor('#000000')"></div>
-      <div class="swatch" style="background:#f97316" (click)="quickColor('#f97316')"></div>
-      <div class="swatch" style="background:#22c55e" (click)="quickColor('#22c55e')"></div>
-      <div class="swatch" style="background:#3b82f6" (click)="quickColor('#3b82f6')"></div>
-      <div class="swatch" style="background:#a855f7" (click)="quickColor('#a855f7')"></div>
+      <div class="swatch" [class.active]="color === '#000000'"
+           style="background:#000000" (click)="quickColor('#000000')"></div>
+      <div class="swatch" [class.active]="color === '#f97316'"
+           style="background:#f97316" (click)="quickColor('#f97316')"></div>
+      <div class="swatch" [class.active]="color === '#22c55e'"
+           style="background:#22c55e" (click)="quickColor('#22c55e')"></div>
+      <div class="swatch" [class.active]="color === '#3b82f6'"
+           style="background:#3b82f6" (click)="quickColor('#3b82f6')"></div>
+      <div class="swatch" [class.active]="color === '#a855f7'"
+           style="background:#a855f7" (click)="quickColor('#a855f7')"></div>
     </div>
   </div>
 
   <!-- GROSOR -->
   <div class="tool-group">
     <label class="lbl" for="width">Grosor: {{ lineWidth }} px</label>
-    <input
-      id="width"
-      type="range"
-      min="1"
-      max="60"
-      step="1"
-      [ngModel]="lineWidth"
-      (ngModelChange)="setLineWidth($event)"
-    />
+    <input id="width" type="range" min="1" max="60" step="1"
+           [ngModel]="lineWidth" (ngModelChange)="setLineWidth($event)" />
   </div>
 
   <span class="toolbar__divider"></span>
@@ -170,24 +121,9 @@
     <button type="button" class="btn btn--clean" (click)="requestClear()">
       <span class="btn__icon">
         <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M6 8L7 19H17L18 8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M9 8V5H15V8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-          <path
-            d="M5 8H19"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
+          <path d="M6 8L7 19H17L18 8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 8V5H15V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M5 8H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
       </span>
       <span>Limpiar</span>
