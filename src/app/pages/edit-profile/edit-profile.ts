@@ -39,7 +39,6 @@ const PWD_PATTERN = /^(?=(?:.*[A-Z]){2,})(?=.*[a-z])(?=.*\d).{8,}$/;
   styleUrl: './edit-profile.css',
 })
 export class EditProfile implements OnInit, AfterViewInit {
-  /* 🟡 Referencia al anillo IA */
   @ViewChild('aiRing', { static: false })
   private aiRing?: ElementRef<HTMLDivElement>;
 
@@ -85,8 +84,6 @@ export class EditProfile implements OnInit, AfterViewInit {
       artLevel: ['', [Validators.required]],
     });
   }
-
-  /* ====================== ANILLO IA ====================== */
 
   ngAfterViewInit(): void {
     if (!this.aiRing) return;
@@ -146,7 +143,6 @@ export class EditProfile implements OnInit, AfterViewInit {
     });
   }
 
-  /* ====================== FORMULARIO ====================== */
 
   ngOnInit(): void {
     const currentUser = this.auth.getUser();

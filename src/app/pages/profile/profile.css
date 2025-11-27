@@ -155,16 +155,16 @@
     padding: 8px 14px;
   }
 }
-/* Fuerza colores correctos solo en la página de perfil */
+
 .profile-page,
 .profile-header,
 .profile-header * {
-  color: #fff9ed !important;            /* crema */
+  color: #fff9ed !important;            
 }
 
 .profile-subtitle,
 .profile-header p {
-  color: rgba(255, 249, 237, .8) !important;  /* crema suave */
+  color: rgba(255, 249, 237, .8) !important;  
 }
 
 

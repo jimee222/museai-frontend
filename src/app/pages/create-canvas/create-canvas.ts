@@ -109,7 +109,7 @@ export class CreateCanvasPageComponent {
 
   // LIMPIAR (toolbar) → abre modal oscuro
   onClearRequested() {
-    this.pendingGalleryDelete = null; // no es delete, es limpiar
+    this.pendingGalleryDelete = null; 
     this.confirmModal.visible = true;
     this.confirmModal.mode = 'clear';
   }

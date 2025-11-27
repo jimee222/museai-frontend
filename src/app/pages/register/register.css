@@ -4,7 +4,6 @@
     'Segoe UI', sans-serif;
 }
 
-/* Paleta café + dorado */
 :host {
   --muse-brown-900: #1e130a;
   --muse-brown-800: #2c1b12;
@@ -150,7 +149,7 @@
   filter: saturate(1.25) contrast(1.08);
 }
 
-/* 🔵 ORBE IA*/
+/*  ORBE IA*/
 .ai-orb {
   position: relative;
   animation: orb-levitate 3s ease-in-out infinite;
@@ -174,7 +173,6 @@
   animation: orb-ring 2.4s ease-out infinite;
 }
 
-/* Levitar (sube y baja como flotando) */
 @keyframes orb-levitate {
   0% {
     transform: translateY(0) scale(1);
@@ -202,7 +200,6 @@
   }
 }
 
-/* Pulso circular rápido, estilo “está pensando / hablando” */
 @keyframes orb-ring {
   0% {
     opacity: 0;
@@ -510,7 +507,7 @@
   justify-content: center;
 }
 
-/* 🟡 ANILLO IA – MOVIMIENTO CONTINUO SIN PAUSAS */
+/* ANILLO IA – MOVIMIENTO CONTINUO SIN PAUSAS */
 
 .ai-ring {
   position: relative;

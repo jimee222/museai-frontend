@@ -13,13 +13,13 @@
   --text-softer: #c6b68a;
 }
 
-/* 🪩 Tarjeta translúcida con efecto glass */
+/* Tarjeta translúcida con efecto glass */
 .meta-card {
-  background: rgba(30, 19, 10, 0.28); /* transparencia base */
+  background: rgba(30, 19, 10, 0.28); 
   border-radius: 20px;
   padding: 20px 20px 22px;
   border: 1px solid rgba(200, 164, 73, 0.35);
-  backdrop-filter: blur(22px) saturate(1.6);   /* difuminado */
+  backdrop-filter: blur(22px) saturate(1.6);   
   -webkit-backdrop-filter: blur(22px) saturate(1.6);
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.7),

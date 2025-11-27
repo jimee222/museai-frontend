@@ -49,10 +49,9 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
   private canvas!: fabric.Canvas;
   private resizeObserver?: ResizeObserver;
 
-  // para fallback del borrador si no existe EraserBrush nativo
+  
   private readonly fallbackEraseColor = '#FFFFFF';
 
-  // proporción tipo lienzo (3:2) con topes
   private readonly minHeight = 420;
   private readonly maxHeight = 720;
 
@@ -135,12 +134,7 @@ export class CanvasBoardComponent implements AfterViewInit, OnDestroy {
     this.canvas.on('path:created', this.handlePathCreated);
   }
 
-  /**
-   * Ajusta el tamaño del Canvas para que:
-   * - Tenga el mismo ancho máximo que la toolbar (var --creator-max-width)
-   * - Mantenga proporción 3:2 (alto = ancho*2/3)
-   * - Respete topes de altura para pantallas extremas
-   */
+ 
   private fitToContainer(): void {
     const parent = this.canvasRef.nativeElement.parentElement!; // .canvas-card
     const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--creator-max-width').trim();

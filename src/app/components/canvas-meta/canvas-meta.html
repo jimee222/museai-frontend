@@ -9,8 +9,6 @@
   <!-- Mensajes -->
   <div *ngIf="errorMessage" class="alert alert--error">{{ errorMessage }}</div>
   <div *ngIf="successMessage" class="alert alert--success">{{ successMessage }}</div>
-
-  <!-- 🖋️ TÍTULO -->
   <div class="meta__row">
     <label for="titulo" class="meta__label">Título de la obra</label>
     <input
@@ -25,15 +23,12 @@
       {{ validationErrors.title }}
     </small>
   </div>
-
-  <!-- 🧠 DESCRIPCIÓN + BOTÓN IA -->
   <div class="meta__row">
     <div class="meta__label-row">
       <label for="desc" class="meta__label">Descripción de la obra</label>
 
       <button type="button" class="btn--ai" (click)="requestAIDescription.emit()">
         <span class="btn__icon">
-          <!-- 🌟 Estrella IA celeste -->
           <svg viewBox="0 0 24 24" fill="none">
             <path
               d="M12 2L13.5 8L19 9L13.5 10L12 16L10.5 10L5 9L10.5 8L12 2Z"
@@ -62,8 +57,6 @@
       {{ validationErrors.description }}
     </small>
   </div>
-
-  <!-- 🎨 ACCIONES -->
   <div class="meta__actions">
     <button type="button" class="btn btn--primary" (click)="save.emit()" [disabled]="isSaving">
       <span class="btn__icon">

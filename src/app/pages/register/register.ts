@@ -55,7 +55,7 @@ const REGISTER_REDIRECT_DELAY_MS = 900;
   styleUrl: './register.css',
 })
 export class Register implements AfterViewInit {
-  /* 🟡 Referencia al anillo IA */
+  /*  Referencia al anillo IA */
   @ViewChild('aiRing', { static: false })
   private aiRing?: ElementRef<HTMLDivElement>;
 

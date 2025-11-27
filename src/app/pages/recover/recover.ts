@@ -42,11 +42,9 @@ export class Recover implements AfterViewInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  /* 🟡 Referencia al anillo IA */
   @ViewChild('aiRing', { static: false })
   private aiRing?: ElementRef<HTMLDivElement>;
 
-  /* Guardar animación GSAP para cancelarla */
   private ringTween?: gsap.core.Tween;
 
   public step = signal<'request' | 'reset'>('request');
@@ -104,8 +102,8 @@ export class Recover implements AfterViewInit {
     const ny = Math.max(-1, Math.min(1, dy));
 
     // Actualizar gradientes (CSS vars)
-    const lightX = 50 + nx * 18; // %
-    const lightY = 20 + ny * 18; // %
+    const lightX = 50 + nx * 18; 
+    const lightY = 20 + ny * 18; 
     ring.style.setProperty('--ring-light-x', `${lightX}%`);
     ring.style.setProperty('--ring-light-y', `${lightY}%`);
 

@@ -1,4 +1,4 @@
-/* El lienzo ocupará el mismo ancho que la toolbar usando la variable global */
+
 :host {
   width: 100%;
   display: flex;
@@ -13,7 +13,7 @@
   max-width: var(--creator-max-width);
   background: #ffffff;
 
-  /* esquinas menos curvas = look más “lienzo” */
+
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.35);
 
@@ -28,7 +28,6 @@
 /* Contenedor que Fabric genera alrededor del <canvas> */
 .canvas-card .canvas-container {
   width: 100% !important;
-  /* la altura exacta la pone TS; aquí solo un mínimo por si acaso */
   min-height: 520px !important;
 
   background: #FFFFFF;

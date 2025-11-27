@@ -4,7 +4,6 @@
     'Segoe UI', sans-serif;
 }
 
-/* Paleta café + dorado */
 :host {
   --muse-brown-900: #1e130a;
   --muse-brown-800: #2c1b12;
@@ -394,7 +393,7 @@
   }
 }
 
-/* 🟡 ANILLO IA – MOVIMIENTO CONTINUO SIN PAUSAS */
+/* ANILLO IA */
 
 .ai-ring {
   position: relative;

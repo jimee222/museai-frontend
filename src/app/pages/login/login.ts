@@ -37,12 +37,9 @@ export class Login implements OnInit, AfterViewInit {
 
   @ViewChild('email') private emailModel!: NgModel;
   @ViewChild('password') private passwordModel!: NgModel;
-
-  /* 🟡 Referencia al anillo IA */
   @ViewChild('aiRing', { static: false })
   private aiRing?: ElementRef<HTMLDivElement>;
 
-  /* Guardar animaciones GSAP para cancelarlas */
   private ringTween?: gsap.core.Tween;
 
   public loginForm: { email: string; password: string; remember: boolean } = {
@@ -66,7 +63,6 @@ export class Login implements OnInit, AfterViewInit {
   public ngAfterViewInit(): void {
     if (!this.aiRing) return;
 
-    // Ajuste inicial por si quieres escalar luego
     gsap.set(this.aiRing.nativeElement, {
       transformOrigin: '50% 50%',
     });
@@ -111,14 +107,12 @@ export class Login implements OnInit, AfterViewInit {
     });
   }
 
-  /** Evento cuando el mouse sale del anillo */
   public onRingMouseLeave(): void {
     if (!this.aiRing) return;
 
     const ring = this.aiRing.nativeElement;
     this.ringTween?.kill();
 
-    // Deformación vuelve a estado neutro
     gsap.to(ring.querySelectorAll('.ai-ring-layer'), {
       duration: 0.5,
       skewX: 0,
@@ -128,7 +122,6 @@ export class Login implements OnInit, AfterViewInit {
       ease: 'sine.out',
     });
 
-    // Luz vuelve suave al centro superior
     gsap.to(ring, {
       duration: 0.6,
       onUpdate: () => {
@@ -138,7 +131,6 @@ export class Login implements OnInit, AfterViewInit {
     });
   }
 
-  /* ====================== LOGIN METHODS ====================== */
 
   public handleLogin(event: Event): void {
     event.preventDefault();
