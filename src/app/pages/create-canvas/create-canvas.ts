@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 import { CanvasToolbarComponent } from '../../components/canvas-toolbar/canvas-toolbar';
 import { CanvasBoardComponent } from '../../components/canvas-board/canvas-board';
@@ -9,6 +10,8 @@ import {
   CanvasGalleryComponent,
   GalleryPainting,
 } from '../../components/canvas-gallery/canvas-gallery';
+import { AiDescriptionsService } from '../../services/ai-descriptions.service';
+import { LanguagePreferenceService } from '../../services/language-preference.service';
 
 type Tool =
   | 'select'
@@ -66,6 +69,7 @@ export class CreateCanvasPageComponent {
   // meta de la obra
   artTitle = '';
   artDescription = '';
+  isGeneratingDescription = false;
 
   // estado de guardado / validación
   isSaving = false;
@@ -89,7 +93,11 @@ export class CreateCanvasPageComponent {
   // si viene de la galería, guardamos cuál card se quiere borrar
   pendingGalleryDelete: GalleryPainting | null = null;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private aiDescriptions: AiDescriptionsService,
+    private languagePreference: LanguagePreferenceService,
+  ) {
     this.loadGallery();
   }
 
@@ -173,6 +181,34 @@ export class CreateCanvasPageComponent {
   }
 
   /* ───────── GUARDAR / DESCARGAR / ELIMINAR ───────── */
+  async generateDescriptionFromImage() {
+    if (!this.board || this.isGeneratingDescription) return;
+
+    this.resetMessages();
+    const previewDataUrl = this.board.getPreviewDataUrl(0.6);
+    if (!previewDataUrl) {
+      this.errorMessage = 'No se pudo obtener la imagen para describir.';
+      return;
+    }
+
+    this.isGeneratingDescription = true;
+    try {
+      const language = this.languagePreference.language();
+      const description = await firstValueFrom(
+        this.aiDescriptions.describeImage(previewDataUrl, language),
+      );
+      if (!description) {
+        throw new Error('Descripción vacía');
+      }
+      this.artDescription = description;
+      this.successMessage = 'Descripción generada automáticamente.';
+    } catch (error) {
+      console.error('Error al generar descripción', error);
+      this.errorMessage = 'No se pudo generar la descripción automáticamente.';
+    } finally {
+      this.isGeneratingDescription = false;
+    }
+  }
 
   saveArtwork() {
     if (!this.board) return;

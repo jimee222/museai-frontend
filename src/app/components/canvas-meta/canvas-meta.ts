@@ -22,10 +22,12 @@ export class CanvasMetaComponent {
   @Input() successMessage: string | null = null;
   @Input() isSaving = false;
   @Input() canDelete = false;
+  @Input() isGeneratingDescription = false;
 
   @Output() save = new EventEmitter<void>();
   @Output() download = new EventEmitter<void>();
   @Output() deleteCurrent = new EventEmitter<void>();
+  @Output() generateDescription = new EventEmitter<void>();
 
   /* nuevo: para disparar la IA desde el parent */
   @Output() requestAIDescription = new EventEmitter<void>();
