@@ -440,7 +440,7 @@ private tryWallInteract() {
     this.showTourDialog = true;
     return;
   }
-  if (route === '__openTourDialog__') {
+  if (route === '_openTourDialog_') {
     this.showTourDialog = true;
     return;
   }
@@ -637,61 +637,36 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
             { w: frameW, h: frameH, d: FRAME.d }
           );
 
-          this.skinFrameFrontWithImage(frame, previews[placed]);
+
+     this.skinFrameFrontWithImage(frame, previews[placed]);
           frame.userData['popup'] = {
             id: `user-${placed}`,
             title: 'Obra del usuario',
             artist: 'Tú',
             image: previews[placed]
           };
-
           this.userFrames.push(frame);
           placed++;
         }
-      }
-    },
+        }
+      },
     error: (e) => console.error('Error cargando pinturas del usuario', e),
   });
 }
 
 
 private makeWallButton(label: string, route: string, w = 1.2, h = 0.35): THREE.Mesh {
-  // helper para rounded-rect
-  const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
-    const rr = Math.min(r, h/2, w/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y,   x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x,   y+h, rr);
-    ctx.arcTo(x,   y+h, x,   y,   rr);
-    ctx.arcTo(x,   y,   x+w, y,   rr);
-    ctx.closePath();
-  };
-
-  // === Cara frontal (base oscuro + texto) ===
   const base = document.createElement('canvas');
-  base.width = 1024; base.height = 300; // más nitidez
+  base.width = 512; base.height = 180;
   const ctx = base.getContext('2d')!;
   ctx.clearRect(0,0,base.width,base.height);
-
-  const BG = '#232323';
-  const FG = '#f5e1ce';
-  const R  = 32; // radio px
-
-  // fondo
-  ctx.fillStyle = BG;
-  roundRect(ctx, 8, 8, base.width-16, base.height-16, R);
-  ctx.fill();
-
-  // borde fino
-  ctx.strokeStyle = FG;
+  ctx.fillStyle = '#232323';
+  ctx.fillRect(0,0,base.width,base.height);
+  ctx.strokeStyle = '#f5e1ce';
   ctx.lineWidth = 8;
-  roundRect(ctx, 12, 12, base.width-24, base.height-24, R);
-  ctx.stroke();
-
-  // texto
-  ctx.fillStyle = FG;
-  ctx.font = 'bold 120px system-ui, sans-serif';
+  ctx.strokeRect(6,6,base.width-12,base.height-12);
+  ctx.fillStyle = '#f5e1ce';
+  ctx.font = 'bold 64px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, base.width/2, base.height/2);
@@ -699,50 +674,29 @@ private makeWallButton(label: string, route: string, w = 1.2, h = 0.35): THREE.M
   const baseTex = new THREE.CanvasTexture(base);
   baseTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy?.() ?? 1;
 
-  // cara frontal (la que usaremos para raycast)
   const geo = new THREE.PlaneGeometry(w, h);
   const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, metalness: 0, roughness: 1 });
   const mesh = new THREE.Mesh(geo, baseMat);
   mesh.userData['route'] = route;
   mesh.userData['baseMat'] = baseMat;
 
-  // === Placa trasera (look 3D) ===
-  const back = document.createElement('canvas');
-  back.width = 1024; back.height = 300;
-  const bctx = back.getContext('2d')!;
-  bctx.clearRect(0,0,back.width,back.height);
-
-  // gradiente sutil para “sombra”
-  const g = bctx.createLinearGradient(0, 0, 0, back.height);
-  g.addColorStop(0.0, '#1b1b1b');
-  g.addColorStop(1.0, '#0f0f0f');
-  bctx.fillStyle = g;
-  roundRect(bctx, 0, 0, back.width, back.height, R + 26);
-  bctx.fill();
-
-  const backTex = new THREE.CanvasTexture(back);
-  const backMat = new THREE.MeshStandardMaterial({ map: backTex, metalness: 0, roughness: 1 });
-  const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(w*1.06, h*1.14), backMat);
-  backPlane.position.z = -0.025;           // un poco detrás para dar volumen
-  mesh.add(backPlane);
-
-  // === Overlay de hover dorado (con tu color) ===
-  const GOLD = '#53420fff'; // tu header
+  const GOLD = '#53420fff';
   const hov = document.createElement('canvas');
-  hov.width = 1024; hov.height = 300;
+  hov.width = 512; hov.height = 180;
   const hctx = hov.getContext('2d')!;
   hctx.clearRect(0,0,hov.width,hov.height);
   hctx.strokeStyle = GOLD;
-  hctx.lineWidth = 22;
+  hctx.lineWidth = 16;
   hctx.shadowColor = GOLD;
-  hctx.shadowBlur = 28;
-  roundRect(hctx, 24, 24, hov.width-48, hov.height-48, R + 6);
-  hctx.stroke();
+  hctx.shadowBlur = 24;
+  hctx.strokeRect(14,14,hov.width-28,hov.height-28);
 
   const hovTex = new THREE.CanvasTexture(hov);
-  const hovMat = new THREE.MeshBasicMaterial({ map: hovTex, transparent: true, opacity: 0, depthTest: false });
-  const hovPlane = new THREE.Mesh(new THREE.PlaneGeometry(w*1.10, h*1.20), hovMat);
-  hovPlane.position.z = 0.004;             // delante para evitar z-fighting
+  const hovMat = new THREE.MeshBasicMaterial({
+    map: hovTex, transparent: true, opacity: 0, depthTest: false
+  });
+  const hovPlane = new THREE.Mesh(new THREE.PlaneGeometry(w*1.02, h*1.08), hovMat);
+  hovPlane.position.z = 0.003;
   mesh.add(hovPlane);
 
   mesh.userData['hoverMat'] = hovMat;
@@ -753,8 +707,7 @@ private makeWallButton(label: string, route: string, w = 1.2, h = 0.35): THREE.M
 
 
 
-
-// ✅ NUEVO helper
+// NUEVO helper
 private getOrCreateArtPlane(frame: THREE.Mesh, pad = 0.12): THREE.Mesh {
   let art = frame.userData['artPlane'] as THREE.Mesh | undefined;
   if (art) return art;
@@ -944,6 +897,7 @@ private mountUserSculpturesInRoom2() {
         }
       }
     },
+    
     error: (e) => console.error('Error obteniendo esculturas', e),
   });
 }
@@ -1217,18 +1171,16 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const bExplora = this.makeWallButton('Explora 3D', '/explorar');
     const bLienzo = this.makeWallButton('Lienzo',  '/create-canvas');
     const bPerfil = this.makeWallButton('Perfil',  '/app/profile');
-    const bTour = this.makeWallButton('Iniciar Tour', '__openTourDialog__');
+    const bTour = this.makeWallButton('Iniciar Tour', '_openTourDialog_');
 
 
     // distribución vertical
-    const gap = 0.20;
-    const MENU_PULL = 0.08; // 8 cm fuera de la pared
-
-    bInicio.position.set(0, 2.2 + (0.35+gap)*1.5, -MENU_PULL);
-    bExplora.position.set(0, 2.2 + (0.35+gap)*0.5, -MENU_PULL);
-    bLienzo.position.set(0, 2.2 - (0.35+gap)*0.5, -MENU_PULL);
-    bPerfil.position.set(0, 2.2 - (0.35+gap)*1.5, -MENU_PULL);
-
+    const gap = 0.20;  // separación
+    bInicio.position.set(0, 2.2 + (0.35+gap)*1.5, 0);
+    bExplora.position.set(0, 2.2 + (0.35+gap)*0.5, 0);
+    bLienzo.position.set(0, 2.2 - (0.35+gap)*0.5, 0);
+    bPerfil.position.set(0, 2.2 - (0.35+gap)*1.5, 0);
+    bTour.position.set(0, 2.2 - (0.35+gap)*2.5, 0);
 
     menuGroup.add(bInicio, bExplora, bLienzo, bPerfil, bTour);
 
@@ -1271,7 +1223,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       side: THREE.DoubleSide, depthTest: false
     });
     const hotspot = new THREE.Mesh(hotspotGeo, hotspotMat);
-    // ⬇️ aún más al frente que el lienzo
+    // ⬇ aún más al frente que el lienzo
     hotspot.position.set(0, 0, -frameD/2 - 0.006);
     hotspot.userData['route'] = '/create-canvas';
     hotspot.userData['baseMat'] = hotspotMat;
@@ -1294,7 +1246,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       new THREE.PlaneGeometry(1.4, 0.28), // un poco más grande
       new THREE.MeshBasicMaterial({ map: tagTex, transparent: true, side: THREE.DoubleSide })
     );
-    tag.position.set(0, -(frameH/2) - 0.22, -frameD/2 - 0.003); // ⬅️ -Z, bajo el marco
+    tag.position.set(0, -(frameH/2) - 0.22, -frameD/2 - 0.003); // ⬅ -Z, bajo el marco
     blankFrame.add(tag);
 }
 
@@ -1390,7 +1342,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       })
     );
 
-    // ✔ misma Y; Z: pegado a la pared usando `pull` (un pelín delante de ella)
+    // ✔ misma Y; Z: pegado a la pared usando pull (un pelín delante de ella)
     tag.position.set(0, -(size2.y/2) - 0.22, -(pull - 0.006));
     wrap.add(tag);
 
@@ -1467,8 +1419,6 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     lintel.position.set(wallX, lintelYCenter, doorZ);
     this.scene.add(lintel); this.walls.push(lintel);
   }
-
-  
 
   // ====== SALA 2 ALINEADA ======
   const room2Width = 8, room2Depth = 12, room2H = 5, gap = 0.01;
@@ -1565,79 +1515,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     eastLintel.position.set(east2X, doorH + lintelH / 2, doorZ);
     this.scene.add(eastLintel); this.walls.push(eastLintel);
   }
-
-  // === Cartel "Mi Galeria" (visible desde sala principal) ===
-{
-  const signW = 2.2;
-  const signH = 0.42;
-
-  // Coloca el cartel en la CARA EXTERIOR de la pared Este (hacia el salón principal)
-  const epsilon = 0.03; // separa 3cm para evitar z-fighting
-  const signX = east2X + thick/2 + epsilon;               // fuera de la pared (lado salón principal)
-  const signY = doorYBottom + doorH + 0.35;               // arriba del dintel
-  const signZ = doorZ;                                     // centrado al hueco
-
-  // Lienzo del cartel
-  const c = document.createElement('canvas');
-  c.width = 1400; c.height = 300;
-  const ctx = c.getContext('2d')!;
-  const rr = (x:number,y:number,w:number,h:number,r:number) => {
-    const rad = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rad, y);
-    ctx.arcTo(x+w, y,   x+w, y+h, rad);
-    ctx.arcTo(x+w, y+h, x,   y+h, rad);
-    ctx.arcTo(x,   y+h, x,   y,   rad);
-    ctx.arcTo(x,   y,   x+w, y,   rad);
-    ctx.closePath();
-  };
-  const GOLD = '#53420f';
-  const BASE = '#1c1c1c';
-
-  ctx.fillStyle = BASE;
-  rr(10, 10, c.width-20, c.height-20, 36);
-  ctx.fill();
-
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 10;
-  ctx.shadowColor = GOLD;
-  ctx.shadowBlur = 18;
-  rr(16, 16, c.width-32, c.height-32, 30);
-  ctx.stroke();
-
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 150px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Mi Galeria', c.width/2, c.height/2);
-
-  const tex = new THREE.CanvasTexture(c);
-  const mat = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    side: THREE.DoubleSide,                // visible desde ambos lados
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-    depthTest: true
-  });
-
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(signW, signH), mat);
-  sign.position.set(signX, signY, signZ);
-
-  // ⚠️ Importante: normal hacia -X (mirando al salón principal)
-  sign.rotation.y = -Math.PI / 2;
-
-  // Evita que lo tape el dintel en algunos ángulos
-  sign.renderOrder = 10;
-
-  this.scene.add(sign);
 }
-
-}
-
- 
 
 
 
@@ -2038,7 +1916,7 @@ private onKeyUp = (event: KeyboardEvent) => {
     // colisión + clamps
     const resolved = this.resolveCollisions(attempt);
 
-    // ⬇️ Usa los límites dinámicos, no -10/10 fijos
+    // ⬇ Usa los límites dinámicos, no -10/10 fijos
     resolved.x = Math.max(this.minX, Math.min(this.maxX, resolved.x));
     resolved.z = Math.max(this.minZ, Math.min(this.maxZ, resolved.z));
 
@@ -2086,5 +1964,5 @@ private onKeyUp = (event: KeyboardEvent) => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-  };
+  };
 }
