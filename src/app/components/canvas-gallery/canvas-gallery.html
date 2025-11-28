@@ -1,57 +1,47 @@
-<h3 class="gallery__title">Mis obras guardadas</h3>
-<p class="gallery__subtitle">Haz clic en una obra para volver a editarla.</p>
+<div class="gallery">
+  <h3 class="gallery__title">Mis obras guardadas</h3>
+  <p class="gallery__subtitle">Haz clic en una obra para volver a editarla.</p>
 
-<div class="gallery__grid">
-  <article
-    class="gallery__item"
-    *ngFor="let painting of paintings"
-    (click)="onLoad(painting)"
-  >
-    <div class="gallery__item-header">
-      <div class="gallery__meta-title">{{ painting.title }}</div>
-
+  <div class="gallery__grid">
+    <article
+      class="gallery__item"
+      *ngFor="let painting of paintings"
+      (click)="onLoad(painting)"
+      tabindex="0"
+      (keydown.enter)="onLoad(painting)"
+      (keydown.space)="onLoad(painting)"
+      aria-label="Abrir {{ painting.title }}"
+    >
+      <!-- Botón eliminar flotante -->
       <button
         type="button"
         class="gallery__delete"
         (click)="onDelete(painting, $event)"
         aria-label="Eliminar obra"
       >
-        <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M6 8L7 19H17L18 8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M9 8V5H15V8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-          <path
-            d="M5 8H19"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 8L7 19H17L18 8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 8V5H15V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M5 8H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
       </button>
-    </div>
 
-    <img
-      class="gallery__thumb"
-      [src]="
-        painting.previewUrl ||
-        'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 150%22><rect width=%22200%22 height=%22150%22 fill=%22%23f3f4f6%22 /></svg>'
-      "
-      [alt]="painting.title"
-    />
+      <!-- Marco + imagen -->
+      <div class="gallery__frame">
+        <img
+          class="gallery__thumb"
+          [src]="painting.previewUrl || 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 150%22><rect width=%22200%22 height=%22150%22 fill=%22%23121212%22 /></svg>'"
+          [alt]="painting.title"
+          loading="lazy"
+          decoding="async"
+        />
 
-    <div class="gallery__meta">
-      <div class="gallery__meta-date">
-        {{ painting.updatedAt | date: 'short' }}
+        <!-- Overlay con título/fecha -->
+        <div class="gallery__overlay">
+          <div class="gallery__overlay-title">{{ painting.title || 'Sin título' }}</div>
+          <div class="gallery__overlay-date">{{ painting.updatedAt | date: 'short' }}</div>
+        </div>
       </div>
-    </div>
-  </article>
+    </article>
+  </div>
 </div>

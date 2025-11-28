@@ -66,3 +66,5 @@ export interface ISearch {
   totalElements?: number;
   totalPages?:number;
 }
+
+export * from './translation';
