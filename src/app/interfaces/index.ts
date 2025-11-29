@@ -66,3 +66,32 @@ export interface ISearch {
   totalElements?: number;
   totalPages?:number;
 }
+
+export interface IQuiz {
+  id?: number | null;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  level?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
+  createdAt?: string;
+  updatedAt?: string;
+  questions?: IQuestion[];
+}
+
+
+
+export interface IQuestion {
+  id?: number | null;
+  quizId?: number| null; 
+  text: string;
+  imageUrl?: string | null;
+  options: IOption[];
+}
+
+
+export interface IOption {
+  id?: number | null;
+  questionId?: number; 
+  text: string;
+  correct: boolean;
+}

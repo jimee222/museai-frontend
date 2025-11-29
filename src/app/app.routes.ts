@@ -14,6 +14,10 @@ import { EditProfile } from './pages/edit-profile/edit-profile';
 import { AuthGuard } from './guards/auth.guard';
 import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
+import { QuizListAdmin } from './pages/quiz/admin/quiz-list-admin/quiz-list-admin';
+import { QuizCreate } from './pages/quiz/admin/quiz-create/quiz-create'; 
+import { QuizEdit } from './pages/quiz/admin/quiz-edit/quiz-edit'; 
+import { Questions } from './pages/quiz/admin/questions/questions';
 
 export const routes: Routes = [
   {
@@ -64,6 +68,20 @@ export const routes: Routes = [
         component: EditProfile,
       },
       {
+        path: 'quizzes-admin',
+        component: QuizListAdmin,
+    },
+    {
+      path: 'quiz',
+      children: [
+        { path: 'create', component: QuizCreate },
+        { path: 'edit/:id', component: QuizEdit },
+        { path: 'questions/:id', component: Questions },
+        { path: '', redirectTo: 'create', pathMatch: 'full' }
+      ]
+    },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'menu',
@@ -79,6 +97,7 @@ export const routes: Routes = [
     path: 'sculptor',
     component: SculptorPageComponent,
   },
+  
   {
     path: '**',
     component: NotFound,
