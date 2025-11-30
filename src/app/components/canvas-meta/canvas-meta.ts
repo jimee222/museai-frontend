@@ -29,9 +29,6 @@ export class CanvasMetaComponent {
   @Output() deleteCurrent = new EventEmitter<void>();
   @Output() generateDescription = new EventEmitter<void>();
 
-  /* nuevo: para disparar la IA desde el parent */
-  @Output() requestAIDescription = new EventEmitter<void>();
-
   onTitleInput(value: string) { this.titleChange.emit(value); }
   onDescriptionInput(value: string) { this.descriptionChange.emit(value); }
 }

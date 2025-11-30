@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import {
   LanguagePreferenceService,
   SupportedLanguage,
@@ -11,8 +11,13 @@ import {
   imports: [CommonModule],
   templateUrl: './language-selector.component.html',
   styleUrl: './language-selector.component.css',
+  host: {
+    class: 'language-selector',
+    '[class.dark]': "appearance === 'dark'",
+  },
 })
 export class LanguageSelectorComponent implements OnInit {
+  @Input() appearance: 'light' | 'dark' = 'light';
   isModalOpen = false;
   selectedLanguage!: SupportedLanguage;
   readonly languages: SupportedLanguage[] = [];

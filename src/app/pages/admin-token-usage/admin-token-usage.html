@@ -1,0 +1,110 @@
+<section class="token-usage">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Control de consumo</p>
+      <h1>Consumo de tokens de IA</h1>
+      <p class="subtitle">
+        Monitorea por fecha, módulo y usuario; exporta reportes en CSV o PDF.
+      </p>
+    </div>
+    <div class="export-actions">
+      <button type="button" class="secondary" (click)="onExportCsv()">
+        Exportar CSV
+      </button>
+      <button type="button" class="primary" (click)="onExportPdf()">
+        Exportar PDF
+      </button>
+    </div>
+  </header>
+
+  <div
+    class="alert"
+    *ngIf="report().alert"
+    [class.critical]="report().usagePercentage >= report().alertThreshold + 0.1"
+  >
+    <div>
+      <strong>Alerta:</strong>
+      {{ (report().usagePercentage * 100) | number : '1.0-0' }}% del límite
+      consumido.
+    </div>
+    <small>
+      Considera aumentar el límite o reducir llamadas para evitar sobrecostos.
+    </small>
+  </div>
+
+  <section class="filters">
+    <div class="field">
+      <label for="from">Desde</label>
+      <input id="from" type="date" [(ngModel)]="filters.startDate" />
+    </div>
+    <div class="field">
+      <label for="to">Hasta</label>
+      <input id="to" type="date" [(ngModel)]="filters.endDate" />
+    </div>
+    <button type="button" class="primary" (click)="loadReport()">
+      Aplicar filtros
+    </button>
+  </section>
+
+  <section class="summary">
+    <article class="card">
+      <p class="label">Total tokens</p>
+      <h3>{{ report().totalTokensUsed | number }}</h3>
+      <small>Límite: {{ report().tokenLimit | number }}</small>
+    </article>
+    <article class="card" [class.warn]="report().usagePercentage * 100 >= 80">
+      <p class="label">% del límite</p>
+      <h3>{{ (report().usagePercentage * 100) | number : '1.0-0' }}%</h3>
+      <small>
+        Umbral de alerta:
+        {{ (report().alertThreshold * 100) | number : '1.0-0' }}%
+      </small>
+    </article>
+    <article class="card">
+      <p class="label">Top módulo</p>
+      <h3>{{ topModule()?.module || 'N/D' }}</h3>
+      <small>{{ topModule()?.tokens | number }} tokens</small>
+    </article>
+    <article class="card">
+      <p class="label">Top usuario</p>
+      <h3>{{ topUser()?.userEmail || 'N/D' }}</h3>
+      <small>{{ topUser()?.tokens | number }} tokens</small>
+    </article>
+  </section>
+
+  <section class="table-wrapper">
+    <header class="table-header">
+      <h2>Registro de solicitudes</h2>
+      <span>{{ report().details.length }} registros</span>
+    </header>
+    <div class="table-scroller">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Módulo</th>
+            <th>Usuario</th>
+            <th>Prompt</th>
+            <th>Completion</th>
+            <th>Total tokens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of report().details">
+            <td>{{ entry.date | date : 'mediumDate' }}</td>
+            <td><span class="pill">{{ entry.module }}</span></td>
+            <td>{{ entry.userEmail }}</td>
+            <td>{{ entry.promptTokens | number }}</td>
+            <td>{{ entry.completionTokens | number }}</td>
+            <td>{{ entry.totalTokens | number }}</td>
+          </tr>
+          <tr *ngIf="!report().details.length">
+            <td colspan="6" class="empty">
+              Sin datos para los filtros seleccionados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
