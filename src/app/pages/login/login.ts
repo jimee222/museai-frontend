@@ -54,7 +54,7 @@ export class Login implements OnInit, AfterViewInit {
     private readonly googleAuthService: GoogleAuthService
   ) {}
 
-  /*  INIT  */
+  /* ============================ INIT ============================ */
 
   public ngOnInit(): void {
     this.googleAuthService.signInWithGoogle();
@@ -68,9 +68,9 @@ export class Login implements OnInit, AfterViewInit {
     });
   }
 
-  /*  ANIMACIONES DEL ANILLO  */
+  /* ====================== ANIMACIONES DEL ANILLO ====================== */
 
-  /**  movimiento del mouse en el anillo */
+  /** Evento de movimiento del mouse en el anillo */
   public onRingMouseMove(event: MouseEvent): void {
     if (!this.aiRing) return;
 
@@ -81,16 +81,19 @@ export class Login implements OnInit, AfterViewInit {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
 
+    // Normalizar -1 a 1
     const dx = (event.clientX - cx) / (rect.width / 2);
     const dy = (event.clientY - cy) / (rect.height / 2);
     const nx = Math.max(-1, Math.min(1, dx));
     const ny = Math.max(-1, Math.min(1, dy));
 
+    // Actualizar gradientes (CSS vars)
     const lightX = 50 + nx * 18; // %
     const lightY = 20 + ny * 18; // %
     ring.style.setProperty('--ring-light-x', `${lightX}%`);
     ring.style.setProperty('--ring-light-y', `${lightY}%`);
 
+    // Deformación suave (capas)
     const layers = ring.querySelectorAll('.ai-ring-layer');
 
     this.ringTween?.kill();
