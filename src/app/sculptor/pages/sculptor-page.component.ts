@@ -31,6 +31,10 @@ import { LanguageSelectorComponent } from '../../shared/language-selector/langua
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
+type SelectionState = { available: boolean; scale: number; y: number };
+type BannerState = { type: 'success' | 'error'; text: string } | null;
+type SaveDialogModel = { name: string; tags: string; description: string };
+type SculptorTutorialStep = { title: string; description: string };
 
 const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
   activeBrush: 'none',
@@ -53,538 +57,8 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
     AssetDropzoneComponent,
     LanguageSelectorComponent,
   ],
-  template: `
-    <section class="sculptor-layout">
-      <app-sculptor-toolbar
-        [gridEnabled]="toggles().grid"
-        [axesEnabled]="toggles().axes"
-        [lightsEnabled]="toggles().lights"
-        [activeBrush]="activeBrush()"
-        [booleanMode]="booleanMode()"
-        [selectionAvailable]="selectionState().available"
-        [selectionScale]="selectionState().scale"
-        [selectionY]="selectionState().y"
-        [brushRadius]="workspaceSettings().brushRadius"
-        [brushStrength]="workspaceSettings().brushStrength"
-        [symmetry]="workspaceSettings().symmetry"
-        [materialPreset]="workspaceSettings().material"
-        [snapToGround]="workspaceSettings().snapToGround"
-        (primitive)="handlePrimitive($event)"
-        (toggleGrid)="onToggle('grid', $event)"
-        (toggleAxes)="onToggle('axes', $event)"
-        (toggleLights)="onToggle('lights', $event)"
-        (resetCamera)="onResetCamera()"
-        (saveScene)="onSaveScene()"
-        (exportFormat)="onExport($event)"
-        (importSelected)="onImport($event)"
-        (brushSelected)="onBrushSelected($event)"
-        (booleanAction)="onBooleanAction($event)"
-        (modifierAction)="onModifierAction($event)"
-        (duplicateSelection)="onDuplicateSelection()"
-        (selectionScaleChange)="onSelectionScaleChange($event)"
-        (selectionYChange)="onSelectionYChange($event)"
-        (brushRadiusChange)="onBrushRadiusChange($event)"
-        (brushStrengthChange)="onBrushStrengthChange($event)"
-        (symmetryChange)="onSymmetryChange($event)"
-        (materialPresetChange)="onMaterialPresetChange($event)"
-        (snapToGroundChange)="onSnapToGroundChange($event)"
-      ></app-sculptor-toolbar>
-
-      <div class="workspace">
-        <div class="viewport-wrapper">
-          <app-sculptor-viewport
-            #viewport
-            (statsChange)="updateStats($event)"
-            (banner)="showBanner($event.type, $event.text)"
-            (booleanModeChange)="onViewportBooleanMode($event)"
-            (selectionStateChange)="onSelectionStateChange($event)"
-          ></app-sculptor-viewport>
-          <app-asset-dropzone
-            (filesDropped)="onDropzoneFiles($event)"
-            (invalidFiles)="showBanner('error', $event)"
-          ></app-asset-dropzone>
-          <div class="banner" *ngIf="bannerMessage() as banner" [class.error]="banner.type === 'error'">
-            {{ banner.text }}
-          </div>
-    </div>
-
-        <section class="gallery">
-          <div class="gallery-controls">
-            <span class="gallery-controls__label">Idioma para Descripción</span>
-            <app-language-selector appearance="dark"></app-language-selector>
-          </div>
-          <header>
-            <h3>Galería local</h3>
-            <small>{{ sculptures().length }} guardadas</small>
-          </header>
-          <ul>
-            <li *ngFor="let sculpture of sculptures(); trackBy: trackById">
-              <div class="meta">
-                <strong>{{ sculpture.name }}</strong>
-                <small>{{ sculpture.updatedAt | date: 'short' }}</small>
-              </div>
-              <div class="actions">
-                <button type="button" (click)="loadSculpture(sculpture)" aria-label="Cargar escultura">Cargar</button>
-                <button type="button" (click)="deleteSculpture(sculpture)" aria-label="Eliminar escultura">✕</button>
-              </div>
-            </li>
-          </ul>
-          <div class="gallery-footer">
-            <button type="button" class="tutorial-replay" (click)="openTutorial()">
-              Ver Tutorial
-            </button>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <div class="tutorial-overlay" *ngIf="tutorialVisible()">
-      <div class="tutorial-modal">
-        <header class="tutorial-modal__header">
-          <div>
-            <p class="tutorial-modal__eyebrow">Guía rápida</p>
-            <h3>{{ tutorialSteps[tutorialStepIndex()].title }}</h3>
-          </div>
-          <button type="button" class="tutorial-close" (click)="completeTutorial()">
-            ✕
-          </button>
-        </header>
-        <p class="tutorial-modal__body">
-          {{ tutorialSteps[tutorialStepIndex()].description }}
-        </p>
-        <div class="tutorial-progress">
-          Paso {{ tutorialStepIndex() + 1 }} de {{ tutorialSteps.length }}
-        </div>
-        <div class="tutorial-actions">
-          <button type="button" class="text-button" (click)="skipFutureTutorials()">
-            No volver a mostrar
-          </button>
-          <div class="tutorial-nav">
-            <button
-              type="button"
-              class="secondary-button"
-              [disabled]="tutorialStepIndex() === 0"
-              (click)="previousTutorialStep()"
-            >
-              Anterior
-            </button>
-            <button
-              *ngIf="tutorialStepIndex() < tutorialSteps.length - 1"
-              type="button"
-              class="primary-button"
-              (click)="nextTutorialStep()"
-            >
-              Siguiente
-            </button>
-            <button
-              *ngIf="tutorialStepIndex() === tutorialSteps.length - 1"
-              type="button"
-              class="primary-button"
-              (click)="completeTutorial()"
-            >
-              Listo
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="save-dialog-overlay" *ngIf="saveDialogVisible()">
-      <form class="save-dialog" (ngSubmit)="submitSaveDialog($event)">
-        <h4>{{ isUpdatingExisting() ? 'Actualizar escultura' : 'Guardar escultura' }}</h4>
-        <label>
-          <span>Nombre</span>
-          <input
-            type="text"
-            name="sculptureName"
-            required
-            [(ngModel)]="saveDialogModel.name"
-            placeholder="Mi escultura"
-          />
-        </label>
-        <label>
-          <span>Etiquetas</span>
-          <input
-            type="text"
-            name="sculptureTags"
-            [(ngModel)]="saveDialogModel.tags"
-            placeholder="fantasía, criatura"
-          />
-          <small>Separa las etiquetas con comas</small>
-        </label>
-        <label class="description-field">
-          <div class="label-row">
-            <span>Descripción</span>
-            <button
-              type="button"
-              (click)="generateSculptureDescription()"
-              [disabled]="isGeneratingDescription()"
-            >
-              {{ isGeneratingDescription() ? 'Generando...' : 'Generar descripción' }}
-            </button>
-          </div>
-          <textarea
-            name="sculptureDescription"
-            rows="3"
-            [(ngModel)]="saveDialogModel.description"
-            placeholder="Describe tu escultura (opcional)"
-          ></textarea>
-        </label>
-        <div class="dialog-actions">
-          <button type="button" (click)="closeSaveDialog()" [disabled]="isSavingScene()">
-            Cancelar
-          </button>
-          <button type="submit" [disabled]="isSavingScene()">
-            {{ isSavingScene() ? 'Guardando...' : isUpdatingExisting() ? 'Actualizar' : 'Guardar' }}
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <footer class="status-bar">
-      <span>FPS: {{ stats().fps }}</span>
-      <span>Triángulos: {{ stats().triangles | number }}</span>
-      <span>Atajos: G-mover · R-rotar · S-escalar · Delete-eliminar · Esc-limpiar</span>
-    </footer>
-  `,
-  styles: [
-    `
-      :host {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        background: #05060a;
-        color: #f8fafc;
-        font-family: 'Inter', system-ui, sans-serif;
-      }
-      .sculptor-layout {
-        display: flex;
-        flex: 1;
-        min-height: 0;
-      }
-      .workspace {
-        display: flex;
-        flex: 1;
-        gap: 1rem;
-        padding: 1rem;
-        min-height: 0;
-      }
-      .viewport-wrapper {
-        position: relative;
-        flex: 1;
-        min-width: 0;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .gallery {
-        width: 280px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.02);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .gallery-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-      }
-      .gallery-controls__label {
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.01em;
-        color: #f8fafc;
-      }
-      .gallery-footer {
-        margin-top: 0.75rem;
-        display: flex;
-        justify-content: center;
-      }
-      .tutorial-replay {
-        background: rgba(255, 255, 255, 0.08);
-        color: #e2e8f0;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 8px;
-        padding: 0.35rem 0.75rem;
-        cursor: pointer;
-        transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-      }
-      .tutorial-replay:hover {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-      }
-      .tutorial-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        display: grid;
-        place-items: center;
-        z-index: 12;
-        padding: 1rem;
-      }
-      .tutorial-modal {
-        width: min(420px, 100%);
-        background: #0c0d13;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 14px;
-        padding: 1.2rem 1.3rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-      }
-      .tutorial-modal__header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.5rem;
-      }
-      .tutorial-modal__eyebrow {
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        font-size: 0.75rem;
-        color: rgba(226, 232, 240, 0.7);
-      }
-      .tutorial-modal h3 {
-        margin: 0.2rem 0 0;
-        font-size: 1.15rem;
-      }
-      .tutorial-modal__body {
-        margin: 0;
-        color: rgba(226, 232, 240, 0.9);
-        line-height: 1.5;
-      }
-      .tutorial-progress {
-        font-size: 0.9rem;
-        color: rgba(226, 232, 240, 0.8);
-      }
-      .tutorial-actions {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-      .tutorial-nav {
-        display: flex;
-        gap: 0.5rem;
-      }
-      .tutorial-close {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        color: #f8fafc;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-      }
-      .primary-button,
-      .secondary-button,
-      .text-button {
-        font: inherit;
-        padding: 0.45rem 0.9rem;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
-      }
-      .primary-button {
-        background: rgba(34, 197, 94, 0.18);
-        border: 1px solid rgba(34, 197, 94, 0.45);
-        color: #bbf7d0;
-      }
-      .primary-button:hover {
-        background: rgba(34, 197, 94, 0.24);
-      }
-      .secondary-button {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #e2e8f0;
-      }
-      .secondary-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .secondary-button:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.1);
-      }
-      .text-button {
-        background: transparent;
-        border: none;
-        color: rgba(226, 232, 240, 0.75);
-        padding: 0.35rem 0;
-      }
-      .text-button:hover {
-        color: #f8fafc;
-        transform: translateY(-1px);
-      }
-      .gallery header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-      }
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        overflow: auto;
-      }
-      li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.3);
-      }
-      .meta {
-        display: flex;
-        flex-direction: column;
-      }
-      .actions {
-        display: flex;
-        gap: 0.35rem;
-      }
-      .actions button {
-        border: none;
-        border-radius: 4px;
-        padding: 0.25rem 0.5rem;
-        cursor: pointer;
-        background: rgba(255, 255, 255, 0.12);
-        color: inherit;
-      }
-      .actions button:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-      .banner {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: rgba(34, 197, 94, 0.9);
-        color: #041302;
-        padding: 0.5rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.9rem;
-      }
-      .banner.error {
-        background: rgba(239, 68, 68, 0.9);
-        color: #fff;
-      }
-      .status-bar {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.35rem 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.85rem;
-        background: #030308;
-      }
-      button {
-        font: inherit;
-      }
-      .save-dialog-overlay {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
-        z-index: 10;
-      }
-      .save-dialog {
-        background: #0c0d13;
-        border-radius: 12px;
-        padding: 1.5rem;
-        width: min(90vw, 360px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .save-dialog h4 {
-        margin: 0;
-        font-size: 1.1rem;
-      }
-      .save-dialog label {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        font-size: 0.9rem;
-      }
-      .save-dialog .description-field {
-        gap: 0.5rem;
-      }
-      .save-dialog .label-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-      }
-      .save-dialog .label-row button {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-        padding: 0.35rem 0.7rem;
-        color: inherit;
-        cursor: pointer;
-      }
-      .save-dialog .label-row button:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.14);
-      }
-      .save-dialog .label-row button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .save-dialog input {
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 0.5rem 0.75rem;
-        background: rgba(255, 255, 255, 0.05);
-        color: inherit;
-      }
-      .save-dialog textarea {
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 0.5rem 0.75rem;
-        background: rgba(255, 255, 255, 0.05);
-        color: inherit;
-        resize: vertical;
-        min-height: 80px;
-        font: inherit;
-      }
-      .save-dialog small {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.75rem;
-      }
-      .dialog-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-      }
-      .dialog-actions button {
-        padding: 0.45rem 0.9rem;
-      }
-      .dialog-actions button[type='submit'] {
-        background: rgba(34, 197, 94, 0.15);
-        border: 1px solid rgba(34, 197, 94, 0.4);
-        color: #a3ffcc;
-      }
-      .dialog-actions button[type='submit']:disabled {
-        opacity: 0.5;
-        cursor: default;
-      }
-    `,
-  ],
+  templateUrl: './sculptor-page.component.html',
+  styleUrls: ['./sculptor-page.component.css'],
 })
 export class SculptorPageComponent implements AfterViewInit, OnInit {
   @ViewChild(ViewportComponent) viewport?: ViewportComponent;
@@ -598,11 +72,11 @@ export class SculptorPageComponent implements AfterViewInit, OnInit {
   readonly sculptures = toSignal(this.store.sculptures$, { initialValue: [] as Sculpture[] });
   readonly stats = signal({ fps: 0, triangles: 0 });
   readonly toggles = signal<SculptorDisplayToggles>({ grid: true, axes: true, lights: true });
-  readonly bannerMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  readonly bannerMessage = signal<BannerState>(null);
   readonly selectedSculptureId = signal<string | null>(null);
   readonly activeBrush = signal<SculptBrush>('none');
   readonly booleanMode = signal<BooleanMode>('none');
-  readonly selectionState = signal<{ available: boolean; scale: number; y: number }>({
+  readonly selectionState = signal<SelectionState>({
     available: false,
     scale: 1,
     y: 0,
@@ -613,12 +87,12 @@ export class SculptorPageComponent implements AfterViewInit, OnInit {
   readonly isGeneratingDescription = signal(false);
   readonly tutorialVisible = signal(false);
   readonly tutorialStepIndex = signal(0);
-  saveDialogModel: { name: string; tags: string; description: string } = {
+  saveDialogModel: SaveDialogModel = {
     name: 'Nueva escultura',
     tags: '',
     description: '',
   };
-  readonly tutorialSteps: Array<{ title: string; description: string }> = [
+  readonly tutorialSteps: SculptorTutorialStep[] = [
     {
       title: 'Explora el espacio',
       description: 'Muévete con clic derecho y rueda del ratón. Usa la barra superior para activar la rejilla y los ejes.',
@@ -636,6 +110,7 @@ export class SculptorPageComponent implements AfterViewInit, OnInit {
       description: 'Guarda tu escultura en la galería local o expórtala en GLB/STL desde el botón de exportación.',
     },
   ];
+  private readonly bannerDurationMs = 4000;
   private readonly brushLabels: Record<SculptBrush, string> = {
     none: 'transformación',
     grab: 'mover',
@@ -646,7 +121,7 @@ export class SculptorPageComponent implements AfterViewInit, OnInit {
     crease: 'surcar',
   };
 
-  private bannerTimeout: number | null = null;
+  private bannerTimeout: ReturnType<typeof window.setTimeout> | null = null;
   constructor() {}
 
   ngOnInit(): void {
@@ -910,7 +385,7 @@ export class SculptorPageComponent implements AfterViewInit, OnInit {
     }
     this.bannerTimeout = window.setTimeout(() => {
       this.bannerMessage.set(null);
-    }, 4000);
+    }, this.bannerDurationMs);
   }
 
   openTutorial(): void {

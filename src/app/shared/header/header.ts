@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgOptimizedImage, CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { IRoleType } from '../../interfaces';
 
 @Component({
   selector: 'app-header',
@@ -33,6 +34,10 @@ export class HeaderComponent {
   @HostListener('window:scroll', [])
   onWindowScroll(): void {
     this.scrolled = window.scrollY > 10;
+  }
+
+  isAdmin(): boolean {
+    return this.auth.hasAnyRole([IRoleType.admin, IRoleType.superAdmin]);
   }
 
   public logout(): void {
