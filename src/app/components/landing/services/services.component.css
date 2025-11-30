@@ -2,8 +2,6 @@
   display: block;
 }
 
-/* Layout genérico de sección (solo Services) */
-
 .section {
   padding: 80px 24px;
 }
@@ -66,7 +64,6 @@
   box-sizing: border-box;
 }
 
-/* Cada card ocupa la columna completa pero sin romper el ancho */
 .service-card {
   width: 100%;
   border-radius: 22px;
@@ -89,7 +86,6 @@
   background: rgba(255, 255, 255, 0.95);
 }
 
-/* Contenido interno: columna para icono + texto */
 .service-card mat-card-content {
   padding: 16px 18px 18px;
   display: flex;

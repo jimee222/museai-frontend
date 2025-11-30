@@ -24,10 +24,10 @@
 
 .contact-card {
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr; /* mejor proporción */
+  grid-template-columns: 1.2fr 0.9fr; 
   align-items: center;
-  gap: 48px; /* más aire entre texto y animación */
-  padding: 48px 56px; /* padding más elegante */
+  gap: 48px; 
+  padding: 48px 56px; 
   border-radius: 28px;
 
   background: rgba(255, 255, 255, 0.8);
@@ -41,7 +41,7 @@
 .contact-card__content {
   display: flex;
   flex-direction: column;
-  gap: 14px; /* espacio entre título–texto–botones */
+  gap: 14px; 
 }
 
 
@@ -54,7 +54,7 @@
 
 .contact-card__text {
   max-width: 520px;
-  line-height: 1.65; /* lectura más premium */
+  line-height: 1.65; 
   font-size: 1rem;
   margin-bottom: 12px;
 }
@@ -90,7 +90,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-right: 12px; /* pequeña compensación óptica */
+  padding-right: 12px; 
 }
 
 /* Contenedor general del logo */

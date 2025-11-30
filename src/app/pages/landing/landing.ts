@@ -37,10 +37,8 @@ export class Landing implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
 
   ngOnInit() {
-    // Cambiar título
     document.title = "Code Horizon";
 
-    // Cambiar favicon
     const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement;
     if (favicon) {
       favicon.href = "assets/brand/codehorizon-favicon.png";
@@ -48,10 +46,8 @@ export class Landing implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Restaurar título
     document.title = "MuseAI";
 
-    // Restaurar favicon de MuseAI
     const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement;
     if (favicon) {
       favicon.href = "assets/favicon.ico";

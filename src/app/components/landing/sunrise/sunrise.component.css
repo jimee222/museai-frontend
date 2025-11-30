@@ -2,8 +2,6 @@
   display: block;
 }
 
-/* === Layout genérico de sección (solo Hero) === */
-
 .section {
   padding: 80px 24px;
 }
@@ -63,10 +61,10 @@
 
 .hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); /* texto manda un poquito */
-  gap: 64px;                         /* más espacio entre texto y logo */
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); 
+  gap: 64px;                         
   align-items: center;
-  max-width: 1180px;                 /* un poco más ancho que 1120 */
+  max-width: 1180px;                
   margin: 0 auto; 
 }
 
@@ -377,7 +375,6 @@
 /*                        ANIMACIONES – HERO                      */
 /* ============================================================= */
 
-/* Brackets en LOOP: se esconden → se abren → se van → repite */
 @keyframes bracketLoopLeftHero {
   0%, 8% {
     opacity: 0;
@@ -443,7 +440,7 @@
   }
 }
 
-/* Olas – entran, respiran, se apagan */
+/* Olas*/
 @keyframes waveLoopHero {
   0%, 14% {
     transform: translateY(8px) scaleX(0.9);
@@ -459,7 +456,6 @@
   }
 }
 
-/* Texto: entra después del sol y se va al final */
 @keyframes textLoopHero {
   0%, 20% {
     opacity: 0;
@@ -500,7 +496,7 @@
   }
 
   .hero__visual {
-    order: -1;          /* animación arriba en mobile */
+    order: -1;         
     margin-bottom: 8px;
   }
 

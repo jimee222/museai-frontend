@@ -2,8 +2,6 @@
   display: block;
 }
 
-/* Layout genérico de sección (solo Team) */
-
 .section {
   padding: 80px 24px;
 }
@@ -55,8 +53,6 @@
   }
 }
 
-/* CONTENEDOR: cards pequeños y centrados */
-
 .team__grid {
   display: flex;
   flex-wrap: wrap;
@@ -66,7 +62,6 @@
   width: 100%;
 }
 
-/* CARD: ancho fijo, no rompe el layout */
 .team-card {
   flex: 0 1 200px;
   max-width: 200px;
@@ -89,7 +84,6 @@
   border-color: rgba(7, 136, 255, 0.25);
 }
 
-/* CUADRO DE LA FOTO: todos iguales */
 .team-card__avatar {
   width: 100%;
   aspect-ratio: 3 / 4;
@@ -98,7 +92,6 @@
   background: #ffffff;
 }
 
-/* FOTO rellena el cuadro */
 .team-card__avatar img {
   width: 100%;
   height: 100%;

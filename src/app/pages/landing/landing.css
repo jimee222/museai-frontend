@@ -20,10 +20,9 @@
   font-family: var(--font-sans);
   background: radial-gradient(circle at top left, #f9fbff 0, #ffffff 55%, #f3f4ff 100%);
   color: var(--text-main);
-  overflow-x: hidden; /* solo landing */
+  overflow-x: hidden; 
 }
 
-/* CONTENEDOR GENERAL */
 
 :host .page-shell {
   min-height: 100vh;

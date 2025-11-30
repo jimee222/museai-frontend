@@ -2,7 +2,6 @@
   display: block;
 }
 
-/* Layout genérico de sección (solo Vision) */
 
 .section {
   padding: 80px 24px;
@@ -63,7 +62,6 @@
   gap: 18px;
 }
 
-/* CARD con animación MUY sutil */
 .vision-card {
   position: relative;
   border-radius: 22px;
@@ -71,10 +69,8 @@
   border: 1px solid rgba(226, 232, 240, 0.9);
   padding: 18px 22px;
 
-  /* Sombra casi imperceptible */
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.03);
 
-  /* Movimiento muy suave */
   transform: translateY(0);
   transition:
     box-shadow 0.25s ease,
@@ -82,7 +78,6 @@
     border-color 0.25s ease;
 }
 
-/* Halo ultra sutil */
 .vision-card::before {
   content: '';
   position: absolute;
@@ -97,7 +92,6 @@
   z-index: -1;
 }
 
-/* Hover: levanta *apenas* 2px y sube la sombra un poquito */
 .vision-card:hover,
 .vision-card:focus-within {
   transform: translateY(-2px);
@@ -107,7 +101,7 @@
 
 .vision-card:hover::before,
 .vision-card:focus-within::before {
-  opacity: 0.35; /* muy suave */
+  opacity: 0.35; 
 }
 
 /* Contenido */
