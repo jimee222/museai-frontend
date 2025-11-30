@@ -4,7 +4,6 @@
     'Segoe UI', sans-serif;
 }
 
-/* PALETA MUSE (igual a login/perfil/admin) */
 :host {
   --muse-brown-900: #1e130a;
   --muse-brown-800: #2a1a10;
@@ -16,13 +15,13 @@
   --muse-cream-soft: rgba(255, 249, 237, 0.86);
 }
 
-/* FONDO GENERAL (centrado como en el screenshot) */
 .menu-shell {
   width: 100%;
   min-height: calc(100vh - 70px);
   display: flex;
   justify-content: center;
-  padding: 40px 16px 60px;
+  padding: 90px 16px 80px;
+
   background:
     radial-gradient(circle at 14% 18%, rgba(200, 164, 73, 0.18), transparent 30%),
     radial-gradient(circle at 88% 12%, rgba(232, 196, 118, 0.12), transparent 26%),
@@ -30,7 +29,8 @@
   color: var(--muse-cream);
 }
 
-/* CONTENEDOR PRINCIPAL */
+
+
 .menu-wrap {
   width: 100%;
   max-width: 1120px;
@@ -46,8 +46,8 @@
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding: 22px 22px 20px;
-  border-radius: 22px;
+  padding: 32px 32px 28px;
+  border-radius: 26px;
   background:
     radial-gradient(circle at top left, rgba(200, 164, 73, 0.16), transparent 60%),
     linear-gradient(140deg, var(--muse-brown-900), var(--muse-brown-800));
@@ -64,7 +64,7 @@
 }
 
 .menu-logo {
-  width: 76px;
+  width: 95px;
   height: auto;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.55);
@@ -92,14 +92,15 @@
 
 .menu-title {
   margin: 0;
-  font-size: 1.9rem;
+  font-size: 2.35rem;
   font-weight: 900;
   letter-spacing: 0.5px;
+  line-height: 1.15;
 }
 
 .menu-subtitle {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: var(--muse-cream-soft);
 }
 
@@ -235,7 +236,7 @@
   }
 
   .menu-wrap {
-    gap: 22px;
+    gap: 36px;
   }
 
   .menu-title {

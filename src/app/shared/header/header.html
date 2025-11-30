@@ -4,6 +4,16 @@
   [class.hide-underline]="isLoginPage"
 >
 
+  <button
+    *ngIf="showBack"
+    type="button"
+    class="back-btn"
+    (click)="goBack()"
+    aria-label="Volver"
+  >
+    ←
+  </button>
+
   <a class="brand" routerLink="/app/menu">
     <img
       ngSrc="/assets/brand/museai-logo-solo.png"
@@ -29,6 +39,14 @@
         </a>
 
         <a routerLink="/app/profile" routerLinkActive="active">Perfil</a>
+
+        <a
+          *ngIf="isAdmin()"
+          routerLink="/admin/token-usage"
+          routerLinkActive="active"
+        >
+          Consumo AI
+        </a>
       </ng-container>
 
       <ng-container *ngIf="!isAuthenticated">

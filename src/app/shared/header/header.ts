@@ -24,22 +24,15 @@ export class HeaderComponent {
   ) {
 
     this.router.events.subscribe(() => {
-
-      // Detectar si estamos en login / register para quitar línea dorada
       this.isLoginPage =
         this.router.url.includes('/login') ||
         this.router.url.includes('/register');
 
-      // Páginas donde NO debe aparecer botón de regresar
       const noBackPages = [
-        "/app/menu",
-        "/menu",
-        "/",
-        "/museum",
-        "/create-canvas",
-        "/app/profile",
-        "/login",
-        "/register"
+        '/app/menu', 
+        '/menu',
+        '/',
+        '/login'     
       ];
 
       this.showBack = !noBackPages.includes(this.router.url);
