@@ -681,8 +681,9 @@ private createModernWallMenu(
   const TITLE_LINES = [
     "Bienvenido al museo 3D",
     "de MuseAI.",
-    "Presiona un botón o una obra",
-    "para navegar por la página."
+    "Presiona un botón, el lienzo",
+    "o la escultura para navegar", 
+    "por la página."
   ];
 
   const group = new THREE.Group();
