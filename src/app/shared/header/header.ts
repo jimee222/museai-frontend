@@ -12,16 +12,37 @@ import { IRoleType } from '../../interfaces';
   styleUrls: ['./header.css']
 })
 export class HeaderComponent {
+
   isAuthenticated: boolean = false;
   scrolled = false;
-  hideHeader = false;
+  showBack = false;
+  isLoginPage = false;
 
   constructor(
     public auth: AuthService,
     private router: Router,
   ) {
+
     this.router.events.subscribe(() => {
-      this.hideHeader = this.router.url.includes('/museum');
+
+      // Detectar si estamos en login / register para quitar línea dorada
+      this.isLoginPage =
+        this.router.url.includes('/login') ||
+        this.router.url.includes('/register');
+
+      // Páginas donde NO debe aparecer botón de regresar
+      const noBackPages = [
+        "/app/menu",
+        "/menu",
+        "/",
+        "/museum",
+        "/create-canvas",
+        "/app/profile",
+        "/login",
+        "/register"
+      ];
+
+      this.showBack = !noBackPages.includes(this.router.url);
     });
   }
 
@@ -38,6 +59,10 @@ export class HeaderComponent {
 
   isAdmin(): boolean {
     return this.auth.hasAnyRole([IRoleType.admin, IRoleType.superAdmin]);
+  }
+
+  goBack(): void {
+    window.history.back();
   }
 
   public logout(): void {
