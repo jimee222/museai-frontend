@@ -73,6 +73,12 @@ export class MuseumComponent implements OnInit, OnDestroy {
   @ViewChild('miniMapCanvas', { static: false })
   private miniCtx!: CanvasRenderingContext2D;
   private miniMapReady = false;
+  public showSavedPopup = false;
+  public savedPopupText = "";
+  resumeIndex: number = 0;
+  public savedResumeIndex: number | null = null;
+  public showResumePopup = false;
+  public showTourCompletedPopup = false;
 
   private readonly mapMinX = -10;
   private readonly mapMaxX =  10;
@@ -87,37 +93,87 @@ export class MuseumComponent implements OnInit, OnDestroy {
   return ((idx + 1) / total) * 100;
 }
 
-getCategoryOfCurrentArtwork(): string {
-  const id = this.TOUR_ORDER[this.tour.currentIndex()];
-  if (!id) return "";
+  getCategoryOfCurrentArtwork(): string {
+    const id = this.TOUR_ORDER[this.tour.currentIndex()];
+    if (!id) return "";
 
-  if (['141639', '93014', '135483', '151298', '125249'].includes(id)) {
-    return "Paisajes";
+    if (['141639', '93014', '135483', '151298', '125249'].includes(id)) {
+      return "Paisajes";
+    }
+    if (['170235', '111702', '135428'].includes(id)) {
+      return "Históricas";
+    }
+    if (['132618', '115067', '1953.155', '380063', '135614'].includes(id)) {
+      return "Flores";
+    }
+    if (['2009.157', '1921.1239', '1921.428', '1942.638'].includes(id)) {
+      return "Retratos";
+    }
+
+    return "Obra";
   }
-  if (['170235', '111702', '135428'].includes(id)) {
-    return "Históricas";
+
+  startGuidedTour() {
+    const saved = localStorage.getItem('tour-progress');
+
+    if (saved) {
+      const idx = parseInt(saved, 10);
+      this.savedResumeIndex = idx;
+
+      const artworkId = this.TOUR_ORDER[idx];
+      const category = this.getCategoryOfCurrentArtwork();
+
+      this.savedPopupText = `¿Deseas continuar desde la obra ${artworkId} (${category})?`;
+      this.showTourDialog = false;
+      this.showResumePopup = true;
+      return;
+
+    }
+
+    this.startTourFromBeginning();
   }
-  if (['132618', '115067', '1953.155', '380063', '135614'].includes(id)) {
-    return "Flores";
+
+  startTourFromBeginning() {
+    this.showResumePopup = false;
+    this.showTourDialog = false;
+
+    this.camera.rotation.set(0, 0, 0);
+
+    const tourPoints = this.generateTourPointsForArtworkOrder(this.TOUR_ORDER);
+    this.tour.setup(tourPoints);
+
+    this.tour.start();
+    this.disablePlayerMovement();
   }
-  if (['2009.157', '1921.1239', '1921.428', '1942.638'].includes(id)) {
-    return "Retratos";
+
+
+  continueSavedTour() {
+    if (this.savedResumeIndex === null) return;
+
+    this.showResumePopup = false;
+    this.showTourDialog = false;
+
+    const tourPoints = this.generateTourPointsForArtworkOrder(this.TOUR_ORDER);
+    this.tour.setup(tourPoints);
+    this.tour.onTourFinished = () => this.finishTour();
+
+    const p = tourPoints[this.savedResumeIndex];
+
+    this.camera.rotation.set(0, p.rotY, 0);
+    this.camera.position.set(p.x, p.y, p.z);
+
+    this.tour.startFrom(this.savedResumeIndex);
+    this.disablePlayerMovement();
   }
 
-  return "Obra";
-}
+  finishTour() {
+    this.enablePlayerMovement();
 
-startGuidedTour() {
-  this.showTourDialog = false;
+    this.showTourCompletedPopup = true;
 
-  this.camera.rotation.set(0, 0, 0);
+    this.tour.stop();
+  }
 
-  const tourPoints = this.generateTourPointsForArtworkOrder(this.TOUR_ORDER);
-  this.tour.setup(tourPoints);
-  this.tour.start();
-
-  this.disablePlayerMovement();
-}
 
 
 private generateTourPointsForArtworkOrder(order: string[]): any[] {
@@ -178,9 +234,19 @@ enterFreeMode() {
 }
 
 stopTour() {
+  const index = this.tour.currentIndex();
+  localStorage.setItem('tour-progress', index.toString());
+
+  const artworkId = this.TOUR_ORDER[index];
+  const category = this.getCategoryOfCurrentArtwork();
+
+  this.savedPopupText = `Tu recorrido se guardó en la obra ${artworkId} (${category}).`;
+  this.showSavedPopup = true;
+
   this.tour.stop();
   this.enablePlayerMovement();
 }
+
 
 private disablePlayerMovement() {
   this.movementEnabled = false;

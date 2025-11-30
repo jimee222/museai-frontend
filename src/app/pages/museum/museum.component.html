@@ -13,6 +13,17 @@
   </div>
 </div>
 
+<div class="popup-backdrop" *ngIf="showResumePopup">
+  <div class="popup-window">
+    <h2>Reanudar recorrido</h2>
+    <p>{{ savedPopupText }}</p>
+
+    <button (click)="continueSavedTour()">Sí, continuar</button>
+    <button (click)="startTourFromBeginning()">No, empezar nuevo</button>
+  </div>
+</div>
+
+
 
 
 <div class="tour-controls" *ngIf="tour.isActive()">
@@ -42,7 +53,30 @@
 
 </div>
 
+<!-- POPUP: Progreso guardado -->
+<div
+  class="popup-backdrop"
+  *ngIf="showSavedPopup"
+  (click)="showSavedPopup = false">
 
+  <div class="popup-window" (click)="$event.stopPropagation()">
+    <h2>Recorrido guardado</h2>
+    <p>{{ savedPopupText }}</p>
+
+    <button (click)="showSavedPopup = false">Aceptar</button>
+  </div>
+</div>
+
+<div class="popup-backdrop" *ngIf="showTourCompletedPopup">
+  <div class="popup-window">
+    <h2>Fin del recorrido</h2>
+    <p>Has llegado al final del tour guiado. ¡Gracias por explorar MuseAI!</p>
+
+    <button (click)="showTourCompletedPopup = false">
+      Aceptar
+    </button>
+  </div>
+</div>
 
 
 <div class="lang-overlay">

@@ -1,67 +1,99 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class TourService {
 
-  private points: { x: number; y: number; z: number; rotY: number }[] = [];
-  private index = 0;
+  private points: any[] = [];
 
-  private active = new BehaviorSubject<boolean>(false);
-  private paused = new BehaviorSubject<boolean>(false);
+  active: boolean = false;
+  paused: boolean = false;
 
-  tourActive$ = this.active.asObservable();
-  tourPaused$ = this.paused.asObservable();
+  current: number = 0;
 
-  setup(points: { x: number; y: number; z: number; rotY: number }[]) {
+  constructor() {}
+
+  setup(points: any[]) {
     this.points = points;
+    this.current = 0;
   }
 
   start() {
-    this.index = 0;
-    this.active.next(true);
-    this.paused.next(false);
+    this.active = true;
+    this.paused = false;
+    this.current = 0;
   }
 
-  pause() {
-    this.paused.next(true);
-  }
+  startFrom(index: number) {
+    this.active = true;
+    this.paused = false;
 
-  resume() {
-    this.paused.next(false);
-  }
+    if (index < 0 || index >= this.points.length) {
+      index = 0;
+    }
 
-  restart() {
-    this.index = 0;
-    this.paused.next(false);
+    this.current = index;
   }
 
   stop() {
-    this.active.next(false);
-    this.paused.next(false);
+    this.active = false;
+    this.paused = false;
+    this.current = 0;
   }
 
+  pause() {
+    this.paused = true;
+  }
+
+  resume() {
+    this.paused = false;
+  }
+  restart() {
+    if (!this.points || this.points.length === 0) return;
+
+    this.active = true;
+    this.paused = false;
+
+    this.current = 0;
+
+    localStorage.removeItem('tour-progress');
+  }
+
+
+
   next() {
-    if (this.index < this.points.length - 1) this.index++;
+    if (!this.active) return;
+
+  if (this.current === this.points.length - 1) {
+      localStorage.removeItem('tour-progress');
+      this.onTourFinished?.();
+      return;
+  }
+  this.current++;
   }
 
   prev() {
-    if (this.index > 0) this.index--;
+    if (!this.active) return;
+
+    if (this.current > 0) {
+      this.current--;
+    }
   }
 
   currentPoint() {
-    return this.points[this.index];
+    return this.points[this.current];
   }
 
-  currentIndex(): number {
-    return this.index;
+  currentIndex() {
+    return this.current;
   }
 
   isActive() {
-    return this.active.value;
+    return this.active;
   }
 
   isPaused() {
-    return this.paused.value;
+    return this.paused;
   }
+    onTourFinished?: () => void;
+
 }
