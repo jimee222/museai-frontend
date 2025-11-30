@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  OnInit,
   ViewChild,
   effect,
   inject,
@@ -26,6 +27,7 @@ import { BooleanMode, ModifierAction, SculptBrush } from '../models/sculpt-tools
 import { FormsModule } from '@angular/forms';
 import { AiDescriptionsService } from '../../services/ai-descriptions.service';
 import { LanguagePreferenceService } from '../../services/language-preference.service';
+import { LanguageSelectorComponent } from '../../shared/language-selector/language-selector.component';
 
 type PrimitiveType = 'box' | 'sphere' | 'cylinder';
 type ExportFormat = 'glb' | 'stl';
@@ -43,7 +45,14 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
 @Component({
   selector: 'app-sculptor-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ToolbarComponent, ViewportComponent, AssetDropzoneComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ToolbarComponent,
+    ViewportComponent,
+    AssetDropzoneComponent,
+    LanguageSelectorComponent,
+  ],
   template: `
     <section class="sculptor-layout">
       <app-sculptor-toolbar
@@ -100,6 +109,10 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
     </div>
 
         <section class="gallery">
+          <div class="gallery-controls">
+            <span class="gallery-controls__label">Idioma para Descripción</span>
+            <app-language-selector appearance="dark"></app-language-selector>
+          </div>
           <header>
             <h3>Galería local</h3>
             <small>{{ sculptures().length }} guardadas</small>
@@ -116,9 +129,65 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
               </div>
             </li>
           </ul>
+          <div class="gallery-footer">
+            <button type="button" class="tutorial-replay" (click)="openTutorial()">
+              Ver Tutorial
+            </button>
+          </div>
         </section>
       </div>
     </section>
+
+    <div class="tutorial-overlay" *ngIf="tutorialVisible()">
+      <div class="tutorial-modal">
+        <header class="tutorial-modal__header">
+          <div>
+            <p class="tutorial-modal__eyebrow">Guía rápida</p>
+            <h3>{{ tutorialSteps[tutorialStepIndex()].title }}</h3>
+          </div>
+          <button type="button" class="tutorial-close" (click)="completeTutorial()">
+            ✕
+          </button>
+        </header>
+        <p class="tutorial-modal__body">
+          {{ tutorialSteps[tutorialStepIndex()].description }}
+        </p>
+        <div class="tutorial-progress">
+          Paso {{ tutorialStepIndex() + 1 }} de {{ tutorialSteps.length }}
+        </div>
+        <div class="tutorial-actions">
+          <button type="button" class="text-button" (click)="skipFutureTutorials()">
+            No volver a mostrar
+          </button>
+          <div class="tutorial-nav">
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="tutorialStepIndex() === 0"
+              (click)="previousTutorialStep()"
+            >
+              Anterior
+            </button>
+            <button
+              *ngIf="tutorialStepIndex() < tutorialSteps.length - 1"
+              type="button"
+              class="primary-button"
+              (click)="nextTutorialStep()"
+            >
+              Siguiente
+            </button>
+            <button
+              *ngIf="tutorialStepIndex() === tutorialSteps.length - 1"
+              type="button"
+              class="primary-button"
+              (click)="completeTutorial()"
+            >
+              Listo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="save-dialog-overlay" *ngIf="saveDialogVisible()">
       <form class="save-dialog" (ngSubmit)="submitSaveDialog($event)">
@@ -217,6 +286,143 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+      }
+      .gallery-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .gallery-controls__label {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: #f8fafc;
+      }
+      .gallery-footer {
+        margin-top: 0.75rem;
+        display: flex;
+        justify-content: center;
+      }
+      .tutorial-replay {
+        background: rgba(255, 255, 255, 0.08);
+        color: #e2e8f0;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        padding: 0.35rem 0.75rem;
+        cursor: pointer;
+        transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+      }
+      .tutorial-replay:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+      .tutorial-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: grid;
+        place-items: center;
+        z-index: 12;
+        padding: 1rem;
+      }
+      .tutorial-modal {
+        width: min(420px, 100%);
+        background: #0c0d13;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.2rem 1.3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+      .tutorial-modal__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .tutorial-modal__eyebrow {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.75rem;
+        color: rgba(226, 232, 240, 0.7);
+      }
+      .tutorial-modal h3 {
+        margin: 0.2rem 0 0;
+        font-size: 1.15rem;
+      }
+      .tutorial-modal__body {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.9);
+        line-height: 1.5;
+      }
+      .tutorial-progress {
+        font-size: 0.9rem;
+        color: rgba(226, 232, 240, 0.8);
+      }
+      .tutorial-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .tutorial-nav {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .tutorial-close {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        color: #f8fafc;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+      }
+      .primary-button,
+      .secondary-button,
+      .text-button {
+        font: inherit;
+        padding: 0.45rem 0.9rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+      }
+      .primary-button {
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(34, 197, 94, 0.45);
+        color: #bbf7d0;
+      }
+      .primary-button:hover {
+        background: rgba(34, 197, 94, 0.24);
+      }
+      .secondary-button {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+      }
+      .secondary-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .secondary-button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .text-button {
+        background: transparent;
+        border: none;
+        color: rgba(226, 232, 240, 0.75);
+        padding: 0.35rem 0;
+      }
+      .text-button:hover {
+        color: #f8fafc;
+        transform: translateY(-1px);
       }
       .gallery header {
         display: flex;
@@ -380,13 +586,14 @@ const DEFAULT_WORKSPACE: SculptWorkspaceSettings = {
     `,
   ],
 })
-export class SculptorPageComponent implements AfterViewInit {
+export class SculptorPageComponent implements AfterViewInit, OnInit {
   @ViewChild(ViewportComponent) viewport?: ViewportComponent;
 
   private readonly store = inject(SculptureStoreService);
   private readonly route = inject(ActivatedRoute);
   private readonly aiDescriptions = inject(AiDescriptionsService);
   private readonly languagePreference = inject(LanguagePreferenceService);
+  private readonly tutorialStorageKey = 'sculptorTutorialDismissed';
 
   readonly sculptures = toSignal(this.store.sculptures$, { initialValue: [] as Sculpture[] });
   readonly stats = signal({ fps: 0, triangles: 0 });
@@ -404,11 +611,31 @@ export class SculptorPageComponent implements AfterViewInit {
   readonly saveDialogVisible = signal(false);
   readonly isSavingScene = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly tutorialVisible = signal(false);
+  readonly tutorialStepIndex = signal(0);
   saveDialogModel: { name: string; tags: string; description: string } = {
     name: 'Nueva escultura',
     tags: '',
     description: '',
   };
+  readonly tutorialSteps: Array<{ title: string; description: string }> = [
+    {
+      title: 'Explora el espacio',
+      description: 'Muévete con clic derecho y rueda del ratón. Usa la barra superior para activar la rejilla y los ejes.',
+    },
+    {
+      title: 'Elige un pincel',
+      description: 'Selecciona una herramienta en la barra lateral: mover, inflar, suavizar o pellizcar. Ajusta radio e intensidad.',
+    },
+    {
+      title: 'Trabaja con simetría',
+      description: 'Activa la simetría y el material que prefieras para ver mejor las formas mientras esculpes.',
+    },
+    {
+      title: 'Guarda y exporta',
+      description: 'Guarda tu escultura en la galería local o expórtala en GLB/STL desde el botón de exportación.',
+    },
+  ];
   private readonly brushLabels: Record<SculptBrush, string> = {
     none: 'transformación',
     grab: 'mover',
@@ -420,9 +647,11 @@ export class SculptorPageComponent implements AfterViewInit {
   };
 
   private bannerTimeout: number | null = null;
+  constructor() {}
 
-  constructor() {
+  ngOnInit(): void {
     this.applyQueryParams();
+    this.maybeOpenTutorial();
   }
 
   ngAfterViewInit(): void {
@@ -684,6 +913,33 @@ export class SculptorPageComponent implements AfterViewInit {
     }, 4000);
   }
 
+  openTutorial(): void {
+    this.tutorialStepIndex.set(0);
+    this.tutorialVisible.set(true);
+  }
+
+  nextTutorialStep(): void {
+    const nextIndex = Math.min(this.tutorialSteps.length - 1, this.tutorialStepIndex() + 1);
+    this.tutorialStepIndex.set(nextIndex);
+  }
+
+  previousTutorialStep(): void {
+    const prevIndex = Math.max(0, this.tutorialStepIndex() - 1);
+    this.tutorialStepIndex.set(prevIndex);
+  }
+
+  completeTutorial(markDismissed = true): void {
+    if (markDismissed) {
+      this.persistTutorialDismissal();
+    }
+    this.tutorialVisible.set(false);
+  }
+
+  skipFutureTutorials(): void {
+    this.persistTutorialDismissal();
+    this.tutorialVisible.set(false);
+  }
+
   trackById(_: number, sculpture: Sculpture): string {
     return sculpture.id;
   }
@@ -757,5 +1013,28 @@ export class SculptorPageComponent implements AfterViewInit {
       return null;
     }
     return this.sculptures().find((item) => item.name.trim().toLowerCase() === target)?.id ?? null;
+  }
+
+  private maybeOpenTutorial(): void {
+    if (this.loadTutorialDismissed()) {
+      return;
+    }
+    this.openTutorial();
+  }
+
+  private persistTutorialDismissal(): void {
+    try {
+      localStorage.setItem(this.tutorialStorageKey, 'true');
+    } catch (error) {
+      console.warn('No se pudo guardar preferencia del tutorial', error);
+    }
+  }
+
+  private loadTutorialDismissed(): boolean {
+    try {
+      return localStorage.getItem(this.tutorialStorageKey) === 'true';
+    } catch {
+      return false;
+    }
   }
 }
