@@ -116,6 +116,30 @@
   line-height: 1.5;
   color: #fff;
 }
+/* oculta el botón translate */
+.lang-overlay {
+  position: fixed;
+  top: 30px;
+  right: 40px;
+  z-index: 99999;
+  
+}
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.museum-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+
 
 /*  POPUP INICIAL DEL TOUR */
 

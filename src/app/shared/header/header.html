@@ -1,3 +1,5 @@
+<div *ngIf="!hideHeader">
+  <header>
 <nav class="nav" [class.nav--scrolled]="scrolled">
   <a class="brand" routerLink="/" aria-label="Ir al inicio">
     <img
@@ -33,3 +35,5 @@
     </button>
   </div>
 </nav>
+</header>
+</div>
