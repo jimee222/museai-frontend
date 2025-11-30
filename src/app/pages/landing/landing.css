@@ -1,100 +1,35 @@
-/* contenedor general */
-.wrap{
-  max-width: 1200px;
-  margin: 24px auto;
-  padding: 16px;
-  background: var(--background-color);
+:host {
+  --horizon-blue: #0788ff;
+  --deep-blue: #4a28f6;
+  --sun-1: #ffb526;
+  --sun-2: #ff6a45;
+  --sun-3: #ff377d;
+
+  --bg-white: #ffffff;
+  --shadow-soft: #f3f4f6;
+
+  --text-main: #0f172a;
+  --text-soft: #6b7280;
+
+  --font-sans: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background: radial-gradient(circle at top left, #f9fbff 0, #ffffff 55%, #f3f4ff 100%);
+  color: var(--text-main);
+  overflow-x: hidden; /* solo landing */
 }
 
-/* grid del mockup */
-@media (min-width: 1024px){
-  .wrap{
-    display: grid;
-    grid-template-columns: 1.1fr .9fr;
-    grid-template-rows: auto auto;
-    gap: 24px;
-  }
+/* CONTENEDOR GENERAL */
+
+:host .page-shell {
+  min-height: 100vh;
+  width: 100%;
 }
 
-/* -------- panel izquierdo (tarjeta grande) -------- */
-.panel{
-  background: var(--main-color);
-  color: var(--text);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 10px 24px rgba(0,0,0,.10);
-}
-.panel__img{
-  display:block;
-  width:100%;
-  height:auto;
-  max-height: 260px;
-  object-fit: cover;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-.panel__body{
-  padding: 18px 20px 22px;
-}
-.panel h2{
-  margin:0 0 4px;
-  font-size: 1.25rem;
-  font-weight: 800;
-}
-.panel__lead{
-  margin: 8px 0 6px;
-  font-weight: 800;
-  font-size: 1.15rem;
-}
-
-/* -------- bloque de marca grande -------- */
-.hero-brand{
-  align-self: start;
-  justify-self: center;
-  display:flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-.hero-brand__logo{
-  width: 260px;
-  height: 260px;
-  object-fit: contain;
-}
-
-/* -------- callouts (dos burbujas redondeadas) -------- */
-.callouts{
-  grid-column: 2 / 3;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-content: start;
-}
-.callout{
-  background: var(--main-color);
-  color: var(--text);
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.10);
-}
-.callout p{
-  margin:0 0 12px;
-  line-height: 1.35;
-}
-
-/* -------- botones reutilizables (ya definidos globalmente si seguiste mi paso anterior) -------- */
-.btn{
-  display:inline-flex; align-items:center; gap:.5rem;
-  padding:.6rem 1rem; border-radius:14px; border:none; cursor:pointer;
-  font-weight:700; text-decoration:none; user-select:none;
-}
-.btn-primary{ background:var(--third-color); color:var(--text); }
-.btn-secondary{ background:#524f4e; color:var(--text); } /* gris botón de login del mockup */
-.btn:hover{ filter:brightness(1.05); }
-
-/* -------- responsive -------- */
-@media (max-width: 1023px){
-  .wrap{ display:block }
-  .hero-brand{ margin: 24px 0; }
-  .callouts{ grid-column:auto; grid-template-columns: 1fr; }
+:host .page-main {
+  padding-top: 8px;
 }

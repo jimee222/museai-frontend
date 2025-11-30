@@ -1,0 +1,514 @@
+:host {
+  display: block;
+}
+
+/* === Layout genérico de sección (solo Hero) === */
+
+.section {
+  padding: 80px 24px;
+}
+
+.section--tight {
+  padding-block: 64px;
+}
+
+.section__inner {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.section__header {
+  max-width: 640px;
+  margin-bottom: 32px;
+}
+
+.section__eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--deep-blue);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.section__title {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.section__description {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.98rem;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 16px;
+  }
+
+  .section__title {
+    font-size: 1.6rem;
+  }
+}
+
+/* === Hero específico === */
+
+.hero {
+  padding: 110px 24px 96px;
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); /* texto manda un poquito */
+  gap: 64px;                         /* más espacio entre texto y logo */
+  align-items: center;
+  max-width: 1180px;                 /* un poco más ancho que 1120 */
+  margin: 0 auto; 
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 540px;
+}
+
+.hero__title {
+  font-size: 2.9rem;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.hero__subtitle {
+   margin: 0;
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Tira con logo */
+
+.hero__logo-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  width: fit-content;
+}
+
+.hero-logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+.hero-logo__text {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+/* Botones */
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.hero__primary-cta,
+.hero__secondary-cta {
+  border-radius: 999px;
+  padding-inline: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+.hero__primary-cta {
+  background: linear-gradient(135deg, var(--sun-1), var(--sun-3));
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(255, 106, 69, 0.28);
+}
+
+/* Hover: un poquito más de sombra */
+.hero__primary-cta:hover {
+  box-shadow: 0 14px 32px rgba(255, 106, 69, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Active: se “hund e” un poco */
+.hero__primary-cta:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 6px 14px rgba(255, 106, 69, 0.25);
+}
+
+/* Secundario: outline azul con relleno blanco */
+.hero__secondary-cta {
+  border-radius: 999px;
+  padding-inline: 18px;
+  border: 1px solid var(--deep-blue);
+  color: var(--deep-blue) !important;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+/* Hover secundario: fondo muy suave y más sombra */
+.hero__secondary-cta:hover {
+  background: rgba(7, 136, 255, 0.06);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+  transform: translateY(-1px);
+}
+
+/* Active secundario */
+.hero__secondary-cta:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+/* Badges */
+
+.hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(241, 245, 249, 0.9);
+}
+
+.hero-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.hero-chip__dot--blue {
+  background: var(--horizon-blue);
+}
+
+.hero-chip__dot--gradient {
+  background: linear-gradient(135deg, var(--sun-1), var(--sun-3));
+}
+
+.hero-chip__dot--soft {
+  background: rgba(148, 163, 184, 1);
+}
+
+/* Visual hero: centrado y un poco más grande */
+
+.hero__visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+}
+
+/* ============================================================= */
+/*   LOGO ANIMADO CODE HORIZON – HERO COMPONENT                   */
+/* ============================================================= */
+
+:host .code-horizon-logo {
+  transform: scale(0.9);
+  transform-origin: center;
+}
+
+/* Marca completa */
+:host .logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Flechas < > */
+:host .bracket {
+  font-size: 46px;
+  font-weight: 700;
+  color: var(--deep-blue);
+  opacity: 0;
+}
+
+/* Loop: brackets se abren, viven un rato y se van, luego repiten */
+:host .bracket-left {
+  animation: bracketLoopLeftHero 7s 0.4s ease-in-out infinite;
+}
+
+:host .bracket-right {
+  animation: bracketLoopRightHero 7s 0.4s ease-in-out infinite;
+}
+
+/* Sol + Agua */
+:host .sun-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Sol más grande */
+:host .sun-wrapper {
+  position: relative;
+  width: 150px;
+  height: 110px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+:host .sun {
+  width: 150px;
+  height: 80px;
+  border-radius: 150px 150px 0 0;
+  background: linear-gradient(180deg, var(--sun-3), var(--sun-2), var(--sun-1));
+  transform: translateY(30px) scale(0.7);
+  opacity: 0;
+  /* Sol en loop: sube, brilla, baja y desaparece */
+  animation: sunLoopHero 7s 0.7s ease-in-out infinite;
+}
+
+
+/* Rayos (por si luego los usas en el HTML) */
+
+:host .ray {
+  position: absolute;
+  top: -14px;
+  width: 32px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sun-1);
+  opacity: 0;
+  animation: rayPopHero 7s 0.9s ease-out infinite;
+}
+
+:host .ray-1 {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+:host .ray-2 {
+  left: 34%;
+}
+
+:host .ray-3 {
+  left: 20%;
+}
+
+:host .ray-4 {
+  left: 66%;
+}
+
+:host .ray-5 {
+  left: 80%;
+}
+
+/* Agua */
+
+:host .water {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+:host .wave {
+  display: block;
+  border-radius: 999px;
+  background: #4a28f6;
+  opacity: 0;
+  /* Olas en loop: entran, respiran y se apagan */
+  animation: waveLoopHero 7s 1s ease-in-out infinite;
+}
+
+:host .wave-1 { width: 110px; height: 8px; }
+:host .wave-2 { width: 90px; height: 8px; }
+:host .wave-3 { width: 65px; height: 8px; }
+
+/* Texto */
+
+:host .logo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+:host .logo-text .code {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--horizon-blue);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: textLoopHero 7s 1.4s ease-out infinite;
+}
+
+:host .logo-text .horizon {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--horizon-blue);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: textLoopHero 7s 1.7s ease-out infinite;
+}
+
+/* ============================================================= */
+/*                        ANIMACIONES – HERO                      */
+/* ============================================================= */
+
+/* Brackets en LOOP: se esconden → se abren → se van → repite */
+@keyframes bracketLoopLeftHero {
+  0%, 8% {
+    opacity: 0;
+    transform: translateX(-8px) scale(1.05);
+  }
+  18%, 62% {
+    opacity: 1;
+    transform: translateX(-32px) scale(1);
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: translateX(-8px) scale(1.02);
+  }
+}
+
+@keyframes bracketLoopRightHero {
+  0%, 8% {
+    opacity: 0;
+    transform: translateX(8px) scale(1.05);
+  }
+  18%, 62% {
+    opacity: 1;
+    transform: translateX(32px) scale(1);
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: translateX(8px) scale(1.02);
+  }
+}
+
+/* Sol: sube, brilla, baja y desaparece */
+@keyframes sunLoopHero {
+  0%, 10% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.7);
+    filter: drop-shadow(0 0 0 rgba(255,170,80,0));
+  }
+  26%, 68% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 14px rgba(255,170,80,0.85));
+  }
+  84%, 100% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.85);
+    filter: drop-shadow(0 0 0 rgba(255,170,80,0));
+  }
+}
+
+/* Rayos: pequeño pop en cada ciclo */
+@keyframes rayPopHero {
+  0%, 20% {
+    opacity: 0;
+    transform: translateY(4px) scaleX(0.3);
+  }
+  32%, 70% {
+    opacity: 1;
+    transform: translateY(0) scaleX(1);
+  }
+  86%, 100% {
+    opacity: 0;
+    transform: translateY(2px) scaleX(0.6);
+  }
+}
+
+/* Olas – entran, respiran, se apagan */
+@keyframes waveLoopHero {
+  0%, 14% {
+    transform: translateY(8px) scaleX(0.9);
+    opacity: 0;
+  }
+  28%, 70% {
+    transform: translateY(0) scaleX(1.03);
+    opacity: 1;
+  }
+  86%, 100% {
+    transform: translateY(6px) scaleX(0.9);
+    opacity: 0;
+  }
+}
+
+/* Texto: entra después del sol y se va al final */
+@keyframes textLoopHero {
+  0%, 20% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  32%, 72% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90%, 100% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ====== RESPONSIVE ====== */
+
+@media (max-width: 1024px) {
+  .hero__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px;
+    max-width: 1000px;
+  }
+
+  :host .code-horizon-logo {
+    transform: scale(0.85);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding-top: 88px;
+  }
+
+  .hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .hero__visual {
+    order: -1;          /* animación arriba en mobile */
+    margin-bottom: 8px;
+  }
+
+  .hero__title {
+    font-size: 2.2rem;
+  }
+
+  :host .code-horizon-logo {
+    transform: scale(0.8);
+  }
+}

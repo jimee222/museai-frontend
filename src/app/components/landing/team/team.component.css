@@ -1,0 +1,134 @@
+:host {
+  display: block;
+}
+
+/* Layout genérico de sección (solo Team) */
+
+.section {
+  padding: 80px 24px;
+}
+
+.section--tight {
+  padding-block: 64px;
+}
+
+.section__inner {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.section__header {
+  max-width: 640px;
+  margin-bottom: 32px;
+}
+
+.section__eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--deep-blue);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.section__title {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.section__description {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.98rem;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 16px;
+  }
+
+  .section__title {
+    font-size: 1.6rem;
+  }
+}
+
+/* CONTENEDOR: cards pequeños y centrados */
+
+.team__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* CARD: ancho fijo, no rompe el layout */
+.team-card {
+  flex: 0 1 200px;
+  max-width: 200px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 10px 12px 14px;
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out,
+    border-color 180ms ease-out,
+    background 180ms ease-out;
+}
+
+
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
+  border-color: rgba(7, 136, 255, 0.25);
+}
+
+/* CUADRO DE LA FOTO: todos iguales */
+.team-card__avatar {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* FOTO rellena el cuadro */
+.team-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* TEXTO */
+.team-card__info {
+  margin-top: 8px;
+}
+
+.team-card__name {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.team-card__role {
+  margin: 2px 0 4px;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+@media (max-width: 600px) {
+  .team__grid {
+    gap: 16px;
+  }
+
+  .team-card {
+    flex: 0 1 180px;
+    max-width: 180px;
+  }
+}

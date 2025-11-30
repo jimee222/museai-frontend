@@ -1,0 +1,134 @@
+:host {
+  display: block;
+}
+
+/* Layout genérico de sección (solo Services) */
+
+.section {
+  padding: 80px 24px;
+}
+
+.section--tight {
+  padding-block: 64px;
+}
+
+.section__inner {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.section__header {
+  max-width: 640px;
+  margin-bottom: 32px;
+}
+
+.section__eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--deep-blue);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.section__title {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.section__description {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.98rem;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 16px;
+  }
+
+  .section__title {
+    font-size: 1.6rem;
+  }
+}
+
+/* Services específicas */
+
+.services__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Cada card ocupa la columna completa pero sin romper el ancho */
+.service-card {
+  width: 100%;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  margin: 0;
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out,
+    border-color 180ms ease-out,
+    background 180ms ease-out;
+  height: 100%;
+  display: flex;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  border-color: rgba(7, 136, 255, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Contenido interno: columna para icono + texto */
+.service-card mat-card-content {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Icono circular */
+.service-card__icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  background: radial-gradient(circle at 10% 0%, #ffffff, #dbeafe);
+}
+
+.service-card__icon {
+  font-size: 1.2rem;
+  color: var(--horizon-blue);
+}
+
+/* Texto */
+.service-card__title {
+  margin: 0 0 6px;
+  font-size: 0.96rem;
+}
+
+.service-card__description {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+}
+
+/* Ajuste suave en móviles */
+@media (max-width: 600px) {
+  .services__grid {
+    gap: 16px;
+  }
+}
