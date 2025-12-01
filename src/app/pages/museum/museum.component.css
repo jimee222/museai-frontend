@@ -1,6 +1,6 @@
 .museum-container {
   width: 100%;
-  height: calc(100vh - 64px); 
+  height: 100vh;     /* ocupa toda la altura */
   overflow: hidden;
 }
 
@@ -266,5 +266,9 @@
   height: 100%;
   background: linear-gradient(90deg, #caa526, #f3d46e);
   transition: width .35s ease;
+}
+:host ::ng-deep footer,
+:host ::ng-deep app-footer {
+  display: none !important;
 }
 

@@ -1,4 +1,8 @@
-<nav class="nav" [class.nav--scrolled]="scrolled">
+<nav
+  *ngIf="!hideHeader"
+  class="nav"
+  [class.nav--scrolled]="scrolled"
+>
   <a class="brand" routerLink="/" aria-label="Ir al inicio">
     <img
       ngSrc="/assets/brand/museai-logo-solo.png"

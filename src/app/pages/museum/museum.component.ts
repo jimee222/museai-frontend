@@ -1102,9 +1102,27 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   //    ESCENA 3D (init)
   private initScene(): void {
 
+        // ====== PUERTA PEGADA A LA ÚLTIMA OBRA DE LA PARED IZQUIERDA ======
+    {
+      const wallThick = 0.2;
+      const wallH     = 5;
+      const wallLen   = 20;
+      const wallX     = -10;
+
+      // Usa los marcos ya creados; si no hay, asume que el último está en z=6
+      const doorW = 2.0;
+      const doorZ = -10 + doorW / 2 + 0.05;
+      const doorH = 3.0;
+      const doorYBottom = 0;
+
+      const zMin = -10;
+      const zMax =  10;
+      const zStart = doorZ - doorW / 2;
+      const zEnd   = doorZ + doorW / 2;
+
     // Color azul rey
     const WALL_COLOR = 0xEEEAE6 //0xFAFAFA  //0xDCD4CB  //0xEEEAE6   //0xB0BEC5  //0xCFD8DC    // 0xF5F5F5  //0x2B2B2B
-; // royal blue
+    // royal blue
 
     // Un SOLO material para TODAS las paredes
     const wallMaterial = new THREE.MeshStandardMaterial({ color: WALL_COLOR });
@@ -1418,6 +1436,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const lintelYCenter = doorYBottom + doorH + lintelH / 2;
     lintel.position.set(wallX, lintelYCenter, doorZ);
     this.scene.add(lintel); this.walls.push(lintel);
+
   }
 
   // ====== SALA 2 ALINEADA ======
@@ -1515,6 +1534,52 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     eastLintel.position.set(east2X, doorH + lintelH / 2, doorZ);
     this.scene.add(eastLintel); this.walls.push(eastLintel);
   }
+
+
+   // ===== Cartel "Mi galería" con el estilo de los botones del menú =====
+  {
+    // 1) Dibujamos un canvas 2D con el mismo look
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 180;
+    const ctx = signCanvas.getContext('2d')!;
+
+    // Fondo oscuro
+    ctx.fillStyle = '#232323';
+    ctx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+
+    // Borde claro
+    ctx.strokeStyle = '#f5e1ce';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(6, 6, signCanvas.width - 12, signCanvas.height - 12);
+
+    // Texto
+    ctx.fillStyle = '#f5e1ce';
+    ctx.font = 'bold 64px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Mi galería', signCanvas.width / 2, signCanvas.height / 2);
+
+    const signTex = new THREE.CanvasTexture(signCanvas);
+
+    // 2) Plane 3D con esa textura (un poco más ancho que la puerta)
+    const signGeo = new THREE.PlaneGeometry(doorW + 0.8, 0.5);
+    const signMat = new THREE.MeshStandardMaterial({
+      map: signTex,
+      metalness: 0,
+      roughness: 1
+    });
+    const signMesh = new THREE.Mesh(signGeo, signMat);
+
+    const signY = doorH + 0.6;
+    const signX = east2X + thick / 2 + 0.02;   // lado museo principal
+
+    signMesh.position.set(signX, signY, doorZ);
+    signMesh.rotation.y = Math.PI / 2;         // mirando hacia la sala principal
+
+    this.scene.add(signMesh);
+  }
+
 }
 
 
@@ -1726,6 +1791,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     });
 
     window.addEventListener('resize', this.onResize);
+  }
   }
 
   // ==========================
