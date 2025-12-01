@@ -43,26 +43,20 @@
       ></div>
 
       <div class="card-content">
-        <h3 class="quiz-title">{{ quiz.title }}</h3>
-        <p class="quiz-description">{{ quiz.description | slice:0:80 }}...</p>
+  <h3 class="quiz-title">{{ quiz.title }}</h3>
+  <p class="quiz-description">{{ quiz.description | slice:0:80 }}...</p>
 
-        <div class="card-actions">
-          <img
-            src="/assets/icons/edit.png"
-            alt="Editar quiz"
-            class="card-icon edit-icon"
-            (click)="goToQuiz(quiz.id!)"
-          />
+  <p class="quiz-questions">Preguntas: {{ quiz.questionCount }}</p>
 
-          <img
-            src="/assets/icons/delete.png"
-            alt="Eliminar quiz"
-            class="card-icon delete-icon"
-            (click)="deleteQuiz(quiz)"
-          />
-        </div>
+  <div class="card-actions">
+    <img src="/assets/icons/edit.png" alt="Editar quiz" class="card-icon edit-icon"
+         (click)="goToQuiz(quiz.id!)" />
 
-      </div>
+    <img src="/assets/icons/delete.png" alt="Eliminar quiz" class="card-icon delete-icon"
+         (click)="deleteQuiz(quiz)" />
+  </div>
+</div>
+
     </div>
 
   </main>

@@ -28,7 +28,22 @@
   font-size: 1.1rem;
   opacity: 0.85;
   margin-top: 6px;
+  max-width: 300px;   
+  margin-left: auto;
+  margin-right: auto;     
+  text-align: center;
+  line-height: 1.5rem;
+  align-self: center;
+  word-wrap: break-word; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 10;
+  line-clamp: inherit;
+  -webkit-box-orient: vertical;
 }
+
+
 
 /* ============================
     INFO DEL QUIZ 
@@ -163,33 +178,7 @@
   background: #0e9f21;
 }
 
-.correct-icon,
-.delete-icon {
-  font-size: 28px;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: .2s ease;
-}
 
-
-.correct-icon { color: #b5b5b5; }
-.delete-icon { color: #a74a4a; }
-
-
-.correct-icon.active {
-  color: var(--third-color); 
-  transform: scale(1.1);
-}
-
-
-.correct-icon:hover { color: #00c853; }
-.delete-icon:hover { color: #ff5252; }
-
-
-.delete-icon.disabled {
-  opacity: .4;
-  pointer-events: none;
-}
 
 .return {
   background-color:var(--secondary-color);
@@ -223,7 +212,10 @@
   background: var(--main-color); 
   border-radius: 14px; 
   box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
-  max-width: 90%; }
+  max-width: 600px; 
+  width: 95%;         
+}
+
 
 
 .add-question-wrapper {
@@ -335,8 +327,9 @@
 .question-image-block { text-align: center; }
 .question-image {
   width: 100%;
-  max-width: 700px;       
-  height: 300px;          
+  max-width: 100%;       
+  height: auto;   
+  max-height: 300px;       
   border-radius: 16px;
   overflow: hidden;
   margin: 0 auto;
@@ -348,7 +341,7 @@
 .question-image img {
   width: 100%;
   height: 100%;
-  object-fit: contain;    
+  object-fit: cover;    
 }
 
 /* ============================

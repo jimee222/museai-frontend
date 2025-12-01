@@ -1,0 +1,73 @@
+<section class="quiz-user-page">
+
+  <header class="quiz-header text-center">
+    <img
+      src="/assets/brand/museai-logo.png"
+      width="110"
+      height="110"
+      alt="Muse AI"
+      class="brand-logo"
+    />
+
+    <h2 class="title">Quizzes Disponibles</h2>
+    <p class="subtitle">Selecciona un quiz y pon a prueba tus conocimientos</p>
+
+    <div class="search-container">
+      <input
+        type="text"
+        placeholder="Buscar quiz..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        class="search-input"
+      />
+    </div>
+  </header>
+
+  <main class="quiz-cards-container">
+
+    <p class="placeholder-text" *ngIf="filteredQuizzes().length === 0">
+      No se encontraron quizzes. ¡Busca otro o vuelve más tarde!
+    </p>
+
+    <div class="quiz-card"
+         *ngFor="let quiz of filteredQuizzes()"
+         [ngClass]="{ 'completed': quiz.hasAttempt }">
+
+      <div class="card-background"
+           [ngStyle]="{ 'background-image': quiz.imageUrl ? 'url(' + quiz.imageUrl + ')' : 'none' }">
+      </div>
+
+      <div class="card-content">
+        <h3 class="quiz-title">{{ quiz.title || 'Sin título' }}</h3>
+        <p class="quiz-description">{{ quiz.description || 'Sin descripción' }}</p>
+        <p class="quiz-questions">Preguntas: {{ quiz.questionCount }}</p>
+
+        <p class="quiz-score-badge"
+             *ngIf="quiz.hasAttempt && quiz.maxScore != null"
+             [ngClass]="{
+               'score-high': quiz.maxScore >= 80,
+               'score-medium': quiz.maxScore >= 50 && quiz.maxScore < 80,
+               'score-low': quiz.maxScore < 50
+             }">
+          ⭐ {{ quiz.maxScore }}%
+        </p>
+
+        <div class="card-actions">
+          <button class="attempt-btn"
+                  [disabled]="quiz.maxScore === 100"
+                  (click)="startQuiz(quiz)">
+            {{ quiz.hasAttempt ? 'Reintentar Quiz' : 'Intentar Quiz' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div style="text-align:center; margin-bottom: 20px;">
+    <button class="btn return" (click)="return()">
+      Regresar
+    </button>
+  </div>
+
+</section>
