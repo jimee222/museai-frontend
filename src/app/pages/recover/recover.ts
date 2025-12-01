@@ -74,7 +74,7 @@ export class Recover implements AfterViewInit {
     ),
   });
 
-  /*  ANILLO IA – ANIMACIONES  */
+  /* ====================== ANILLO IA – ANIMACIONES ====================== */
 
   public ngAfterViewInit(): void {
     if (!this.aiRing) return;
@@ -95,16 +95,19 @@ export class Recover implements AfterViewInit {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
 
+    // Normalizar -1 a 1
     const dx = (event.clientX - cx) / (rect.width / 2);
     const dy = (event.clientY - cy) / (rect.height / 2);
     const nx = Math.max(-1, Math.min(1, dx));
     const ny = Math.max(-1, Math.min(1, dy));
 
+    // Actualizar gradientes (CSS vars)
     const lightX = 50 + nx * 18; 
     const lightY = 20 + ny * 18; 
     ring.style.setProperty('--ring-light-x', `${lightX}%`);
     ring.style.setProperty('--ring-light-y', `${lightY}%`);
 
+    // Deformación suave (capas)
     const layers = ring.querySelectorAll('.ai-ring-layer');
 
     this.ringTween?.kill();
@@ -118,7 +121,7 @@ export class Recover implements AfterViewInit {
     });
   }
 
-  /**  cuando el mouse sale del anillo */
+  /** Evento cuando el mouse sale del anillo */
   public onRingMouseLeave(): void {
     if (!this.aiRing) return;
 
@@ -145,7 +148,7 @@ export class Recover implements AfterViewInit {
     });
   }
 
-  /*  LÓGICA DE RECUPERACIÓN  */
+  /* ====================== LÓGICA DE RECUPERACIÓN ====================== */
 
   public field(form: FormGroup, controlName: string) {
     return form.get(controlName)!;
