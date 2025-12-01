@@ -11,28 +11,42 @@
   align-items: center;
   width: 100%;
   padding: 10px 22px;
-
-  /* Transparencia pura (se mezcla con el fondo real del componente) */
   background: rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(14px) saturate(1.45);
   -webkit-backdrop-filter: blur(14px) saturate(1.45);
-
-  /* SIN bordes ni sombras */
   border: none;
   box-shadow: none;
-  transition: background .22s ease, backdrop-filter .22s ease;
+  transition: background 0.22s ease, backdrop-filter 0.22s ease;
 }
 
-/* ====== ESTADO SCROLLED (IA REACTIVA) ====== */
+/* ====== ESTADO SCROLLED ====== */
 .nav.nav--scrolled {
   background: rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(18px) saturate(1.6);
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
-
-  /* Glow dorado suave */
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.85),
     0 1px 0 rgba(255, 214, 120, 0.45);
+}
+
+/* ====== BOTÓN REGRESAR ====== */
+.back-btn {
+  margin-right: 16px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff4d0;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background .2s ease, border-color .2s ease;
+  backdrop-filter: blur(6px);
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* ====== MARCA ====== */
@@ -59,63 +73,107 @@
   color: #e3e3e3;
 }
 
-/* ====== LINKS ====== */
+/* ====== CONTENEDOR LINKS + BOTÓN ====== */
 .links {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 20px;
 }
 
-.links a {
+/* Grupo principal */
+.links-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ====== LINKS ====== */
+.links-main a {
   text-decoration: none;
   font-weight: 700;
   color: rgba(255, 245, 217, 0.82);
   font-size: 0.92rem;
   opacity: 0.75;
   padding: 3px 0;
-  transition: opacity .2s ease, color .2s ease;
+  transition: opacity 0.2s ease, color 0.2s ease;
 }
 
-.links a:hover,
-.links a.active {
+/* ====== ACTIVO (texto dorado + línea animada) ====== */
+.links-main a.active {
+  color: #f5dca8 !important;
   opacity: 1;
-  color: #fff9ed;
+  position: relative;
+}
+
+.links-main a.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #f8dca2, #ffd88b);
+  border-radius: 50px;
+}
+
+/* Botón tipo píldora - Escultura 3D */
+.pill-link {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 245, 217, 0.6);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.pill-link:hover,
+.pill-link.active {
+  background: linear-gradient(135deg, #c8a449, #e6c66e);
+  color: #1a1208;
+  border-color: rgba(255, 236, 180, 0.95);
 }
 
 /* ====== BOTÓN CERRAR SESIÓN ====== */
 .logout-btn {
-  border: 1px solid rgba(255,255,255,.28);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
   padding: 6px 14px;
   border-radius: 999px;
   cursor: pointer;
   color: #fff8df;
   font-weight: 700;
-  transition: background .18s ease, border-color .18s ease;
+  font-size: 0.86rem;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
 .logout-btn:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,.75);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.75);
 }
 
 /* ====== MOBILE ====== */
 @media (max-width: 768px) {
   .nav {
     padding: 10px 16px;
-    background: rgba(0,0,0,0.08);
+    background: rgba(0, 0, 0, 0.08);
   }
 
   .brand__name {
     display: none;
   }
 
-  .links {
-    gap: 16px;
+  .links-main {
+    gap: 14px;
   }
 
-  .links a {
+  .links-main a {
     font-size: 0.85rem;
+  }
+
+  .pill-link {
+    padding-inline: 10px;
+  }
+
+  .back-btn {
+    margin-right: 8px;
   }
 }
