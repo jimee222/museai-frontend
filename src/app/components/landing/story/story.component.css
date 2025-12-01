@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+/* Layout genérico de sección (solo Story) */
+
+.section {
+  padding: 80px 24px;
+}
+
+.section--tight {
+  padding-block: 64px;
+}
+
+.section__inner {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.section__header {
+  max-width: 100%;
+  margin-bottom: 32px;
+}
+
+.section__eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--deep-blue);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.section__title {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  white-space: normal;
+}
+
+.section__description {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.98rem;
+}
+
+/* ============= CARD "Nuestra historia" con efecto tipo team-card ============= */
+
+.story__inner {
+  /* sin padding aquí, lo pasamos a .glass para no duplicar */
+}
+
+/* Usa la clase .glass como si fuera un card grande */
+.glass {
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 32px 28px;
+
+  /* sombra suave base */
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+
+  /* mismas transiciones que los cards de team */
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out,
+    border-color 180ms ease-out,
+    background 180ms ease-out;
+}
+
+/* Hover igual que .team-card:hover */
+.glass:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
+  border-color: rgba(7, 136, 255, 0.25);
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 16px;
+  }
+
+  .section__title {
+    font-size: 1.6rem;
+  }
+
+  .glass {
+    padding: 24px 20px;
+  }
+}
+
+

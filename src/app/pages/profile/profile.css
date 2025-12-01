@@ -9,7 +9,7 @@
   --brown-800: #2a1a10;
 }
 
-/*  Fondo general  */
+/* ====== Fondo general ====== */
 .profile-page {
   display: flex;
   flex-direction: column;
@@ -20,7 +20,7 @@
   gap: 28px;
 }
 
-/*  Header principal  */
+/* ====== Header principal ====== */
 .profile-header {
   text-align: center;
   display: flex;
@@ -48,7 +48,7 @@
   letter-spacing: 0.2px;
 }
 
-/*  Tabs de navegación  */
+/* ====== Tabs de navegación ====== */
 .tabs {
   display: flex;
   justify-content: center;
@@ -84,7 +84,7 @@
   box-shadow: 0 10px 24px rgba(200, 164, 73, 0.4);
 }
 
-/*  Contenedor general  */
+/* ====== Contenedor general ====== */
 .profile-content-wrapper {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 860px) 1fr;
@@ -94,7 +94,7 @@
   padding: 0 36px;
 }
 
-/*  Ilustraciones laterales  */
+/* ====== Ilustraciones laterales ====== */
 .side-art {
   display: flex;
   justify-content: center;
@@ -116,7 +116,7 @@
   100% { transform: translateY(0); }
 }
 
-/*  Área de contenido  */
+/* ====== Área de contenido ====== */
 .profile-content {
   display: flex;
   justify-content: center;
@@ -136,6 +136,7 @@
   display: block;
 }
 
+/* ====== Responsividad ====== */
 @media (max-width: 991px) {
   .profile-content-wrapper {
     grid-template-columns: 1fr;
@@ -158,12 +159,12 @@
 .profile-page,
 .profile-header,
 .profile-header * {
-  color: #fff9ed !important;
+  color: #fff9ed !important;            
 }
 
 .profile-subtitle,
 .profile-header p {
-  color: rgba(255, 249, 237, .8) !important;
+  color: rgba(255, 249, 237, .8) !important;  
 }
 
 

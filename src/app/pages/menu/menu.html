@@ -1,90 +1,47 @@
-<section class="menu-shell">
-  <div class="menu-wrap">
-    <header class="menu-hero">
-      <div class="menu-hero__brand">
-        <img
-          ngSrc="assets/brand/museai-logo-solo.png"
-          width="120"
-          height="120"
-          alt="Muse AI"
-          class="menu-logo"
-        />
+<section class="menu-wrap">
+  <header class="menu-hero">
+    <img
+      ngSrc="assets/brand/museai-logo.png"
+      width="120"
+      height="120"
+      alt="Muse AI"
+      class="menu-logo"
+    />
+    <div class="menu-headings">
+      <h1>Bienvenido a MuseAI</h1>
+      <p>Seleccione una opción para comenzar a crear, explorar o gestionar su perfil.</p>
+    </div>
+  </header>
 
-        <div class="menu-hero__titles">
-          <span class="menu-chip">Panel creativo</span>
-          <h1 class="menu-title">Bienvenido a MuseAI</h1>
-          <p class="menu-subtitle">
-            Elija una experiencia para continuar creando, explorar museos 3D
-            o gestionar su perfil.
-          </p>
-        </div>
-      </div>
-
-      <ul class="menu-hero__highlights">
-        <li>
-          <span class="dot"></span>
-          Gestione su perfil y preferencias artísticas.
-        </li>
-        <li>
-          <span class="dot"></span>
-          Explore museos y recorridos generados con IA.
-        </li>
-        <li>
-          <span class="dot"></span>
-          Cree obras nuevas en el lienzo o el taller 3D.
-        </li>
-      </ul>
-    </header>
-    <section class="menu-grid" aria-label="Secciones principales de MuseAI">
-      <a class="menu-card" routerLink="/app/profile">
-        <span class="menu-card__eyebrow">Cuenta</span>
-        <h2 class="menu-card__title">Mi Perfil</h2>
-        <p class="menu-card__desc">
-          Revise y actualice su información personal y preferencias artísticas.
-        </p>
-      </a>
-
-      <a class="menu-card" routerLink="/museum">
-        <span class="menu-card__eyebrow">Exploración</span>
-        <h2 class="menu-card__title">Explora 3D</h2>
-        <p class="menu-card__desc">
-          Descubra experiencias inmersivas y obras generadas por IA en tres
-          dimensiones.
-        </p>
-      </a>
-
-      <a class="menu-card" routerLink="/create-canvas">
-        <span class="menu-card__eyebrow">Creación</span>
-        <h2 class="menu-card__title">Lienzo</h2>
-        <p class="menu-card__desc">
-          Cree sus propias obras en el lienzo inteligente de MuseAI.
-        </p>
-      </a>
-
-      <a class="menu-card" routerLink="">
-        <span class="menu-card__eyebrow">Recomendaciones</span>
-        <h2 class="menu-card__title">Quiz Creativo</h2>
-        <p class="menu-card__desc">
-          Responda un breve cuestionario para recibir sugerencias personalizadas.
-        </p>
-      </a>
-
-      <a class="menu-card" routerLink="/sculptor">
-        <span class="menu-card__eyebrow">3D</span>
-        <h2 class="menu-card__title">Taller de Escultura 3D</h2>
-        <p class="menu-card__desc">
-          Cree, importe y manipule esculturas en el sandbox Three.js de MuseAI.
-        </p>
-      </a>
-
-      <a class="menu-card" href="https://codehorizon.dev" target="_blank" rel="noopener">
-      <span class="menu-card__eyebrow">Equipo</span>
-      <h2 class="menu-card__title">Code Horizon</h2>
-      <p class="menu-card__desc">
-        Conozca al equipo creador de MuseAI y explore nuestra visión, proyectos y experiencia.
-      </p>
+  <div class="menu-grid">
+    <a class="menu-card" routerLink="/app/profile">
+      <h2>Mi Perfil</h2>
+      <p>Revise y actualice su información personal y preferencias artísticas.</p>
     </a>
 
-    </section>
+    <a class="menu-card" routerLink="/museum">
+      <h2>Explora 3D</h2>
+      <p>Descubra experiencias inmersivas y obras generadas por IA en tres dimensiones.</p>
+    </a>
+
+   <a class="menu-card" routerLink="/create-canvas">
+      <h2>Lienzo</h2>
+      <p>Crea tus propias obras en MuseAI.</p>
+    </a>
+
+    <a class="menu-card" routerLink="">
+      <h2>Quiz Creativo</h2>
+      <p>Responda un breve cuestionario para recibir recomendaciones personalizadas.</p>
+    </a>
+
+    <a class="menu-card" routerLink="/sculptor">
+      <h2>Taller de Escultura 3D</h2>
+      <p>Cree, importe y manipule esculturas en el nuevo sandbox Three.js.</p>
+    </a>
+
+    <a class="menu-card" routerLink="/about">
+      <h2>Acerca de MuseAI</h2>
+      <p>Conozca la misión del proyecto y las tecnologías que lo impulsan.</p>
+    </a>
   </div>
 </section>
