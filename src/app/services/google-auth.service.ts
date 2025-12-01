@@ -67,7 +67,7 @@ export class GoogleAuthService {
       .subscribe({
         next: (res) => {
           this.authService.setSession(res);
-          this.router.navigateByUrl('/app/menu');
+          this.router.navigateByUrl('/museum');
         },
         error: (err) => console.error('Error en login con Google:', err)
       });

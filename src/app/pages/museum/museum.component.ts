@@ -1531,7 +1531,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     tagCanvas.width = 1024; tagCanvas.height = 256; // más nítido
     const tctx = tagCanvas.getContext('2d')!;
     tctx.clearRect(0,0,tagCanvas.width,tagCanvas.height);
-    tctx.fillStyle = '#333';
+    tctx.fillStyle = '#000000';
     tctx.font = 'bold 96px system-ui, sans-serif'; // más pequeño para que quepa
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
@@ -1619,7 +1619,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const tctx = tagCanvas.getContext('2d')!;
     tctx.fillStyle = '#00000000';
     tctx.fillRect(0, 0, tagCanvas.width, tagCanvas.height);
-    tctx.fillStyle = '#333';
+    tctx.fillStyle = '#000000';
     tctx.font = 'bold 80px system-ui, sans-serif';
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
