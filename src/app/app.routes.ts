@@ -18,6 +18,9 @@ import { QuizListAdmin } from './pages/quiz/admin/quiz-list-admin/quiz-list-admi
 import { QuizCreate } from './pages/quiz/admin/quiz-create/quiz-create'; 
 import { QuizEdit } from './pages/quiz/admin/quiz-edit/quiz-edit'; 
 import { Questions } from './pages/quiz/admin/questions/questions';
+import { QuizListUser } from './pages/quiz/user/quiz-list-user/quiz-list-user';
+import {QuizAttemptComponent} from './pages/quiz/user/quiz-attempt/quiz-attempt';
+
 
 export const routes: Routes = [
   {
@@ -53,32 +56,45 @@ export const routes: Routes = [
   },
   {
     path: 'app',
-    canActivate: [AuthGuard],
+canActivate: [AuthGuard], 
+children: [
+  {
+    path: 'menu',
+    component: Menu
+  },
+  {
+    path: 'profile',
+    component: Profile
+  },
+  {
+    path: 'edit-profile',
+    component: EditProfile
+  },
+
+  {
+    path: 'quizzes',
+    component: QuizListUser 
+  },
+  {
+  path: 'quizzes/:id/attempt',
+  component: QuizAttemptComponent
+},
+  {
+    path: 'quizzes-admin',
+    component: QuizListAdmin
+  },
+
+  {
+    path: 'quiz',
     children: [
-      {
-        path: 'menu',
-        component: Menu,
-      },
-      {
-        path: 'profile',
-        component: Profile,
-      },
-      {
-        path: 'edit-profile',
-        component: EditProfile,
-      },
-      {
-        path: 'quizzes-admin',
-        component: QuizListAdmin,
-    },
-    {
-      path: 'quiz',
-      children: [
-        { path: 'create', component: QuizCreate },
-        { path: 'edit/:id', component: QuizEdit },
-        { path: 'questions/:id', component: Questions },
-        { path: '', redirectTo: 'create', pathMatch: 'full' }
-      ]
+      { path: 'create', component: QuizCreate },
+      { path: 'edit/:id', component: QuizEdit },
+      { path: 'questions/:id', component: Questions },
+      { path: '', redirectTo: 'create', pathMatch: 'full' }
+    ]
+  }
+]
+
     },
 
       {
@@ -86,8 +102,7 @@ export const routes: Routes = [
         pathMatch: 'full',
         redirectTo: 'menu',
       },
-    ],
-  },
+    
   {
       path: 'museum',
       component: MuseumComponent,
