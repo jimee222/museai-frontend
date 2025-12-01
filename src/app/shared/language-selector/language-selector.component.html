@@ -1,0 +1,19 @@
+<div class="language-chip" (click)="openModal()">
+  🌐 <span>{{ selectedLanguage }}</span>
+</div>
+
+<div class="lang-modal-backdrop" *ngIf="isModalOpen" (click)="isModalOpen = false">
+  <div class="lang-modal" (click)="$event.stopPropagation()">
+    <h3>Elige tu idioma</h3>
+    <div class="lang-options">
+      <button
+        *ngFor="let lang of languages"
+        type="button"
+        [class.active]="selectedLanguage === lang"
+        (click)="selectLanguage(lang)"
+      >
+        {{ lang.toUpperCase() }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,20 @@
 .museum-container {
   width: 100%;
-  height: calc(100vh - 64px); 
+  height: 100vh;     /* ocupa toda la altura */
   overflow: hidden;
 }
+
+/*  POPUP DE OBRA   */
 
 .artwork-popup-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: fadeIn .25s ease-out;
   z-index: 1000;
 }
 
@@ -19,25 +23,50 @@
   max-width: 900px;
   width: 90%;
   max-height: 80vh;
-  background: #f7f5f0;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  padding: 24px;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 18px;
+
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  padding: 28px;
   display: flex;
-  gap: 24px;
+  gap: 28px;
   overflow: hidden;
+
+  animation: slideUp .35s ease-out;
 }
 
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 .popup-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 12px;
+  right: 14px;
   border: none;
-  background: transparent;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
   font-size: 20px;
   cursor: pointer;
-  color: #444;
+  color: #222;
+  border-radius: 6px;
+  padding: 4px 8px;
+  transition: 0.2s ease;
+}
+
+.popup-close:hover {
+  background: rgba(255,255,255,0.45);
 }
 
 .popup-content {
@@ -45,68 +74,288 @@
   gap: 24px;
   width: 100%;
 }
-
-/* Imagen de la obra */
 .popup-image-wrapper {
-  flex: 0 0 40%;
+  flex: 0 0 45%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .popup-image-wrapper img {
-  max-width: 100%;
-  max-height: 60vh;
+  width: 100%;
+  height: auto;
+  max-height: 75vh;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 18px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.35);
 }
 
-/* Texto */
-.popup-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-}
 
 .popup-info h2 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,.4);
 }
 
 .popup-artist {
   margin: 0;
-  font-weight: 600;
-  color: #555;
+  font-weight: 500;
+  color: #eee;
 }
 
 .popup-technique {
   margin: 0;
   font-style: italic;
-  color: #666;
+  color: #e5e5e5;
 }
 
 .popup-description {
-  margin-top: 8px;
-  line-height: 1.4;
-  text-align: justify;
+  margin-top: 12px;
+  line-height: 1.5;
+  color: #fff;
+}
+/* oculta el botón translate */
+.lang-overlay {
+  position: fixed;
+  top: 30px;
+  right: 40px;
+  z-index: 99999;
+  
+}
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
-/* Responsive para pantallas pequeñas */
-@media (max-width: 768px) {
-  .artwork-popup {
-    flex-direction: column;
-    max-height: 90vh;
-  }
+.museum-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
 
-  .popup-content {
-    flex-direction: column;
-  }
 
-  .popup-image-wrapper {
-    flex: unset;
-    justify-content: center;
-  }
+
+/*  POPUP INICIAL DEL TOUR */
+
+.tour-start-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn .25s ease-out;
+  z-index: 99999;
+}
+
+.tour-start-box {
+  background: rgba(255,255,255,0.12);
+  padding: 40px 50px;
+  border-radius: 18px;
+
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(16px);
+
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  color: white;
+
+  animation: slideUp .35s ease-out;
+}
+
+.tour-start-box h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.tour-start-box p {
+  color: #eaeaea;
+  margin-bottom: 25px;
+}
+
+.tour-btn {
+  display: block;
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px 18px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  color: white;
+
+  transition: transform .15s ease, background .18s ease;
+}
+
+.tour-btn.start {
+  background: #d3b15a;
+}
+
+.tour-btn.start:hover {
+  background: #e1c06d;
+  transform: translateY(-2px);
+}
+
+.tour-btn.free {
+  background: #646464;
+}
+
+.tour-btn.free:hover {
+  background: #7a7a7a;
+  transform: translateY(-2px);
+}
+
+/* CONTROLES DEL TOUR */
+
+.tour-controls {
+  position: fixed;
+  top: 80px;
+  right: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 99999;
+}
+
+.tour-controls button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.35);
+
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.tour-controls button:hover {
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-2px);
+}
+/* TIMELINE HUD*/
+
+.tour-timeline {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  background: rgba(15, 15, 15, 0.55);
+  backdrop-filter: blur(6px);
+  padding: 14px 20px;
+  border-radius: 12px;
+  width: 300px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  color: #f5f5f5;
+  font-family: system-ui, sans-serif;
+  z-index: 999999999; /* esto para que esté por encima del popup */
+  animation: fadeInTimeline .25s ease-out;
+}
+
+@keyframes fadeInTimeline {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.timeline-title {
+  font-size: 14px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #f9f5e8;
+}
+
+.timeline-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(240, 240, 240, 0.25);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.timeline-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #caa526, #f3d46e);
+  transition: width .35s ease;
+}
+:host ::ng-deep footer,
+:host ::ng-deep app-footer {
+  display: none !important;
+}
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-window {
+  background: rgba(255,255,255,0.2);
+  border-radius: 18px;
+  padding: 22px 28px;
+  width: 320px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255,255,255,0.4);
+  color: #fff;
+  text-align: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.popup-window h2 {
+  margin: 0 0 12px 0;
+}
+
+.popup-window button {
+  margin-top: 18px;
+  padding: 10px 20px;
+  border: none;
+  background: rgba(255,255,255,0.35);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #000;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: scale(0.95); }
+  to   { opacity:1; transform: scale(1); }
+}
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10010;
+}
+
+.popup-window {
+  background: rgba(255,255,255,0.22);
+  border-radius: 16px;
+  padding: 24px;
+  width: 300px;
+  text-align: center;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.6);
 }

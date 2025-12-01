@@ -1,0 +1,113 @@
+.language-selector {
+  display: inline-block;
+}
+
+.language-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f4f4f4;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #dedede;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.language-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+:host(.dark) .language-chip {
+  background: #0f172a;
+  color: #e8edff;
+  border: 1px solid #1f2a44;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(90, 122, 255, 0.12);
+}
+
+:host(.dark) .language-chip:hover {
+  transform: translateY(-1px) scale(1.01);
+  border-color: #5a7aff;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(90, 122, 255, 0.2);
+}
+
+.lang-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.lang-modal {
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  min-width: 260px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.lang-modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.lang-options {
+  display: flex;
+  gap: 10px;
+}
+
+.lang-options button {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.lang-options button.active {
+  background: #2f4858;
+  color: #fff;
+  border-color: #2f4858;
+}
+
+.lang-options button:hover:not(.active) {
+  border-color: #999;
+}
+
+:host(.dark) .lang-modal {
+  background: #0b1220;
+  color: #e8edff;
+  border: 1px solid #1c2440;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+}
+
+:host(.dark) .lang-modal h3 {
+  color: #f4f6ff;
+}
+
+:host(.dark) .lang-options button {
+  background: #0f172a;
+  color: #e5e9f5;
+  border-color: #1f2a44;
+}
+
+:host(.dark) .lang-options button.active {
+  background: linear-gradient(135deg, #334155, #475569);
+  color: #f8fafc;
+  border-color: #5a7aff;
+  box-shadow: 0 6px 20px rgba(90, 122, 255, 0.25);
+}
+
+:host(.dark) .lang-options button:hover:not(.active) {
+  border-color: #2f3d5c;
+  background: #10192f;
+}

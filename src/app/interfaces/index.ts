@@ -120,3 +120,6 @@ export interface IQuizAttemptAnswerResult {
   selectedOptionText: string;
   correct: boolean;
 }
+
+
+export * from './translation';

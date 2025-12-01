@@ -1,0 +1,192 @@
+<section class="sculptor-layout">
+  <app-sculptor-toolbar
+    [gridEnabled]="toggles().grid"
+    [axesEnabled]="toggles().axes"
+    [lightsEnabled]="toggles().lights"
+    [activeBrush]="activeBrush()"
+    [booleanMode]="booleanMode()"
+    [selectionAvailable]="selectionState().available"
+    [selectionScale]="selectionState().scale"
+    [selectionY]="selectionState().y"
+    [brushRadius]="workspaceSettings().brushRadius"
+    [brushStrength]="workspaceSettings().brushStrength"
+    [symmetry]="workspaceSettings().symmetry"
+    [materialPreset]="workspaceSettings().material"
+    [snapToGround]="workspaceSettings().snapToGround"
+    (primitive)="handlePrimitive($event)"
+    (toggleGrid)="onToggle('grid', $event)"
+    (toggleAxes)="onToggle('axes', $event)"
+    (toggleLights)="onToggle('lights', $event)"
+    (resetCamera)="onResetCamera()"
+    (saveScene)="onSaveScene()"
+    (exportFormat)="onExport($event)"
+    (importSelected)="onImport($event)"
+    (brushSelected)="onBrushSelected($event)"
+    (booleanAction)="onBooleanAction($event)"
+    (modifierAction)="onModifierAction($event)"
+    (duplicateSelection)="onDuplicateSelection()"
+    (selectionScaleChange)="onSelectionScaleChange($event)"
+    (selectionYChange)="onSelectionYChange($event)"
+    (brushRadiusChange)="onBrushRadiusChange($event)"
+    (brushStrengthChange)="onBrushStrengthChange($event)"
+    (symmetryChange)="onSymmetryChange($event)"
+    (materialPresetChange)="onMaterialPresetChange($event)"
+    (snapToGroundChange)="onSnapToGroundChange($event)"
+  ></app-sculptor-toolbar>
+
+  <div class="workspace">
+    <div class="viewport-wrapper">
+      <app-sculptor-viewport
+        #viewport
+        (statsChange)="updateStats($event)"
+        (banner)="showBanner($event.type, $event.text)"
+        (booleanModeChange)="onViewportBooleanMode($event)"
+        (selectionStateChange)="onSelectionStateChange($event)"
+      ></app-sculptor-viewport>
+      <app-asset-dropzone
+        (filesDropped)="onDropzoneFiles($event)"
+        (invalidFiles)="showBanner('error', $event)"
+      ></app-asset-dropzone>
+      <div class="banner" *ngIf="bannerMessage() as banner" [class.error]="banner.type === 'error'">
+        {{ banner.text }}
+      </div>
+    </div>
+
+    <section class="gallery">
+      <div class="gallery-controls">
+        <span class="gallery-controls__label">Idioma para Descripción</span>
+        <app-language-selector appearance="dark"></app-language-selector>
+      </div>
+      <header>
+        <h3>Galería local</h3>
+        <small>{{ sculptures().length }} guardadas</small>
+      </header>
+      <ul>
+        <li *ngFor="let sculpture of sculptures(); trackBy: trackById">
+          <div class="meta">
+            <strong>{{ sculpture.name }}</strong>
+            <small>{{ sculpture.updatedAt | date: 'short' }}</small>
+          </div>
+          <div class="actions">
+            <button type="button" (click)="loadSculpture(sculpture)" aria-label="Cargar escultura">Cargar</button>
+            <button type="button" (click)="deleteSculpture(sculpture)" aria-label="Eliminar escultura">✕</button>
+          </div>
+        </li>
+      </ul>
+      <div class="gallery-footer">
+        <button type="button" class="tutorial-replay" (click)="openTutorial()">
+          Ver Tutorial
+        </button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<div class="tutorial-overlay" *ngIf="tutorialVisible()">
+  <div class="tutorial-modal">
+    <header class="tutorial-modal__header">
+      <div>
+        <p class="tutorial-modal__eyebrow">Guía rápida</p>
+        <h3>{{ tutorialSteps[tutorialStepIndex()].title }}</h3>
+      </div>
+      <button type="button" class="tutorial-close" (click)="completeTutorial()">
+        ✕
+      </button>
+    </header>
+    <p class="tutorial-modal__body">
+      {{ tutorialSteps[tutorialStepIndex()].description }}
+    </p>
+    <div class="tutorial-progress">
+      Paso {{ tutorialStepIndex() + 1 }} de {{ tutorialSteps.length }}
+    </div>
+    <div class="tutorial-actions">
+      <button type="button" class="text-button" (click)="skipFutureTutorials()">
+        No volver a mostrar
+      </button>
+      <div class="tutorial-nav">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="tutorialStepIndex() === 0"
+          (click)="previousTutorialStep()"
+        >
+          Anterior
+        </button>
+        <button
+          *ngIf="tutorialStepIndex() < tutorialSteps.length - 1"
+          type="button"
+          class="primary-button"
+          (click)="nextTutorialStep()"
+        >
+          Siguiente
+        </button>
+        <button
+          *ngIf="tutorialStepIndex() === tutorialSteps.length - 1"
+          type="button"
+          class="primary-button"
+          (click)="completeTutorial()"
+        >
+          Listo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="save-dialog-overlay" *ngIf="saveDialogVisible()">
+  <form class="save-dialog" (ngSubmit)="submitSaveDialog($event)">
+    <h4>{{ isUpdatingExisting() ? 'Actualizar escultura' : 'Guardar escultura' }}</h4>
+    <label>
+      <span>Nombre</span>
+      <input
+        type="text"
+        name="sculptureName"
+        required
+        [(ngModel)]="saveDialogModel.name"
+        placeholder="Mi escultura"
+      />
+    </label>
+    <label>
+      <span>Etiquetas</span>
+      <input
+        type="text"
+        name="sculptureTags"
+        [(ngModel)]="saveDialogModel.tags"
+        placeholder="fantasía, criatura"
+      />
+      <small>Separa las etiquetas con comas</small>
+    </label>
+    <label class="description-field">
+      <div class="label-row">
+        <span>Descripción</span>
+        <button
+          type="button"
+          (click)="generateSculptureDescription()"
+          [disabled]="isGeneratingDescription()"
+        >
+          {{ isGeneratingDescription() ? 'Generando...' : 'Generar descripción' }}
+        </button>
+      </div>
+      <textarea
+        name="sculptureDescription"
+        rows="3"
+        [(ngModel)]="saveDialogModel.description"
+        placeholder="Describe tu escultura (opcional)"
+      ></textarea>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" (click)="closeSaveDialog()" [disabled]="isSavingScene()">
+        Cancelar
+      </button>
+      <button type="submit" [disabled]="isSavingScene()">
+        {{ isSavingScene() ? 'Guardando...' : isUpdatingExisting() ? 'Actualizar' : 'Guardar' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<footer class="status-bar">
+  <span>FPS: {{ stats().fps }}</span>
+  <span>Triángulos: {{ stats().triangles | number }}</span>
+  <span>Atajos: G-mover · R-rotar · S-escalar · Delete-eliminar · Esc-limpiar</span>
+</footer>

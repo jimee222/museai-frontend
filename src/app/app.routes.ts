@@ -12,7 +12,7 @@ import { GuestGuard } from './guards/guest.guard';
 import { MuseumComponent } from './pages/museum/museum.component';
 import { EditProfile } from './pages/edit-profile/edit-profile';
 import { AuthGuard } from './guards/auth.guard';
-import { CreateCanvasComponent } from './pages/create-canvas/create-canvas';
+import { CreateCanvasPageComponent } from './pages/create-canvas/create-canvas';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
 import { QuizListAdmin } from './pages/quiz/admin/quiz-list-admin/quiz-list-admin';
 import { QuizCreate } from './pages/quiz/admin/quiz-create/quiz-create'; 
@@ -52,8 +52,9 @@ export const routes: Routes = [
   },
   {
     path: 'create-canvas',
-    component: CreateCanvasComponent,
+    component: CreateCanvasPageComponent,
   },
+
   {
     path: 'app',
 canActivate: [AuthGuard], 
