@@ -14,6 +14,7 @@ import { EditProfile } from './pages/edit-profile/edit-profile';
 import { AuthGuard } from './guards/auth.guard';
 import { CreateCanvasPageComponent } from './pages/create-canvas/create-canvas';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
+import { AdminTokenUsagePage } from './pages/admin-token-usage/admin-token-usage';
 
 export const routes: Routes = [
   {
@@ -79,6 +80,11 @@ export const routes: Routes = [
   {
     path: 'sculptor',
     component: SculptorPageComponent,
+  },
+  {
+    path: 'admin/token-usage',
+    component: AdminTokenUsagePage,
+    canActivate: [AuthGuard],
   },
   {
     path: '**',
