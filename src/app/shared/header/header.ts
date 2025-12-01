@@ -1,62 +1,61 @@
-// src/app/components/header/header.ts
-import { Component, HostListener } from '@angular/core';
-import {
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  NavigationEnd,   // 👈 NUEVO
-} from '@angular/router';
+import { Component, HostListener } from '@angular/core'; 
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgOptimizedImage, CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
-import { filter } from 'rxjs/operators'; // 👈 NUEVO
+import { IRoleType } from '../../interfaces';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, CommonModule, LanguageSelectorComponent],
+  imports: [RouterLink, RouterLinkActive, NgOptimizedImage, CommonModule],
   templateUrl: './header.html',
-  styleUrls: ['./header.css'],
+  styleUrls: ['./header.css']
 })
 export class HeaderComponent {
+
   isAuthenticated: boolean = false;
   scrolled = false;
-
-  // 👇 bandera para mostrar / ocultar navbar
-  showNav = true;
-
-  // rutas donde NO queremos mostrar el navbar
-  private hideOnRoutes: string[] = ['/landing']; // aquí puedes agregar más
+  showBack = false;
+  isLoginPage = false;
 
   constructor(
     public auth: AuthService,
     private router: Router,
-  ) {}
+  ) {
+
+    this.router.events.subscribe(() => {
+      this.isLoginPage =
+        this.router.url.includes('/login') ||
+        this.router.url.includes('/register');
+
+      const noBackPages = [
+        '/app/menu', 
+        '/menu',
+        '/',
+        '/login'     
+      ];
+
+      this.showBack = !noBackPages.includes(this.router.url);
+    });
+  }
 
   ngOnInit() {
-    this.auth.isLoggedIn$.subscribe((status) => {
+    this.auth.isLoggedIn$.subscribe(status => {
       this.isAuthenticated = status;
     });
-
-    // Comprobar la URL actual al cargar
-    this.updateVisibility(this.router.url);
-
-    // Escuchar cambios de ruta
-    this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => {
-        this.updateVisibility(event.urlAfterRedirects);
-      });
-  }
-
-  private updateVisibility(url: string) {
-    // Si la URL empieza con alguna de las rutas de hideOnRoutes, ocultamos el navbar
-    this.showNav = !this.hideOnRoutes.some((route) => url.startsWith(route));
-  }
+  }  
 
   @HostListener('window:scroll', [])
   onWindowScroll(): void {
     this.scrolled = window.scrollY > 10;
+  }
+
+  isAdmin(): boolean {
+    return this.auth.hasAnyRole([IRoleType.admin, IRoleType.superAdmin]);
+  }
+
+  goBack(): void {
+    window.history.back();
   }
 
   public logout(): void {

@@ -120,7 +120,7 @@
   margin-top: 4px;
 }
 
-/* Orbe dorado metálico (puedes cambiar la imagen por el robot si quieres) */
+/* Orbe dorado metálico  */
 
 .register-media__orb-metal {
   margin-top: 28px;
@@ -150,7 +150,7 @@
   filter: saturate(1.25) contrast(1.08);
 }
 
-/* 🟡 ANILLO IA  */
+/* ANILLO IA  */
 
 .ai-ring {
   position: relative;
@@ -173,7 +173,7 @@
   animation: ringIdleBreath 6.2s ease-in-out infinite;
 }
 
-/* CAPAS BASE – varias capas */
+/* CAPAS BASE */
 .ai-ring-layer {
   position: absolute;
   border-radius: 50%;
@@ -182,12 +182,11 @@
   mask: radial-gradient(circle, transparent 60%, #000 61% 100%);
 }
 
-/* Diferencias sutiles de tamaño entre capas */
 .ai-ring-layer.outer { inset: 14%; }
 .ai-ring-layer.mid   { inset: 17%; }
 .ai-ring-layer.inner { inset: 20%; }
 
-/* ───── EXTERIOR ───── */
+/*  EXTERIOR  */
 
 .ai-ring-layer.outer {
   border-color: rgba(255, 239, 175, 0.9);
@@ -222,7 +221,7 @@
       transparent 55%);
 }
 
-/* ───── MEDIO ───── */
+/*  MEDIO  */
 
 .ai-ring-layer.mid {
   border-color: rgba(255, 232, 160, 0.85);
@@ -256,7 +255,7 @@
       transparent 55%);
 }
 
-/* ───── INTERIOR ───── */
+/*  INTERIOR  */
 
 .ai-ring-layer.inner {
   border-color: rgba(255, 249, 210, 0.9);
@@ -288,7 +287,7 @@
       transparent 70%);
 }
 
-/* ───────── ANIMACIONES CONTINUAS SIN PAUSA ───────── */
+/*  ANIMACIONES SIN PAUSA  */
 
 @keyframes ringIdleBreath {
   0%   { transform: scaleX(1.03) scaleY(0.97); }
@@ -328,14 +327,14 @@
   100% { filter: blur(0.55px) brightness(1.1); }
 }
 
-/* Ocultar en móviles */
+/* Ocultar en mobile */
 @media (max-width: 1023px) {
   .ai-ring {
     display: none;
   }
 }
 
-/* ───────────────── TARJETA EDIT PROFILE ───────────────── */
+/*  TARJETA EDIT PROFILE  */
 
 .register-card {
   padding: 28px 26px 34px;
