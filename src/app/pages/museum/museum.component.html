@@ -1,8 +1,95 @@
+<div class="tour-start-overlay" *ngIf="showTourDialog">
+  <div class="tour-start-box">
+    <h2>Explora el Museo</h2>
+    <p>¿Cómo deseas recorrer la sala 3D?</p>
+
+    <button class="tour-btn start" (click)="startGuidedTour()">
+      Empezar recorrido autoguiado
+    </button>
+
+    <button class="tour-btn free" (click)="enterFreeMode()">
+      Explorar libremente
+    </button>
+  </div>
+</div>
+
+<div class="popup-backdrop" *ngIf="showResumePopup">
+  <div class="popup-window">
+    <h2>Reanudar recorrido</h2>
+    <p>{{ savedPopupText }}</p>
+
+    <button (click)="continueSavedTour()">Sí, continuar</button>
+    <button (click)="startTourFromBeginning()">No, empezar nuevo</button>
+  </div>
+</div>
+
+
+
+
+<div class="tour-controls" *ngIf="tour.isActive()">
+  
+  <div class="tour-row">
+    <button *ngIf="!tour.isPaused()" (click)="tour.pause()">⏸ Pausar</button>
+    <button *ngIf="tour.isPaused()" (click)="tour.resume()">▶ Reanudar</button>
+    <button (click)="tour.restart()">⟲ Reiniciar</button>
+    <button (click)="tour.prev()">⟵ Atrás</button>
+    <button (click)="tour.next()">⟶ Avanzar</button>
+    <button (click)="stopTour()">Salir</button>
+  </div>
+
+</div>
+<!--TIMELINE HUD -->
+<div class="tour-timeline" *ngIf="tour.isActive()">
+
+  <div class="timeline-title">
+    Obra {{ tour.currentIndex() + 1 }} / {{ TOUR_ORDER.length }}
+    · {{ getCategoryOfCurrentArtwork() }}
+  </div>
+
+  <div class="timeline-bar">
+    <div class="timeline-bar-fill"
+         [style.width.%]="getTimelineProgress()"></div>
+  </div>
+
+</div>
+
+<!-- POPUP: Progreso guardado -->
 <div
+  class="popup-backdrop"
+  *ngIf="showSavedPopup"
+  (click)="showSavedPopup = false">
+
+  <div class="popup-window" (click)="$event.stopPropagation()">
+    <h2>Recorrido guardado</h2>
+    <p>{{ savedPopupText }}</p>
+
+    <button (click)="showSavedPopup = false">Aceptar</button>
+  </div>
+</div>
+
+<div class="popup-backdrop" *ngIf="showTourCompletedPopup">
+  <div class="popup-window">
+    <h2>Fin del recorrido</h2>
+    <p>Has llegado al final del tour guiado. ¡Gracias por explorar MuseAI!</p>
+
+    <button (click)="showTourCompletedPopup = false">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+
+<div class="lang-overlay">
+  <app-language-selector #langsel></app-language-selector>
+</div>
+
+<div
+
   id="museum-container"
   #museumContainer
   class="museum-container">
 </div>
+
 
 <div
   class="artwork-popup-backdrop"
@@ -10,9 +97,6 @@
   (click)="onPopupBackdropClick()"
 >
   <div class="artwork-popup" (click)="$event.stopPropagation()">
-    <button class="popup-close" (click)="closePopup()">
-      ✕
-    </button>
 
     <div class="popup-content" *ngIf="currentArtwork">
       <div class="popup-image-wrapper">
@@ -40,9 +124,11 @@
           <p class="translation-status" *ngIf="isTranslating">
             {{ translationStatusText }}
           </p>
+
           <p class="translation-error" *ngIf="translationError">
             {{ translationError }}
           </p>
+
           <p *ngIf="!translationError && !isTranslating">
             {{ translatedDescription || currentArtwork.description }}
           </p>

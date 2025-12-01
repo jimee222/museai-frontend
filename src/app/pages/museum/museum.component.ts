@@ -7,6 +7,11 @@ import { CmaService } from '../../services/cma.service';
 import { DescriptionTranslationService } from '../../services/description-translation.service';
 import { LanguagePreferenceService } from '../../services/language-preference.service';
 import { HttpClient } from '@angular/common/http';
+import { TourService } from '../../services/tour.service';
+import { LanguageSelectorComponent } from "../../shared/language-selector/language-selector.component";
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+
 
 // Datos que usa el popup de curaduría (todos vienen de la CMA API)
 interface ArtworkPopupData {
@@ -16,7 +21,7 @@ interface ArtworkPopupData {
   year?: string;
   technique?: string;
   description?: string;
-  image: string; // url (proxy) de la imagen
+  image: string; 
 }
 
 
@@ -36,8 +41,8 @@ interface PaintingResponse {
 interface SculptureResponse {
   id: string;
   name: string;
-  metadata: string | null;   // aquí puede venir glbUrl, scale, rotY, offsetY
-  sceneJson: string | null;  // escena serializada como JSON (fallback si no hay glbUrl)
+  metadata: string | null;
+  sceneJson: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,19 +56,208 @@ interface SculptureMeta {
 type SculptureWithGlb = SculptureMeta & { glbUrl: string };
 
 
+
 @Component({
   selector: 'app-museum',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LanguageSelectorComponent],
   templateUrl: './museum.component.html',
   styleUrls: ['./museum.component.css'],
+  
 })
 
 
-export class MuseumComponent implements OnInit, OnDestroy {
-  @ViewChild('museumContainer', { static: true }) museumContainer!: ElementRef<HTMLDivElement>;
 
-  // === THREE.js core ===
+export class MuseumComponent implements OnInit, OnDestroy {
+  @ViewChild('langsel') languageSelector!: LanguageSelectorComponent;
+  @ViewChild('miniMapCanvas', { static: false })
+  private miniCtx!: CanvasRenderingContext2D;
+  private miniMapReady = false;
+  public showSavedPopup = false;
+  public savedPopupText = "";
+  resumeIndex: number = 0;
+  public savedResumeIndex: number | null = null;
+  public showResumePopup = false;
+  public showTourCompletedPopup = false;
+
+  private readonly mapMinX = -10;
+  private readonly mapMaxX =  10;
+  private readonly mapMinZ = -10;
+  private readonly mapMaxZ =  10;
+
+  miniMapCanvas !: ElementRef<HTMLCanvasElement>;
+  getTimelineProgress(): number {
+  const idx = this.tour.currentIndex();
+  const total = this.TOUR_ORDER.length;
+  if (!total) return 0;
+  return ((idx + 1) / total) * 100;
+}
+
+  getCategoryOfCurrentArtwork(): string {
+    const id = this.TOUR_ORDER[this.tour.currentIndex()];
+    if (!id) return "";
+
+    if (['141639', '93014', '135483', '151298', '125249'].includes(id)) {
+      return "Paisajes";
+    }
+    if (['170235', '111702', '135428'].includes(id)) {
+      return "Históricas";
+    }
+    if (['132618', '115067', '1953.155', '380063', '135614'].includes(id)) {
+      return "Flores";
+    }
+    if (['2009.157', '1921.1239', '1921.428', '1942.638'].includes(id)) {
+      return "Retratos";
+    }
+
+    return "Obra";
+  }
+
+  startGuidedTour() {
+    const saved = localStorage.getItem('tour-progress');
+
+    if (saved) {
+      const idx = parseInt(saved, 10);
+      this.savedResumeIndex = idx;
+
+      const artworkId = this.TOUR_ORDER[idx];
+      const category = this.getCategoryOfCurrentArtwork();
+
+      this.savedPopupText = `¿Deseas continuar desde la obra ${artworkId} (${category})?`;
+      this.showTourDialog = false;
+      this.showResumePopup = true;
+      return;
+
+    }
+
+    this.startTourFromBeginning();
+  }
+
+  startTourFromBeginning() {
+    this.showResumePopup = false;
+    this.showTourDialog = false;
+
+    this.camera.rotation.set(0, 0, 0);
+
+    const tourPoints = this.generateTourPointsForArtworkOrder(this.TOUR_ORDER);
+    this.tour.setup(tourPoints);
+
+    this.tour.start();
+    this.disablePlayerMovement();
+  }
+
+
+  continueSavedTour() {
+    if (this.savedResumeIndex === null) return;
+
+    this.showResumePopup = false;
+    this.showTourDialog = false;
+
+    const tourPoints = this.generateTourPointsForArtworkOrder(this.TOUR_ORDER);
+    this.tour.setup(tourPoints);
+    this.tour.onTourFinished = () => this.finishTour();
+
+    const p = tourPoints[this.savedResumeIndex];
+
+    this.camera.rotation.set(0, p.rotY, 0);
+    this.camera.position.set(p.x, p.y, p.z);
+
+    this.tour.startFrom(this.savedResumeIndex);
+    this.disablePlayerMovement();
+  }
+
+  finishTour() {
+    this.enablePlayerMovement();
+
+    this.showTourCompletedPopup = true;
+
+    this.tour.stop();
+  }
+
+
+
+private generateTourPointsForArtworkOrder(order: string[]): any[] {
+  const idToFrame = new Map<string, THREE.Mesh>();
+
+  for (const frame of this.artFrames) {
+    const tid = frame.userData['tourId'] as string | undefined;
+    if (tid) idToFrame.set(tid, frame);
+  }
+
+  const points: any[] = [];
+  const offset = 1.6;
+  const camY = 1.7;
+
+  for (const id of order) {
+    const frame = idToFrame.get(id);
+    if (!frame) continue;
+
+    const wp = new THREE.Vector3();
+    frame.getWorldPosition(wp);
+
+    const rotY = frame.rotation.y;
+    const normal = new THREE.Vector3(
+      Math.sin(rotY),
+      0,
+      Math.cos(rotY)
+    ).normalize();
+
+    const camPos = wp.clone().add(normal.multiplyScalar(offset));
+
+    const lookVec = wp.clone().sub(camPos);
+    lookVec.y = 0;
+    lookVec.normalize();
+
+    const yaw = Math.atan2(-lookVec.x, -lookVec.z);
+
+    points.push({
+      x: camPos.x,
+      y: camY,
+      z: camPos.z,
+      rotY: yaw,
+    });
+  }
+
+  return points;
+}
+
+
+logoutFromMuseum() {
+  this.authService.logout();
+  this.router.navigate(['/login']);
+}
+
+enterFreeMode() {
+  this.showTourDialog = false;
+  this.tour.stop();
+  this.enablePlayerMovement();
+}
+
+stopTour() {
+  const index = this.tour.currentIndex();
+  localStorage.setItem('tour-progress', index.toString());
+
+  const artworkId = this.TOUR_ORDER[index];
+  const category = this.getCategoryOfCurrentArtwork();
+
+  this.savedPopupText = `Tu recorrido se guardó en la obra ${artworkId} (${category}).`;
+  this.showSavedPopup = true;
+
+  this.tour.stop();
+  this.enablePlayerMovement();
+}
+
+
+private disablePlayerMovement() {
+  this.movementEnabled = false;
+  this.velocity.set(0, 0, 0);
+}
+
+private enablePlayerMovement() {
+  this.movementEnabled = true;
+}
+
+  //  THREE.js core
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
@@ -75,16 +269,15 @@ export class MuseumComponent implements OnInit, OnDestroy {
   private moveBackward = false;
   private moveLeft = false;
   private moveRight = false;
-  private readonly PLAYER_RADIUS = 0.35;  // radio “cintura” del jugador
-    // ----- CONFIG PARA LÍMITES DE MOVIMIENTO (añade arriba con el resto de campos) -----
+  private readonly PLAYER_RADIUS = 0.35;
   private minX = -9.3; private maxX =  9.3;
   private minZ = -9.3; private maxZ =  9.3;
-  private playerRadius = 0.35;        // “grosor” del jugador
-  private colliders: THREE.Box3[] = []; // cajas de colisión estáticas
+  private playerRadius = 0.35;
+  private colliders: THREE.Box3[] = [];
   private walls: THREE.Mesh[] = [];
 
   private artFrames: THREE.Mesh[] = [];
-  private userFrames: THREE.Mesh[] = []; // para limpiar
+  private userFrames: THREE.Mesh[] = [];
   private sculptureGroups: THREE.Group[] = [];
  private readonly API_SCULPT = 'http://localhost:8080/api/sculptures';
 
@@ -98,12 +291,22 @@ export class MuseumComponent implements OnInit, OnDestroy {
   public translatedDescription: string | null = null;
   public translationError: string | null = null;
   public isTranslating = false;
+  showTourStartPopup: any;
+  tourActive: any;
+  showTourDialog = true;
+  movementEnabled = true;
+  private readonly tourLerpSpeed = 0.02;
+
 
   constructor(
     private cmaService: CmaService,
     private readonly translationService: DescriptionTranslationService,
-    private readonly languagePreference: LanguagePreferenceService, 
-    private http: HttpClient
+    private readonly languagePreference: LanguagePreferenceService,
+    private http: HttpClient,
+    public tour: TourService,
+    private authService: AuthService,
+    private router: Router,
+
   ) {
     effect(() => {
       const lang = this.languagePreference.language();
@@ -112,7 +315,7 @@ export class MuseumComponent implements OnInit, OnDestroy {
       }
     });
   }
-  // ==== Geometría Sala 2 (para colgar los canvas del usuario) ====
+  //  Geometría Sala 2 ( colgar los canvas del usuario)
   private room2Width = 0;
   private room2Depth = 0;
   private room2H = 0;
@@ -127,33 +330,64 @@ export class MuseumComponent implements OnInit, OnDestroy {
   private hintEl!: HTMLDivElement;
 
   ngOnInit(): void {
-    this.initScene();
-    this.animate();
-    this.addEventListeners();
+  this.initScene();
+  this.animate();
+  this.enablePlayerMovement();
+  this.showTourDialog = false;
 
-    // al final de initScene() (antes del addEventListeners):
-    this.hintEl = document.createElement('div');
-    this.hintEl.textContent = 'Presione F para interactuar';
-    this.hintEl.style.position = 'fixed';
-    this.hintEl.style.left = '50%';
-    this.hintEl.style.bottom = '6%';
-    this.hintEl.style.transform = 'translateX(-50%)';
-    this.hintEl.style.padding = '10px 16px';
-    this.hintEl.style.borderRadius = '10px';
-    this.hintEl.style.fontFamily = 'system-ui, sans-serif';
-    this.hintEl.style.fontWeight = '700';
-    this.hintEl.style.letterSpacing = '.3px';
-    this.hintEl.style.fontSize = '14px';
-    this.hintEl.style.background = 'rgba(0,0,0,.55)';
-    this.hintEl.style.color = '#f5e1ce';
-    this.hintEl.style.border = '1px solid #f5e1ce';
-    this.hintEl.style.pointerEvents = 'none';
-    this.hintEl.style.userSelect = 'none';
-    this.hintEl.style.opacity = '0';
-    this.hintEl.style.transition = 'opacity .18s ease';
-    document.body.appendChild(this.hintEl);
+  this.addEventListeners();
 
+  // Hint "Presione F"
+  this.hintEl = document.createElement('div');
+  this.hintEl.textContent = 'Presione F para interactuar';
+  this.hintEl.style.position = 'fixed';
+  this.hintEl.style.left = '50%';
+  this.hintEl.style.bottom = '6%';
+  this.hintEl.style.transform = 'translateX(-50%)';
+  this.hintEl.style.padding = '10px 16px';
+  this.hintEl.style.borderRadius = '10px';
+  this.hintEl.style.fontFamily = 'system-ui, sans-serif';
+  this.hintEl.style.fontWeight = '700';
+  this.hintEl.style.letterSpacing = '.3px';
+  this.hintEl.style.fontSize = '14px';
+  this.hintEl.style.background = 'rgba(0,0,0,.55)';
+  this.hintEl.style.color = '#f5e1ce';
+  this.hintEl.style.border = '1px solid #f5e1ce';
+  this.hintEl.style.pointerEvents = 'none';
+  this.hintEl.style.userSelect = 'none';
+  this.hintEl.style.opacity = '0';
+  this.hintEl.style.transition = 'opacity .18s ease';
+  document.body.appendChild(this.hintEl);
+}
+
+  // IDs de la pared del fondo (históricas)
+  private readonly BACK_WALL_IDS = ['170235', '111702', '135428'];
+
+  // Orden curatorial del tour
+  public readonly TOUR_ORDER: string[] = [
+    // 1–5: pasillo izquierdo (paisajes)
+    '141639', '93014', '135483', '151298', '125249',
+
+    // 6–8: pared del fondo (históricas)
+    '170235', '111702', '135428',
+
+    // 9–13: pasillo derecho (flores)
+    '132618', '115067', '1953.155', '380063', '135614',
+
+    // 14–17: muros internos (retratos/personas)
+    '2009.157', '1921.1239', '1921.428', '1942.638',
+  ];
+  ngAfterViewInit(): void {
+  if (this.miniMapCanvas) {
+    const canvas = this.miniMapCanvas.nativeElement;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      this.miniCtx = ctx;
+      this.miniMapReady = true;
+    }
   }
+}
 
   ngOnDestroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
@@ -162,11 +396,24 @@ export class MuseumComponent implements OnInit, OnDestroy {
     if (this.hintEl?.parentNode) this.hintEl.parentNode.removeChild(this.hintEl);
   }
 
-  // ==========================
-  //   HELPERS DE CURADURÍA
-  // ==========================
+  //HELPERS DE CURADURÍA
 
-  /** Mapea el JSON de CMA a la estructura del popup */
+  private updateTourMovement() {
+  if (!this.tour.isActive() || this.tour.isPaused()) return;
+
+  const p = this.tour.currentPoint();
+  if (!p) return;
+
+  const target = new THREE.Vector3(p.x, p.y, p.z);
+
+  this.camera.position.lerp(target, this.tourLerpSpeed);
+
+  const targetRot = p.rotY;
+  this.camera.rotation.y += (targetRot - this.camera.rotation.y) * 0.05;
+  }
+
+
+  /** Maping del JSON de CMA a la estructura del popup */
   private mapCmaToPopup(data: any, imageUrl: string): ArtworkPopupData {
     const id = String(data?.id ?? data?.objectID ?? data?.object_id ?? '');
 
@@ -212,20 +459,20 @@ export class MuseumComponent implements OnInit, OnDestroy {
       description,
       image: imageUrl,
     };
+
   }
 
-  // ==========================
-  //   MARCOS / CUADROS
-  // ==========================
+
+
+  //  MARCOS / CUADROS
 
 private resolveCollisions(attempt: THREE.Vector3) {
   const out = attempt.clone();
-  const playerTop = 1.8; // altura de la cabeza aprox
+  const playerTop = 1.8; 
 
   for (const wall of this.walls) {
     const box = new THREE.Box3().setFromObject(wall);
 
-    // ⬇️ Si TODO el collider está por encima de la cabeza, ignóralo (ej. dinteles)
     if (box.min.y > playerTop) continue;
 
     const min = box.min, max = box.max;
@@ -235,14 +482,13 @@ private resolveCollisions(attempt: THREE.Vector3) {
   return out;
 }
 
-// arriba, junto a otros helpers
 private repaintGroup(root: THREE.Object3D, color: THREE.ColorRepresentation) {
   root.traverse(o => {
     if ((o as THREE.Mesh).isMesh) {
       const m = o as THREE.Mesh;
       m.material = new THREE.MeshStandardMaterial({
         color,
-        roughness: 0.85,   // mate tipo piedra/madera pintada
+        roughness: 0.85,
         metalness: 0.0
       });
       m.castShadow = true;
@@ -251,7 +497,6 @@ private repaintGroup(root: THREE.Object3D, color: THREE.ColorRepresentation) {
   });
 }
 
-// Lanza un rayo desde el centro de la cámara y navega si golpea un botón
 private tryWallInteract() {
   const dir = new THREE.Vector3();
   this.camera.getWorldDirection(dir);
@@ -261,43 +506,50 @@ private tryWallInteract() {
   if (!hits.length) return;
 
   const hit = hits[0];
-  // opcional: limitar distancia
   if (hit.distance > 4.0) return;
 
   const route: string | undefined = hit.object.userData['route'];
   if (!route) return;
 
-  // navega (usa Router si lo tienes, si no, window.location)
+  if (route === 'start-tour') {
+    this.showTourDialog = true;
+    return;
+  }
+  if (route === '_openTourDialog_') {
+    this.showTourDialog = true;
+    return;
+  }
+  if (route === '_openLanguageSelector_') {
+    this.languageSelector.openModal();
+    return;
+  }
+  if (route === '_logout_') {
+    this.logoutFromMuseum();
+    return;
+}
+
   try {
-    // @angular/router (opcional): inyecta private router: Router en el ctor
-    // this.router.navigateByUrl(route);
-    window.location.href = route; // fallback simple
+    window.location.href = route;
   } catch {
     window.location.href = route;
   }
 }
 
 
-// Centra el objeto en XZ respecto al origen de su padre (deja Y igual)
 private recenterXZInParent(obj: THREE.Object3D, parent: THREE.Object3D) {
-  // centro del objeto en world-space
   const box = new THREE.Box3().setFromObject(obj);
   const worldCenter = new THREE.Vector3();
   box.getCenter(worldCenter);
 
-  // pásalo a coords locales del padre
   const localCenter = worldCenter.clone();
   parent.worldToLocal(localCenter);
 
-  // mueve solo XZ para que el centro quede en (0, *, 0) del padre
   obj.position.x -= localCenter.x;
   obj.position.z -= localCenter.z;
 }
 
 
 
-// Crea un AABB del objeto ya transformado y lo añade a colliders.
-// Usa "inflate" para dar un pequeño margen (en metros).
 private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vector3 = 0) {
   obj.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(obj);
@@ -324,7 +576,6 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
     }
   }
 
-  // Igual que addArtworkToFrame pero con una dataURL (preview) en vez de CMA
   private skinFrameFrontWithImage(frame: THREE.Mesh, imgUrl: string) {
     const loader = new THREE.TextureLoader();
     loader.load(
@@ -345,7 +596,6 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
         if (aspect > innerAspect) { artH = innerH; artW = innerH * aspect; }
         else { artW = innerW; artH = innerW / aspect; }
 
-        // Simplemente sustituimos el material FRONTAL del box
         const mats = (frame.material as THREE.Material[]).slice();
         mats[4] = new THREE.MeshStandardMaterial({ map: texture, side: THREE.FrontSide });
         frame.material = mats;
@@ -358,21 +608,16 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
   private stripForeignLighting(root: THREE.Object3D) {
   const toRemove: THREE.Object3D[] = [];
   root.traverse((o) => {
-    // Quita cualquier luz que venga dentro del modelo/sceneJson
     if ((o as any).isLight || (o as any).isLightProbe) {
       toRemove.push(o);
     }
-    // Opcional: normaliza materiales para que respeten tu iluminación
     if ((o as THREE.Mesh).isMesh) {
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[];
       const fix = (mat: THREE.Material) => {
         if ((mat as any).emissive) {
-          // atenúa emisivo por si venía muy alto
           (mat as any).emissiveIntensity = Math.min((mat as any).emissiveIntensity ?? 1, 0.2);
         }
-        // desactiva "unlit" si llega a aparecer (caso raro)
         if ((mat as any).isMeshBasicMaterial) {
-          // no lo forzamos, pero podrías reemplazarlo por Standard si lo necesitas
         }
       };
       Array.isArray(m) ? m.forEach(fix) : fix(m);
@@ -384,7 +629,6 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
  private mountUserCanvasesOnRoom2WestWall() {
   if (!this.room2Depth || !this.room2NorthWall) return;
 
-  // Limpia anteriores
   for (const f of this.userFrames) {
     f.parent?.remove(f);
     const i = this.artFrames.indexOf(f);
@@ -402,91 +646,73 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
       const count = Math.min(previews.length, maxSlots);
       if (!count) return;
 
-      // ----- Parámetros geométricos y “radios” -------
       const FRAME = { w: 1.60, h: 1.80, d: 0.08 };
-      const RZ = 0.30;   // radio horizontal (mínimo medio-espacio entre marcos)
-      const RY = 0.25;   // radio vertical
-      const EDGE_Z = 0.60; // margen a bordes de pared en Z
-      const EDGE_Y = 0.80; // margen estética a techo/suelo
+      const RZ = 0.30;
+      const RY = 0.25;
+      const EDGE_Z = 0.60;
+      const EDGE_Y = 0.80;
       const cols = 3, rows = 2;
 
-      // --- Banda segura para CENTROS en Z (local del muro) ---
-      // centros pueden moverse entre: [-room2Depth/2 + EDGE_Z + (w/2 + RZ),  room2Depth/2 - EDGE_Z - (w/2 + RZ)]
-      // Ojo: como w puede cambiar por escalado, primero calculamos con tamaño base y ajustamos.
       let frameW = FRAME.w;
       let frameH = FRAME.h;
 
-      // “span” disponible para los CENTROS con tamaño actual
       const halfW = () => frameW / 2;
       const zMinCenter = -this.room2Depth / 2 + EDGE_Z + (halfW() + RZ);
       const zMaxCenter =  this.room2Depth / 2 - EDGE_Z - (halfW() + RZ);
-      let span = zMaxCenter - zMinCenter;          // longitud útil para colocar 3 centros
+      let span = zMaxCenter - zMinCenter;
 
-      // Pitch mínimo necesario para no tocarse con el RZ pedido
-      const minPitch = frameW + 2 * RZ;            // distancia centro-a-centro mínima
+      const minPitch = frameW + 2 * RZ;
 
-      // ¿Cabe minPitch entre 3 columnas? (2 intervalos)
+
       const neededSpan = minPitch * (cols - 1);
 
-      // Si no cabe, reducimos el tamaño del marco (manteniendo el radio) hasta que quepa,
-      // pero nunca por debajo del 60% del tamaño original.
       if (span < neededSpan) {
         const scale = Math.max(0.6, span / neededSpan);
         frameW = FRAME.w * scale;
         frameH = FRAME.h * scale;
 
-        // recalcula banda segura con nuevo ancho
         const zMinCenter2 = -this.room2Depth / 2 + EDGE_Z + (frameW / 2 + RZ);
         const zMaxCenter2 =  this.room2Depth / 2 - EDGE_Z - (frameW / 2 + RZ);
         span = zMaxCenter2 - zMinCenter2;
       }
 
-      // Con el tamaño final, el pitch real será el máximo uniforme que cabe centrado:
       const pitch = span / (cols - 1);
 
-      // Centros perfectamente centrados y uniformes, sin clamps por-obra
       const zCenters: number[] = [];
       for (let c = 0; c < cols; c++) {
         zCenters.push(-span / 2 + c * pitch);
       }
 
-      // ---- Alturas (dos filas) garantizando RY y EDGE_Y ----
-      const pitchY = frameH + 0.5 * RY;         // separación centro-a-centro vertical mínima
+      const pitchY = frameH + 0.5 * RY;
       const yCenterWorld = 2.5;
       const halfH = frameH / 2;
 
-      // Centros deseados de filas (mundo)
       let topCenterW = yCenterWorld + pitchY / 2;
       let botCenterW = yCenterWorld - pitchY / 2;
 
-      // Limitar por techo/suelo (mundo) con EDGE_Y
       const topMaxW = this.room2H - EDGE_Y - halfH;
       const botMinW = EDGE_Y + halfH;
       if (topCenterW > topMaxW) {
-        // desplaza ambas filas hacia abajo la diferencia
         const d = topCenterW - topMaxW;
         topCenterW -= d;
         botCenterW -= d;
       }
       if (botCenterW < botMinW) {
-        // desplaza ambas filas hacia arriba la diferencia
         const d = botMinW - botCenterW;
         topCenterW += d;
         botCenterW += d;
       }
 
-      // Convierte a coords locales del muro (resta this.room2H/2)
       const topLocalY = topCenterW - this.room2H / 2;
       const botLocalY = botCenterW - this.room2H / 2;
 
-      // Ligeramente “separado” del plano del muro hacia el interior de la sala
       const localX = +0.11;
 
       let placed = 0;
       for (let r = 0; r < rows && placed < count; r++) {
         const y = (r === 0) ? topLocalY : botLocalY;
         for (let c = 0; c < cols && placed < count; c++) {
-          const z = zCenters[c]; // ya está garantizado, no hagas clamp aquí
+          const z = zCenters[c];
 
           const frame = this.createFrame(
             new THREE.Vector3(localX, y, z),
@@ -495,80 +721,278 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
             { w: frameW, h: frameH, d: FRAME.d }
           );
 
-          this.skinFrameFrontWithImage(frame, previews[placed]);
+
+     this.skinFrameFrontWithImage(frame, previews[placed]);
           frame.userData['popup'] = {
             id: `user-${placed}`,
             title: 'Obra del usuario',
             artist: 'Tú',
             image: previews[placed]
           };
-
           this.userFrames.push(frame);
           placed++;
         }
-      }
-    },
+        }
+      },
     error: (e) => console.error('Error cargando pinturas del usuario', e),
   });
 }
 
 
-// Crea un "botón" plano con texto y ruta asociada
-private makeWallButton(label: string, route: string, w = 1.2, h = 0.35): THREE.Mesh {
-  // base oscuro (igual que antes)
-  const base = document.createElement('canvas');
-  base.width = 512; base.height = 180;
-  const ctx = base.getContext('2d')!;
-  ctx.clearRect(0,0,base.width,base.height);
-  ctx.fillStyle = '#232323';
-  ctx.fillRect(0,0,base.width,base.height);
-  ctx.strokeStyle = '#f5e1ce';
-  ctx.lineWidth = 8;
-  ctx.strokeRect(6,6,base.width-12,base.height-12);
-  ctx.fillStyle = '#f5e1ce';
-  ctx.font = 'bold 64px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, base.width/2, base.height/2);
 
-  const baseTex = new THREE.CanvasTexture(base);
-  baseTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy?.() ?? 1;
+private createModernWallMenu(
+  buttons: { label: string; icon: string; route: string }[]
+): THREE.Group {
 
-  const geo = new THREE.PlaneGeometry(w, h);
-  const baseMat = new THREE.MeshStandardMaterial({ map: baseTex, metalness: 0, roughness: 1 });
-  const mesh = new THREE.Mesh(geo, baseMat);
-  mesh.userData['route'] = route;
-  mesh.userData['baseMat'] = baseMat;
+  const TITLE_LINES = [
+    "Bienvenido al museo 3D",
+    "de MuseAI.",
+    "Presiona un botón, el lienzo",
+    "o la escultura para navegar", 
+    "por la página."
+  ];
 
-  // ✨ overlay dorado (solo borde), oculto por defecto
-  const GOLD = '#53420fff'; // ajusta si quieres igualar exacto al header
-  const hov = document.createElement('canvas');
-  hov.width = 512; hov.height = 180;
-  const hctx = hov.getContext('2d')!;
-  hctx.clearRect(0,0,hov.width,hov.height);
-  hctx.strokeStyle = GOLD;
-  hctx.lineWidth = 16;
-  hctx.shadowColor = GOLD;
-  hctx.shadowBlur = 24;      // leve glow
-  hctx.strokeRect(14,14,hov.width-28,hov.height-28);
+  const group = new THREE.Group();
 
-  const hovTex = new THREE.CanvasTexture(hov);
-  const hovMat = new THREE.MeshBasicMaterial({
-    map: hovTex, transparent: true, opacity: 0, depthTest: false
+  // CONFIGURACIÓN
+  const buttonGap = 0.55;
+  const titleHeight = 0.80;
+  const panelWidth = 2.9;
+  const contentOffsetY = -0.30;
+
+  const panelHeight =
+    titleHeight +
+    (buttons.length * buttonGap) +
+    1;
+
+  // PANEL PRINCIPAL
+  const panelCanvas = document.createElement("canvas");
+  panelCanvas.width = 2048;
+  panelCanvas.height = 3072;
+  const pctx = panelCanvas.getContext("2d")!;
+  pctx.clearRect(0, 0, panelCanvas.width, panelCanvas.height);
+
+  function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // Fondo glass
+  pctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+  roundRect(pctx, 0, 0, panelCanvas.width, panelCanvas.height, 260);
+  pctx.fill();
+
+  // Borde
+  pctx.lineWidth = 26;
+  pctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+  roundRect(pctx, 18, 18, panelCanvas.width - 36, panelCanvas.height - 36, 260);
+  pctx.stroke();
+
+  const panelTex = new THREE.CanvasTexture(panelCanvas);
+  const panel = new THREE.Mesh(
+    new THREE.PlaneGeometry(panelWidth, panelHeight),
+    new THREE.MeshBasicMaterial({ map: panelTex, transparent: true })
+  );
+  panel.position.set(0, 0, 0);
+  group.add(panel);
+
+  // TÍTULO CON FONDO GLASS
+  const titleBGWidth = 2.4;
+  const titleBGHeight = 0.95;
+
+  // Canvas del fondo del título
+  const titleBGCanvas = document.createElement("canvas");
+  titleBGCanvas.width = 1024;
+  titleBGCanvas.height = 512;
+  const bgctx = titleBGCanvas.getContext("2d")!;
+  bgctx.clearRect(0, 0, 1024, 512);
+
+  // Dibujar fondo redondeado
+  bgctx.fillStyle = "rgba(255,255,255,0.18)";
+  roundRect(bgctx, 0, 0, 1024, 512, 80);
+  bgctx.fill();
+
+  // Contorno
+  bgctx.lineWidth = 12;
+  bgctx.strokeStyle = "rgba(255,255,255,0.45)";
+  roundRect(bgctx, 8, 8, 1024 - 16, 512 - 16, 80);
+  bgctx.stroke();
+
+  const titleBGTex = new THREE.CanvasTexture(titleBGCanvas);
+  const titleBG = new THREE.Mesh(
+    new THREE.PlaneGeometry(titleBGWidth, titleBGHeight),
+    new THREE.MeshBasicMaterial({ map: titleBGTex, transparent: true })
+  );
+  titleBG.position.set(0, panelHeight / 2 - 0.45 + contentOffsetY, 0.035);
+  group.add(titleBG);
+
+  // Texto del título encima del fondo
+  const titleCanvas = document.createElement("canvas");
+  titleCanvas.width = 2048;
+  titleCanvas.height = 1024;
+  const tctx = titleCanvas.getContext("2d")!;
+  tctx.clearRect(0, 0, 2048, 1024);
+
+  tctx.font = "bold 128px system-ui";
+  tctx.fillStyle = "#ffffff";
+  tctx.textAlign = "center";
+  tctx.textBaseline = "middle";
+
+  TITLE_LINES.forEach((line, i) => {
+    tctx.fillText(line, 1024, 220 + i * 150);
   });
-  const hovPlane = new THREE.Mesh(new THREE.PlaneGeometry(w*1.02, h*1.08), hovMat);
-  hovPlane.position.z = 0.003; // delante para evitar z-fighting
-  mesh.add(hovPlane);
 
-  mesh.userData['hoverMat'] = hovMat;
+  const titleTex = new THREE.CanvasTexture(titleCanvas);
+  const titleMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.35, 0.85),
+    new THREE.MeshBasicMaterial({ map: titleTex, transparent: true })
+  );
+  titleMesh.position.set(0, panelHeight / 2 - 0.50 + contentOffsetY, 0.04);
+  group.add(titleMesh);
 
-  this.interactables.push(mesh);
-  return mesh;
+  //  BOTONES CON FONDO GLASS REDONDEADO
+  const firstButtonY = (panelHeight / 2) - (titleBGHeight + 0.50) + contentOffsetY;
+
+  buttons.forEach((btn, i) => {
+    const b = this.makePrettyButton(btn.label, btn.icon, btn.route);
+    b.position.set(0, firstButtonY - i * buttonGap, 0.06);
+    group.add(b);
+  });
+
+  return group;
+}
+
+
+private makePrettyButton(
+  label: string,
+  icon: string,
+  route: string
+): THREE.Group {
+
+  const group = new THREE.Group();
+
+  const w = 2.0;
+  const h = 0.55;
+
+  function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  //  Fondo redondeado del botón
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = 1024;
+  bgCanvas.height = 310;
+  const bg = bgCanvas.getContext("2d")!;
+  bg.clearRect(0, 0, 1024, 310);
+
+  // Fondo
+  bg.fillStyle = "rgba(255,255,255,0.22)";
+  roundRect(bg, 0, 0, 1024, 310, 70);
+  bg.fill();
+
+  bg.lineWidth = 14;
+  bg.strokeStyle = "rgba(255,255,255,0.40)";
+  roundRect(bg, 8, 8, 1024 - 16, 310 - 16, 70);
+  bg.stroke();
+
+  const bgTex = new THREE.CanvasTexture(bgCanvas);
+  const bgMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: bgTex, transparent: true })
+  );
+  group.add(bgMesh);
+
+  //  Ícono + Texto
+  const textCanvas = document.createElement("canvas");
+  textCanvas.width = 1024;
+  textCanvas.height = 310;
+  const ctx = textCanvas.getContext("2d")!;
+  ctx.clearRect(0, 0, 1024, 310);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+
+  ctx.font = "bold 120px system-ui";
+  ctx.fillText(icon, 90, 155);
+
+  ctx.font = "600 90px system-ui";
+  ctx.fillText(label, 260, 155);
+
+  const tTex = new THREE.CanvasTexture(textCanvas);
+  const textMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: tTex, transparent: true })
+  );
+  textMesh.position.z = 0.01;
+  group.add(textMesh);
+
+  //  HOVER GLOW
+  const hoverCanvas = document.createElement("canvas");
+  hoverCanvas.width = 1024;
+  hoverCanvas.height = 310;
+  const hctx = hoverCanvas.getContext("2d")!;
+  hctx.clearRect(0, 0, 1024, 310);
+
+  hctx.shadowColor = "#ffffff";
+  hctx.shadowBlur = 55;
+  hctx.lineWidth = 22;
+  hctx.strokeStyle = "#ffffff";
+  roundRect(hctx, 20, 20, 1024 - 40, 310 - 40, 70);
+  hctx.stroke();
+
+  const hoverTex = new THREE.CanvasTexture(hoverCanvas);
+  const hoverMat = new THREE.MeshBasicMaterial({
+    map: hoverTex,
+    transparent: true,
+    opacity: 0,
+    depthTest: false
+  });
+
+  const hoverPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(w * 1.06, h * 1.12),
+    hoverMat
+  );
+  hoverPlane.position.set(0, 0, 0.02);
+  group.add(hoverPlane);
+
+  //  Hotspot invisible
+  const hotspot = new THREE.Mesh(
+    new THREE.PlaneGeometry(w * 1.06, h * 1.12),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.01 })
+  );
+  hotspot.position.set(0, 0, 0.03);
+  hotspot.userData['route'] = route;
+  hotspot.userData['hoverMat'] = hoverMat;
+
+  this.interactables.push(hotspot);
+  group.add(hotspot);
+
+  return group;
 }
 
 
 
-// ✅ NUEVO helper
+
 private getOrCreateArtPlane(frame: THREE.Mesh, pad = 0.12): THREE.Mesh {
   let art = frame.userData['artPlane'] as THREE.Mesh | undefined;
   if (art) return art;
@@ -582,9 +1006,7 @@ private getOrCreateArtPlane(frame: THREE.Mesh, pad = 0.12): THREE.Mesh {
   const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   art = new THREE.Mesh(geo, mat);
 
-  // colócalo sobre la cara frontal, levemente “flotando”
   art.position.set(0, 0, d/2 + 0.002);
-  // como el frame ya está rotado hacia la sala, no hace falta rotar el plano
   frame.add(art);
   frame.userData['artPlane'] = art;
   return art;
@@ -593,7 +1015,6 @@ private getOrCreateArtPlane(frame: THREE.Mesh, pad = 0.12): THREE.Mesh {
 
 
 
-// Carga un GLB (ruta absoluta http(s) o local /assets)
 private loadGLB(path: string): Promise<THREE.Group> {
   return new Promise((resolve, reject) => {
     const p = path.startsWith('/') || path.startsWith('http') ? path : `/${path}`;
@@ -602,13 +1023,11 @@ private loadGLB(path: string): Promise<THREE.Group> {
   });
 }
 
-// Reconstruye un Object3D desde sceneJson (export de THREE.ObjectLoader)
 private objectFromSceneJson(sceneJson: string): THREE.Object3D {
   const loader = new THREE.ObjectLoader();
   return loader.parse(JSON.parse(sceneJson));
 }
 
-// Lee metadata segura
 private parseSculptureMeta(raw: string | null | undefined): SculptureMeta {
   if (!raw) return {};
   try {
@@ -625,12 +1044,7 @@ private hasGlb(m: SculptureMeta): m is SculptureWithGlb {
   return typeof m.glbUrl === 'string' && m.glbUrl.length > 0;
 }
 
-/**
- * Crea grupo: PODIO + ESCULTURA (desde glbUrl o sceneJson).
- * - Centra por AABB
- * - Escala la escultura a targetHeight (luego aplica scale de usuario)
- * - La coloca sobre la tapa del podio
- */
+
 private async addPedestalWithSculptureFromData(
   meta: SculptureMeta,
   sceneJson: string | null | undefined,
@@ -651,12 +1065,10 @@ private async addPedestalWithSculptureFromData(
   // 1) Podio
   const podium = await this.loadGLB('/assets/models/lowpoly_podium.glb');
   this.stripForeignLighting(podium);  
-  // — Color café claro para el podio —
 const PODIUM_COLOR = new THREE.Color('#f5e1ce');
 podium.traverse(o => {
   if ((o as THREE.Mesh).isMesh) {
     const mesh = o as THREE.Mesh;
-    // Si ya es Standard, basta con setear el color; si no, lo reemplazamos
     const current = mesh.material as THREE.Material | THREE.Material[];
     const apply = (mat: THREE.Material) => {
       if ((mat as any).isMeshStandardMaterial) {
@@ -683,12 +1095,10 @@ podium.traverse(o => {
     podium.scale.setScalar(podiumScale);
   }
 
-  // ⬇️ NUEVO: mueve el podio levemente a la izquierda (eje X local del grupo)
-  const podiumNudge = opts?.podiumNudgeX ?? 0.06;  // ~6 cm (ajústalo 0.05–0.08)
+  const podiumNudge = opts?.podiumNudgeX ?? 0.06;
   podium.position.x -= podiumNudge;
   group.add(podium);
 
-  // 2) Escultura: preferir GLB; si no, sceneJson
   let sculpture: THREE.Object3D | null = null;
   try {
     if (this.hasGlb(meta)) sculpture = await this.loadGLB(meta.glbUrl);
@@ -700,7 +1110,6 @@ podium.traverse(o => {
   if (!sculpture) return null;
   this.stripForeignLighting(sculpture);    
 
-  // Normaliza: centro y base a y=0, escalar a targetHeight
   {
     const box = new THREE.Box3().setFromObject(sculpture);
     const size = new THREE.Vector3(); box.getSize(size);
@@ -713,14 +1122,12 @@ podium.traverse(o => {
   }
   sculpture.rotation.y = userRotY;
 
-  // 3) Apoyar sobre la tapa del podio
   const podiumTopY = new THREE.Box3().setFromObject(podium).max.y;
   sculpture.position.y = podiumTopY + extraOffsetY;
   group.add(sculpture);
 
-  
 
-  // 4) Collider suave alrededor del conjunto
+
   const pad = 0.15;
   const col = new THREE.Box3().setFromObject(group).expandByScalar(pad);
   this.colliders.push(col);
@@ -730,14 +1137,10 @@ podium.traverse(o => {
   return group;
 }
 
-/**
- * Coloca hasta 4 esculturas (2 por pared) en la Sala 2 usando tu API.
- * Usa glbUrl si existe; si no, sceneJson.
- */
+
 private mountUserSculpturesInRoom2() {
   if (!this.room2Width || !this.room2Depth) return;
 
-  // Limpia anteriores
   for (const g of this.sculptureGroups) g.parent?.remove(g);
   this.sculptureGroups = [];
 
@@ -745,7 +1148,6 @@ private mountUserSculpturesInRoom2() {
     next: async (list) => {
       const metas = list.map(s => this.parseSculptureMeta(s.metadata));
 
-      // Slots: 2 norte mirando +X, 2 sur mirando -X
       const edgeX = 0.8, wallOffset = 0.55, y = 0;
       const northZ = this.room2CenterZ - this.room2Depth / 2 + wallOffset;
       const southZ = this.room2CenterZ + this.room2Depth / 2 - wallOffset;
@@ -768,7 +1170,7 @@ private mountUserSculpturesInRoom2() {
 
         try {
           await this.addPedestalWithSculptureFromData(
-            
+
             meta,
             sceneJson,
             new THREE.Vector3(s.x, y, s.z),
@@ -780,14 +1182,10 @@ private mountUserSculpturesInRoom2() {
         }
       }
     },
+    
     error: (e) => console.error('Error obteniendo esculturas', e),
   });
 }
-
-
-
-
-
 
  private createFrame(
   position: THREE.Vector3,
@@ -801,16 +1199,14 @@ private mountUserSculpturesInRoom2() {
 
   const geometry = new THREE.BoxGeometry(width, height, depth);
 
-  // ✅ material “madera” estable
   const wood = new THREE.MeshStandardMaterial({
     color: 0x4a2c13,
     metalness: 0.0,
     roughness: 0.6,
-    emissive: new THREE.Color(0x120a06),    // un toque
+    emissive: new THREE.Color(0x120a06),
     emissiveIntensity: 0.12
   });
 
-  // ✅ frente blanco (hueco) con mucha rugosidad
   const frontBlank = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     metalness: 0.0,
@@ -830,29 +1226,24 @@ private mountUserSculpturesInRoom2() {
 
 
 
-// Colgar glb del techo: centra por AABB y posiciona bajo y=5
 private addCeilingLamp(path: string, x: number, z: number, opts?: {clear?: number, scale?: number, rotY?: number}) {
   const loader = new GLTFLoader();
-  const clear = opts?.clear ?? 0.12;         // separación del techo
+  const clear = opts?.clear ?? 0.12;
   const scl   = opts?.scale ?? 1.0;
   const rotY  = opts?.rotY ?? 0;
 
   loader.load(path, (gltf) => {
     const lamp = gltf.scene;
 
-    // 1) Wrapper para mover el modelo al centro sin perder el pivote
     const wrap = new THREE.Group();
 
-    // 2) Calcular AABB y centrar el modelo dentro del wrapper
     const box = new THREE.Box3().setFromObject(lamp);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
 
-    // Mueve el modelo para que su centro quede en (0,0,0) y la base quede en y=0
     lamp.position.sub(center);
-    lamp.position.y -= (-size.y / 2);  // sube el modelo medio alto → base en y=0
+    lamp.position.y -= (-size.y / 2);
 
-    // Sombra opcional
     lamp.traverse(o => {
       if ((o as THREE.Mesh).isMesh) {
         const m = o as THREE.Mesh;
@@ -863,15 +1254,12 @@ private addCeilingLamp(path: string, x: number, z: number, opts?: {clear?: numbe
 
     wrap.add(lamp);
 
-    // 3) Escala el WRAPPER (evita mover offsets internos)
     wrap.scale.setScalar(scl);
 
-    // 4) Recalcular alto final (con la escala aplicada)
     const box2 = new THREE.Box3().setFromObject(wrap);
     const size2 = new THREE.Vector3(); box2.getSize(size2);
     const lampH = size2.y;
 
-    // 5) Posicionar bajo el techo (y=5)
     const ceilingY = 5;
     wrap.position.set(x, ceilingY - clear - lampH, z);
     wrap.rotation.y = rotY;
@@ -884,11 +1272,8 @@ private addCeilingLamp(path: string, x: number, z: number, opts?: {clear?: numbe
 
 
 
-  /**
-   * Llama al backend CMA para una obra por ID y la aplica sobre el marco,
-   * además de guardar la info de curaduría para el popup.
-   */
   private addArtworkToFrame(frame: THREE.Mesh, artworkId: string): void {
+    frame.userData['tourId'] = artworkId;
     this.cmaService.getById(artworkId).subscribe({
       next: (resp: any) => {
         const data = resp?.data ?? resp;
@@ -976,22 +1361,18 @@ private addCeilingLamp(path: string, x: number, z: number, opts?: {clear?: numbe
     });
   }
 
-  // Empuja un círculo (jugador) fuera de un AABB en XZ
 private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: number, maxZ: number) {
   const r = this.PLAYER_RADIUS;
 
-  // Si NO hay intersección, nada que hacer
   if (pos.x + r <= minX || pos.x - r >= maxX || pos.z + r <= minZ || pos.z - r >= maxZ) {
     return pos;
   }
 
-  // Penetraciones en cada lado (positivas = empuje necesario)
-  const penLeft   = (maxX - (pos.x - r)); // choca por la izquierda del AABB -> empujar +x
-  const penRight  = ((pos.x + r) - minX); // choca por la derecha del AABB  -> empujar -x
-  const penTop    = (maxZ - (pos.z - r)); // choca por arriba (en -z/+z depende) -> empujar +z
-  const penBottom = ((pos.z + r) - minZ); // choca por abajo -> empujar -z
+  const penLeft   = (maxX - (pos.x - r));
+  const penRight  = ((pos.x + r) - minX);
+  const penTop    = (maxZ - (pos.z - r));
+  const penBottom = ((pos.z + r) - minZ);
 
-  // Elegimos el eje con menor empuje necesario
   const minPen = Math.min(penLeft, penRight, penTop, penBottom);
 
   if (minPen === penLeft)      pos.x += penLeft;
@@ -1003,10 +1384,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
 }
 
 
-  // ==========================
   //    ESCENA 3D (init)
-  // ==========================
-
   private initScene(): void {
 
     // Color azul rey
@@ -1025,7 +1403,9 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       0.1,
       1000
     );
-    this.camera.position.set(0, 1.7, 0);
+    this.camera.position.set(0, 0, 0);
+    this.camera.rotation.set(0, Math.PI, 0);
+
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1045,7 +1425,6 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x888888, 1.0);
     this.scene.add(hemiLight);
 
-    
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(5, 10, 5);
@@ -1070,41 +1449,35 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     this.scene.add(backWall);
     this.walls.push(backWall);
 
-    // === MENÚ EN LA PARED DEL FONDO ===
-    const menuGroup = new THREE.Group();
+    const menu = new THREE.Group();
 
-    // Botones (label, ruta)
-    const bInicio = this.makeWallButton('Inicio',   '/app/menu');
-    const bExplora = this.makeWallButton('Explora 3D', '/explorar');
-    const bLienzo = this.makeWallButton('Lienzo',  '/create-canvas');
-    const bPerfil = this.makeWallButton('Perfil',  '/app/profile');
-    
+    //  MENÚ MODERNO EN LA PARED DEL FONDO
+    const wallMenu = this.createModernWallMenu([
+      { label: 'Traducir Obras', icon: '🌐', route: '_openLanguageSelector_'},
+      { label: 'Iniciar Tour',icon: '▶️', route: '_openTourDialog_' },
+      { label: 'Realizar Quiz',  icon: '🖼️', route: '/' },
+      { label: 'Perfil',      icon: '👤', route: '/app/profile' },
+      { label: 'Cerrar sesión', icon: '🚪', route: '_logout_' }
 
-    // distribución vertical
-    const gap = 0.20;  // separación
-    bInicio.position.set(0, 2.2 + (0.35+gap)*1.5, 0);
-    bExplora.position.set(0, 2.2 + (0.35+gap)*0.5, 0);
-    bLienzo.position.set(0, 2.2 - (0.35+gap)*0.5, 0);
-    bPerfil.position.set(0, 2.2 - (0.35+gap)*1.5, 0);
+    ]);
 
-    menuGroup.add(bInicio, bExplora, bLienzo, bPerfil);
-
-    // posiciona el grupo un poquito delante de la pared del fondo (mirando +Z)
-    menuGroup.position.set(0, 0, 9.80); // tu pared está en -10
-    menuGroup.rotation.y = Math.PI; // 180°
-    this.scene.add(menuGroup);
+    // centrado en la pared frontal
+    wallMenu.position.set(0, 2.5, 9.4);
+    wallMenu.rotation.y = Math.PI;
+    this.scene.add(wallMenu);
 
 
-// === LIENZO EN BLANCO INTERACTIVO (izquierda del menú) ===
+
+//  LIENZO EN BLANCO INTERACTIVO (izquierda del menú)
 {
   const zWall = 9.80;   // pared frontal
-  const xPos  = 6;      // muévelo a gusto
+  const xPos  = 6;
   const yPos  = 2.2;
 
   const frameW = 2.4, frameH = 2.6, frameD = 0.10;
   const blankFrame = this.createFrame(
     new THREE.Vector3(xPos, yPos, zWall),
-    Math.PI, // ⬅️ ahora mira hacia -Z (a la sala)
+    Math.PI, //  ahora mira hacia -Z (a la sala)
     undefined,
     { w: frameW, h: frameH, d: frameD }
   );
@@ -1117,7 +1490,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       color: 0xffffff, metalness: 0, roughness: 0.95, side: THREE.DoubleSide
     });
     const innerPlane = new THREE.Mesh(innerGeo, innerMat);
-    // ⬇️ delante de la cara frontal (como el marco está a π, usa -Z)
+    //  delante de la cara frontal (como el marco está a π, usa -Z)
     innerPlane.position.set(0, 0, -frameD/2 - 0.004);
     blankFrame.add(innerPlane);
 
@@ -1128,7 +1501,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       side: THREE.DoubleSide, depthTest: false
     });
     const hotspot = new THREE.Mesh(hotspotGeo, hotspotMat);
-    // ⬇️ aún más al frente que el lienzo
+    // aún más al frente que el lienzo
     hotspot.position.set(0, 0, -frameD/2 - 0.006);
     hotspot.userData['route'] = '/create-canvas';
     hotspot.userData['baseMat'] = hotspotMat;
@@ -1151,11 +1524,11 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       new THREE.PlaneGeometry(1.4, 0.28), // un poco más grande
       new THREE.MeshBasicMaterial({ map: tagTex, transparent: true, side: THREE.DoubleSide })
     );
-    tag.position.set(0, -(frameH/2) - 0.22, -frameD/2 - 0.003); // ⬅️ -Z, bajo el marco
+    tag.position.set(0, -(frameH/2) - 0.22, -frameD/2 - 0.003); // ⬅ -Z, bajo el marco
     blankFrame.add(tag);
 }
 
-// === PODIO DE PARED (derecha del menú, mismo look que sala 2) ===
+//  PODIO DE PARED (derecha del menú, mismo look que sala 2)
 {
   const zWall   = 9.80;   // misma pared del menú
   const xPos    = -6;     // lado derecho del menú (el lienzo está a +6)
@@ -1168,7 +1541,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   wrap.rotation.y = Math.PI; // mirando hacia la sala (igual que el menú/lienzo)
   this.scene.add(wrap);
 
-  // Cargar el mismo podio que usas en sala 2 y “estandarizar” materiales/centro
+  // Carga mismo podio que sala 2 y “estandariza” materiales/centro
   const loader = new GLTFLoader();
   loader.load('/assets/models/miguel.glb', (gltf) => {
     const podium = gltf.scene;
@@ -1199,14 +1572,14 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const box = new THREE.Box3().setFromObject(podium);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
-    podium.position.sub(center);   // centro en (0,0,0)
+    podium.position.sub(center);
 
-    // Escala (similar al tamaño visual de los podios de sala 2)
+    // Escala como la de podio 2
     podium.scale.setScalar(2.5);
 
     wrap.add(podium);
 
-    // --- Hotspot interactivo al frente (misma UX de “F para interactuar”) ---
+    //  Hotspot interactivo al frente (misma UX de “F para interactuar”)
     const box2 = new THREE.Box3().setFromObject(podium);
     const size2 = new THREE.Vector3(); box2.getSize(size2);
 
@@ -1216,13 +1589,13 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       side: THREE.DoubleSide, depthTest: false
     });
     const hotspot = new THREE.Mesh(hotspotGeo, hotspotMat);
-    hotspot.position.set(0, 0, size2.z / 2 + 0.02);   // un pelín delante
-    hotspot.userData['route'] = '/sculptor';  // ajusta ruta si usas otra
+    hotspot.position.set(0, 0, size2.z / 2 + 0.02);
+    hotspot.userData['route'] = '/sculptor';
     hotspot.userData['baseMat'] = hotspotMat;
     this.interactables.push(hotspot);
     wrap.add(hotspot);
 
-    // --- Etiqueta “Crea tu propia Escultura!” bajo el podio (en la pared) ---
+    //  Etiqueta “Crea tu propia Escultura!” bajo el podio
     const tagCanvas = document.createElement('canvas');
     tagCanvas.width = 1400; tagCanvas.height = 180;
     const tctx = tagCanvas.getContext('2d')!;
@@ -1240,40 +1613,30 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       new THREE.MeshBasicMaterial({
         map: tagTex,
         transparent: true,
-        side: THREE.DoubleSide,           // 👈 visible desde el frente
-        polygonOffset: true,              // 👇 evita z-fighting
+        side: THREE.DoubleSide,
+        polygonOffset: true,
         polygonOffsetFactor: -1,
         polygonOffsetUnits: -1
       })
     );
-
-    // ✔ misma Y; Z: pegado a la pared usando `pull` (un pelín delante de ella)
     tag.position.set(0, -(size2.y/2) - 0.22, -(pull - 0.006));
     wrap.add(tag);
 
 
 
-    // Colisión suave (por si no quieres atravesarlo al mirarlo muy de cerca)
+    // Colisión suave
     this.addColliderFromObject(wrap, 0.03);
   },
   undefined,
   (e) => console.error('No se pudo cargar el podio flotante:', e));
 }
-
-
-
-
-    
     const frontWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.2), wallMat);
     frontWall.position.set(0, 2.5, 10);
     this.scene.add(frontWall);
     this.walls.push(frontWall);
 
-    // —— Construye cajas AABB de todas las paredes ——
-    // (las hacemos un poco “infinitas” en Y para no preocuparnos por la altura)
-  
 
- // ====== PUERTA PEGADA A LA ÚLTIMA OBRA DE LA PARED IZQUIERDA ======
+ //  PUERTA PEGADA A LA ÚLTIMA OBRA DE LA PARED IZQUIERDA
 {
   const wallThick = 0.2;
   const wallH     = 5;
@@ -1325,7 +1688,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     this.scene.add(lintel); this.walls.push(lintel);
   }
 
-  // ====== SALA 2 ALINEADA ======
+  //  SALA 2 ALINEADA
   const room2Width = 8, room2Depth = 12, room2H = 5, gap = 0.01;
   const room2CenterX = wallX - wallThick/2 - room2Width/2 - gap;
   const room2CenterZ = doorZ;
@@ -1353,12 +1716,12 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   ceil2.position.set(room2CenterX, room2H, room2CenterZ);
   this.scene.add(ceil2);
 
-    // west2 (ya la creas más arriba)
+    // west2 (ya se crea más arriba)
   const west2  = new THREE.Mesh(new THREE.BoxGeometry(0.2, room2H, room2Depth), wallMaterial);
   west2.position.set(room2CenterX - room2Width/2, room2H/2, room2CenterZ);
   this.scene.add(west2); this.walls.push(west2);
 
-  // 👇 usa west2 como pared destino
+  // usa west2 como pared destino
   this.room2NorthWall = west2;
 
   // y monta AHORA
@@ -1379,16 +1742,16 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   this.scene.add(south2); this.walls.push(south2);
 
 
-  // === PARED ESTE de la sala 2, con el MISMO hueco de puerta ===
+  //  PARED ESTE de la sala 2, con el MISMO hueco de puerta 
 {
   const east2X = room2CenterX + room2Width / 2;  // cara Este de la sala 2
-  const thick  = 0.2;                            // igual que las demás
+  const thick  = 0.2;
   const ezMin  = room2CenterZ - room2Depth / 2;
   const ezMax  = room2CenterZ + room2Depth / 2;
   const ezStart = doorZ - doorW / 2;             // inicio del hueco (Z)
   const ezEnd   = doorZ + doorW / 2;             // fin del hueco (Z)
 
-  // Jamba izquierda (desde zMin hasta el inicio del hueco)
+
   const leftLen = ezStart - ezMin;
   if (leftLen > 0) {
     const eastLeft = new THREE.Mesh(
@@ -1399,7 +1762,6 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     this.scene.add(eastLeft); this.walls.push(eastLeft);
   }
 
-  // Jamba derecha (desde el fin del hueco hasta zMax)
   const rightLen = ezMax - ezEnd;
   if (rightLen > 0) {
     const eastRight = new THREE.Mesh(
@@ -1410,7 +1772,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     this.scene.add(eastRight); this.walls.push(eastRight);
   }
 
-  // Dintel (por encima de la puerta)
+  // Dintel (encima de la puerta)
   const lintelH = room2H - doorH;
   if (lintelH > 0) {
     const eastLintel = new THREE.Mesh(
@@ -1440,7 +1802,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     rightWall.position.set(10, 2.5, 0);
     this.scene.add(rightWall);
 
-    // 🧱 Paredes interiores (centrales)
+    // Paredes interiores (centrales)
     const innerWallMaterial = wallMaterial;
     const innerWallGeometry = new THREE.BoxGeometry(0.5, 5, 8);
 
@@ -1462,30 +1824,28 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       return box;
     });
 
-    // ==========================
-    //     DISPLAYS / MARCOS
-    // ==========================
 
+    //     DISPLAYS / MARCOS
 
     const innerIds = [
-      '125249', // leftOuterTop   
-      '151298', // leftOuterBottom  
+      '125249', // leftOuterTop
+      '151298', // leftOuterBottom
       '2009.157', // leftInnerTop
       '1921.1239', // leftInnerBottom
       '380063', // rightOuterTop
       '135614',  // rightOuterBottom
-      '1921.428', // rightInnerTop 
-      '1942.638', // rightInnerBottom 
+      '1921.428', // rightInnerTop
+      '1942.638', // rightInnerBottom
     ];
 
     const backIds = ['170235', '111702', '135428']; // pared del fondo
     const leftIds = ['135483', '93014', '141639']; // pared izquierda
-    const rightIds = ['132618', '115067', '127080']; // pared derecha
+    const rightIds = ['132618', '115067', '1953.155']; // pared derecha
 
-    // -------- PAREDES INTERIORES (8) --------
+    //  PAREDES INTERIORES
     let idx = 0;
 
-    // Pared interior izquierda (x = -3.55) – CARA HACIA EL CENTRO (+X)
+    // Pared interior izquierda
     this.addArtworkToFrame(
       this.createFrame(new THREE.Vector3(-3.55, 2.5, -2.5), -Math.PI / 2),
       innerIds[idx++]
@@ -1495,7 +1855,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       innerIds[idx++]
     );
 
-    // Pared interior izquierda (x = -3.05) – CARA HACIA AFUERA (–X)
+    // Pared interior izquierda
     this.addArtworkToFrame(
       this.createFrame(new THREE.Vector3(-3.05, 2.5, -2.5), Math.PI / 2),
       innerIds[idx++]
@@ -1505,7 +1865,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       innerIds[idx++]
     );
 
-    // Pared interior derecha (x = 3.55) – CARA HACIA EL CENTRO (–X)
+    // Pared interior derecha
     this.addArtworkToFrame(
       this.createFrame(new THREE.Vector3(3.55, 2.5, -2.5), Math.PI / 2),
       innerIds[idx++]
@@ -1515,7 +1875,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       innerIds[idx++]
     );
 
-    // Pared interior derecha (x = 3.05) – CARA HACIA AFUERA (+X)
+    // Pared interior derecha
     this.addArtworkToFrame(
       this.createFrame(new THREE.Vector3(3.05, 2.5, -2.5), -Math.PI / 2),
       innerIds[idx++]
@@ -1525,16 +1885,17 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       innerIds[idx++]
     );
 
-    // -------- PAREDES EXTERIORES (9) --------
+    //  PAREDES EXTERIORES 
 
-    // Pared del fondo (z = -9.9), x = -6, 0, 6
+    // Pared del fondo
     for (let i = 0; i < 3; i++) {
       const x = -6 + i * 6;
       const frame = this.createFrame(new THREE.Vector3(x, 2.5, -9.9), 0);
+      frame.userData['isBackWall'] = true;
       this.addArtworkToFrame(frame, backIds[i]);
     }
 
-    // Pared izquierda (x = -9.9), z = -6, 0, 6
+    // Pared izquierda
     for (let i = 0; i < 3; i++) {
       const z = -6 + i * 6;
       const frame = this.createFrame(
@@ -1544,7 +1905,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
       this.addArtworkToFrame(frame, leftIds[i]);
     }
 
-    // Pared derecha (x = 9.9), z = -6, 0, 6
+    // Pared derecha
     for (let i = 0; i < 3; i++) {
       const z = -6 + i * 6;
       const frame = this.createFrame(
@@ -1563,9 +1924,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     ceiling.position.y = 5;
     this.scene.add(ceiling);
 
-    // ==========================
-    //      MODELOS GLTF
-    // ==========================
+    //MODELOS GLTF
     const loader = new GLTFLoader();
 
      this.addCeilingLamp('/assets/models/large.glb', 0, -7.8, { scale: 2, rotY: 0, clear: -0.8 });
@@ -1632,11 +1991,8 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     window.addEventListener('resize', this.onResize);
   }
 
-  // ==========================
-  //   EVENTOS / CONTROLES
-  // ==========================
+  // EVENTOS / CONTROLES
 
-  
 
   private addEventListeners(): void {
     window.addEventListener('keydown', this.onKeyDown);
@@ -1651,7 +2007,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     case 'KeyS': this.moveBackward = true; break;
     case 'KeyA': this.moveLeft = true;     break;
     case 'KeyD': this.moveRight = true;    break;
-    case 'KeyF': this.tryWallInteract();   break; // ⬅️ nuevo
+    case 'KeyF': this.tryWallInteract();   break;
   }
 };
 
@@ -1664,9 +2020,7 @@ private onKeyUp = (event: KeyboardEvent) => {
   }
 };
 
-  // ==========================
-  //   PROXIMIDAD / POPUP
-  // ==========================
+  // PROXIMIDAD / POPUP
 
   private checkArtworkProximity(): void {
     let nearestFrame: THREE.Mesh | null = null;
@@ -1687,13 +2041,13 @@ private onKeyUp = (event: KeyboardEvent) => {
     }
 
     if (nearestFrame && nearestFrame !== this.activeFrame) {
-      // Entramos a una nueva obra
+      // Si se acerca a una obra nueva
       this.activeFrame = nearestFrame;
       this.currentArtwork = nearestFrame.userData['popup'] as ArtworkPopupData;
       this.translateCurrentArtwork();
       this.isPopupVisible = true;
     } else if (!nearestFrame && this.activeFrame) {
-      // Nos alejamos de todas
+      // Cuando se alejamos de todas
       this.activeFrame = null;
       this.currentArtwork = null;
       this.isPopupVisible = false;
@@ -1760,12 +2114,11 @@ private onKeyUp = (event: KeyboardEvent) => {
       });
   }
 
-  // ==========================
-  //    LOOP DE ANIMACIÓN
-  // ==========================
+  //  LOOP DE ANIMACIÓN
 
   private animate = () => {
-    requestAnimationFrame(this.animate);
+  requestAnimationFrame(this.animate);
+  this.updateTourMovement();
 
   const delta = this.clock.getDelta();
   const speed = 4.0;
@@ -1777,14 +2130,13 @@ private onKeyUp = (event: KeyboardEvent) => {
   this.direction.x = Number(this.moveRight)  - Number(this.moveLeft);
   this.direction.normalize();
 
-    if (this.moveForward || this.moveBackward) {
+    if (this.movementEnabled && (this.moveForward || this.moveBackward)) {
       this.velocity.z -= this.direction.z * speed * delta;
     }
-    if (this.moveLeft || this.moveRight) {
+    if (this.movementEnabled && (this.moveLeft || this.moveRight)) {
       this.velocity.x -= this.direction.x * speed * delta;
     }
 
-  // ===== A PARTIR DE AQUÍ, NUEVO BLOQUE =====
   const moveRightAmt  = -this.velocity.x * delta * 10;
   const moveForwardAmt = this.velocity.z * delta * 10;
 
@@ -1802,29 +2154,31 @@ private onKeyUp = (event: KeyboardEvent) => {
 
     this.renderer.render(this.scene, this.camera);
   
-  // delta en mundo (adelante es -moveForwardAmt)
+  // delta en mundo
   const moveVec = new THREE.Vector3()
     .addScaledVector(forward, -moveForwardAmt)
     .addScaledVector(right,    moveRightAmt);
 
-  // intento de posición y resolución de colisiones
-  // intento de nueva posición
+
+    if (!this.movementEnabled) {
+  // No movimiento WASD durante el tour
+  return;
+}
+
+
     const attempt = this.controls.object.position.clone().add(moveVec);
 
-    // colisión + clamps
     const resolved = this.resolveCollisions(attempt);
 
-    // ⬇️ Usa los límites dinámicos, no -10/10 fijos
     resolved.x = Math.max(this.minX, Math.min(this.maxX, resolved.x));
     resolved.z = Math.max(this.minZ, Math.min(this.maxZ, resolved.z));
 
     this.controls.object.position.copy(resolved);
     this.controls.object.position.y = 1.7;
 
-  // ===== FIN DEL BLOQUE NUEVO =====
 
   // Hover highlight
-// Hover + Hint "Presione F..." 
+  // Hover + Hint "Presione F..."
 {
   const dir = new THREE.Vector3();
   this.camera.getWorldDirection(dir);
@@ -1841,7 +2195,7 @@ private onKeyUp = (event: KeyboardEvent) => {
     this.hovered = undefined;
   }
 
-  // aplicar borde dorado y mostrar hint si está “a tiro”
+  // aplicar borde y mostrar hint si está “a tiro”
   if (top && within) {
     this.hovered = top;
     const hm = top.userData['hoverMat'] as THREE.MeshBasicMaterial | undefined;
@@ -1851,21 +2205,13 @@ private onKeyUp = (event: KeyboardEvent) => {
     if (this.hintEl) this.hintEl.style.opacity = '0';
   }
 }
-
-
-
   this.renderer.render(this.scene, this.camera);
-
-  
 };
-
-
-
 
 
   private onResize = () => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-  };
+  };
 }
