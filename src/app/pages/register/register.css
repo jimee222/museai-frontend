@@ -17,7 +17,7 @@
   --muse-text-soft: #f3e3c3;
 }
 
-/*  LAYOUT GENERAL  */
+/* ───────────────── LAYOUT GENERAL ───────────────── */
 
 .register-shell {
   min-height: 100vh;
@@ -56,7 +56,7 @@
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.86);
 }
 
-/*  PANEL IZQUIERDO  */
+/* ───────────────── PANEL IZQUIERDO ───────────────── */
 
 .register-media {
   border-radius: 18px;
@@ -219,7 +219,7 @@
 }
 
 
-/*  TARJETA REGISTER  */
+/* ───────────────── TARJETA REGISTER ───────────────── */
 
 .register-card {
   padding: 28px 26px 34px;
@@ -461,6 +461,7 @@
   cursor: not-allowed;
 }
 
+/* ───────────────── RESPONSIVE ───────────────── */
 
 @media (max-width: 1023px) {
   .register-shell {
@@ -529,7 +530,7 @@
   animation: ringIdleBreath 6.2s ease-in-out infinite;
 }
 
-/* CAPAS BASE */
+/* CAPAS BASE – varias capas */
 .ai-ring-layer {
   position: absolute;
   border-radius: 50%;
@@ -538,11 +539,12 @@
           mask: radial-gradient(circle, transparent 60%, #000 61% 100%);
 }
 
+/* Diferencias sutiles de tamaño entre capas */
 .ai-ring-layer.outer { inset: 14%; }
 .ai-ring-layer.mid   { inset: 17%; }
 .ai-ring-layer.inner { inset: 20%; }
 
-/*  EXTERIOR  */
+/* ───── EXTERIOR ───── */
 
 .ai-ring-layer.outer {
   border-color: rgba(255, 239, 175, 0.9);
@@ -577,7 +579,7 @@
       transparent 55%);
 }
 
-/*  MEDIO  */
+/* ───── MEDIO ───── */
 
 .ai-ring-layer.mid {
   border-color: rgba(255, 232, 160, 0.85);
@@ -611,7 +613,7 @@
       transparent 55%);
 }
 
-/*  INTERIOR  */
+/* ───── INTERIOR ───── */
 
 .ai-ring-layer.inner {
   border-color: rgba(255, 249, 210, 0.9);
@@ -643,7 +645,7 @@
       transparent 70%);
 }
 
-/*  ANIMACIONES SIN PAUSA  */
+/* ───────── ANIMACIONES CONTINUAS SIN PAUSA ───────── */
 
 @keyframes ringIdleBreath {
   0%   { transform: scaleX(1.03) scaleY(0.97); }
@@ -683,7 +685,7 @@
   100% { filter: blur(0.55px) brightness(1.1); }
 }
 
-/* Ocultar en mobile */
+/* Ocultar en móviles */
 @media (max-width: 1023px) {
   .ai-ring {
     display: none;

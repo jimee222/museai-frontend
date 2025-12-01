@@ -27,12 +27,7 @@
     <div class="meta__label-row">
       <label for="desc" class="meta__label">Descripción de la obra</label>
 
-      <button
-        type="button"
-        class="btn--ai"
-        (click)="generateDescription.emit()"
-        [disabled]="isGeneratingDescription"
-      >
+      <button type="button" class="btn--ai" (click)="requestAIDescription.emit()"[disabled]="isGeneratingDescription">
         <span class="btn__icon">
           <svg viewBox="0 0 24 24" fill="none">
             <path

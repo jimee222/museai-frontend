@@ -101,7 +101,7 @@ export class Register implements AfterViewInit {
     });
   }
 
-  /*  ANILLO IA  */
+  /* ====================== ANILLO IA ====================== */
 
   ngAfterViewInit(): void {
     if (!this.aiRing) return;
@@ -118,11 +118,13 @@ export class Register implements AfterViewInit {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
 
+    // Normalizado -1 a 1
     const dx = (event.clientX - cx) / (rect.width / 2);
     const dy = (event.clientY - cy) / (rect.height / 2);
     const nx = Math.max(-1, Math.min(1, dx));
     const ny = Math.max(-1, Math.min(1, dy));
 
+    // Actualiza gradiente (CSS)
     ring.style.setProperty('--ring-light-x', `${50 + nx * 18}%`);
     ring.style.setProperty('--ring-light-y', `${20 + ny * 18}%`);
 
@@ -162,7 +164,7 @@ export class Register implements AfterViewInit {
     });
   }
 
-  /*  FORMULARIO  */
+  /* ====================== FORMULARIO ====================== */
 
   field(name: string) {
     return this.form.get(name)!;
