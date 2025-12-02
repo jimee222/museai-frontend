@@ -1,6 +1,6 @@
 .museum-container {
   width: 100%;
-  height: calc(100vh - 64px); 
+  height: 100vh;     /* ocupa toda la altura */
   overflow: hidden;
 }
 
@@ -116,6 +116,30 @@
   line-height: 1.5;
   color: #fff;
 }
+/* oculta el botón translate */
+.lang-overlay {
+  position: fixed;
+  top: 30px;
+  right: 40px;
+  z-index: 99999;
+  
+}
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.museum-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+
 
 /*  POPUP INICIAL DEL TOUR */
 
@@ -267,4 +291,71 @@
   background: linear-gradient(90deg, #caa526, #f3d46e);
   transition: width .35s ease;
 }
+:host ::ng-deep footer,
+:host ::ng-deep app-footer {
+  display: none !important;
+}
 
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-window {
+  background: rgba(255,255,255,0.2);
+  border-radius: 18px;
+  padding: 22px 28px;
+  width: 320px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255,255,255,0.4);
+  color: #fff;
+  text-align: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.popup-window h2 {
+  margin: 0 0 12px 0;
+}
+
+.popup-window button {
+  margin-top: 18px;
+  padding: 10px 20px;
+  border: none;
+  background: rgba(255,255,255,0.35);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #000;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: scale(0.95); }
+  to   { opacity:1; transform: scale(1); }
+}
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10010;
+}
+
+.popup-window {
+  background: rgba(255,255,255,0.22);
+  border-radius: 16px;
+  padding: 24px;
+  width: 300px;
+  text-align: center;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.6);
+}

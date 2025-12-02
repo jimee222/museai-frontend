@@ -1,0 +1,32 @@
+<!-- src/app/components/landing/team/team.component.html -->
+<section id="team" class="section section--tight team">
+  <div class="section__inner">
+    <header class="section__header">
+      <p class="section__eyebrow">Nuestro equipo</p>
+      <h2 class="section__title">Personas detrás del código</h2>
+      <p class="section__description">
+        Code Horizon está formado por estudiantes de Ingeniería de Software que convierten
+        proyectos académicos en productos listos para producción.
+      </p>
+    </header>
+
+    <div class="team__grid">
+      <mat-card class="team-card" *ngFor="let member of team">
+        <div class="team-card__avatar">
+          <img
+            ngSrc="{{ member.photo }}"
+            [alt]="member.name"
+            width="400"
+            height="300"
+          />
+        </div>
+        <mat-card-content>
+          <div class="team-card__info">
+            <h3 class="team-card__name">{{ member.name }}</h3>
+            <p class="team-card__role">{{ member.role }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</section>

@@ -13,5 +13,5 @@ export const GuestGuard: CanActivateFn = (route, state) => {
   }
 
   // Si ya hay sesión, redirige al menú inicial
-  return router.parseUrl('/app/menu');
+  return router.parseUrl('/museum');
 };

@@ -151,7 +151,7 @@ export class Login implements OnInit, AfterViewInit {
     this.authService.login({ email, password }).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.router.navigateByUrl('/app/menu');
+        this.router.navigateByUrl('/museum');
       },
       error: (err: any) => {
         this.isSubmitting = false;
