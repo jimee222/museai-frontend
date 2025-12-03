@@ -20,6 +20,7 @@ import { QuizEdit } from './pages/quiz/admin/quiz-edit/quiz-edit';
 import { Questions } from './pages/quiz/admin/questions/questions';
 import { QuizListUser } from './pages/quiz/user/quiz-list-user/quiz-list-user';
 import {QuizAttemptComponent} from './pages/quiz/user/quiz-attempt/quiz-attempt';
+import { AdminTokenUsagePage } from './pages/admin-token-usage/admin-token-usage';
 
 
 export const routes: Routes = [
@@ -54,6 +55,11 @@ export const routes: Routes = [
     path: 'create-canvas',
     component: CreateCanvasPageComponent,
   },
+  {
+    path: 'admin/token-usage',
+    component: AdminTokenUsagePage,
+    canActivate: [AuthGuard],
+  },
 
   {
     path: 'app',
@@ -74,7 +80,7 @@ children: [
 
   {
     path: 'quizzes',
-    component: QuizListUser 
+  component: QuizListUser 
   },
   {
   path: 'quizzes/:id/attempt',

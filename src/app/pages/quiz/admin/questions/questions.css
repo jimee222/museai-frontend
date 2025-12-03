@@ -240,7 +240,12 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+
+  position: sticky;
+  top: 20px;
+  z-index: 20;
 }
+
 
 /* ============================
    TARJETA DE PREGUNTA
