@@ -1,0 +1,64 @@
+<section class="quiz-admin-page">
+
+  <header class="quiz-header text-center">
+    <img
+      src="/assets/brand/museai-logo.png"
+      width="110"
+      height="110"
+      alt="Muse AI"
+      class="brand-logo"
+    />
+
+    <h2 class="title">Administración de Quizzes</h2>
+    <p class="subtitle">Gestiona, crea y organiza los quizzes de MuseAI</p>
+
+    <div class="create-quiz-container">
+      <button class="create-btn" (click)="createNewQuiz()">
+        + Crear Nuevo Quiz
+      </button>
+    </div>
+
+    <div class="search-container">
+      <input
+        type="text"
+        placeholder="Buscar quiz..."
+        [(ngModel)]="searchTerm"
+        class="search-input"
+      />
+    </div>
+  </header>
+
+  <main class="quiz-cards-container">
+
+    <p class="placeholder-text" *ngIf="filteredQuizzes.length === 0">
+      Aún no hay quizzes que coincidan con la búsqueda. ¡Comienza agregando uno!
+    </p>
+
+    <div class="quiz-card" *ngFor="let quiz of filteredQuizzes">
+      <div
+        class="card-background"
+        [ngStyle]="{
+          'background-image': quiz.imageUrl ? 'url(' + quiz.imageUrl + ')' : 'none'
+        }"
+      ></div>
+
+      <div class="card-content">
+  <h3 class="quiz-title">{{ quiz.title }}</h3>
+  <p class="quiz-description">{{ quiz.description | slice:0:80 }}...</p>
+
+  <p class="quiz-questions">Preguntas: {{ quiz.questionCount }}</p>
+
+  <div class="card-actions">
+    <img src="/assets/icons/edit.png" alt="Editar quiz" class="card-icon edit-icon"
+         (click)="goToQuiz(quiz.id!)" />
+
+    <img src="/assets/icons/delete.png" alt="Eliminar quiz" class="card-icon delete-icon"
+         (click)="deleteQuiz(quiz)" />
+  </div>
+</div>
+
+    </div>
+
+  </main>
+
+</section>

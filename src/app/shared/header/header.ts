@@ -24,7 +24,6 @@ export class HeaderComponent implements OnInit {
   showBack = false;
   isLoginPage = false;
 
-  // 👉 NUEVO: controla si se muestra o no el header
   hideHeader = false;
 
   constructor(
@@ -49,23 +48,24 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Estado de autenticación
-    this.auth.isLoggedIn$.subscribe(status => {
-      this.isAuthenticated = status;
+  this.auth.isLoggedIn$.subscribe(status => {
+    this.isAuthenticated = status;
+  });
+
+  // Rutas donde NO queremos ver el header de MuseAI
+  const hideHeaderRoutes = ['/museum', '/landing'];
+
+  const current = this.router.url;
+  this.hideHeader = hideHeaderRoutes.some(prefix => current.startsWith(prefix));
+
+  this.router.events
+    .pipe(filter((e) => e instanceof NavigationEnd))
+    .subscribe((e: any) => {
+      const url = e.urlAfterRedirects ?? e.url ?? '';
+      this.hideHeader = hideHeaderRoutes.some(prefix => url.startsWith(prefix));
     });
+}
 
-    // Estado inicial (por si recargas estando en /museum)
-    const current = this.router.url;
-    this.hideHeader = current.startsWith('/museum');
-
-    // Escuchar cambios de ruta
-    this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
-        const url = e.urlAfterRedirects ?? e.url ?? '';
-        this.hideHeader = url.startsWith('/museum');
-      });
-  }
 
   @HostListener('window:scroll', [])
   onWindowScroll(): void {

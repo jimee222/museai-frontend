@@ -296,7 +296,8 @@ private enablePlayerMovement() {
   showTourDialog = true;
   movementEnabled = true;
   private readonly tourLerpSpeed = 0.02;
-
+isLogged = false;
+isSuperAdmin = false;
 
   constructor(
     private cmaService: CmaService,
@@ -309,12 +310,43 @@ private enablePlayerMovement() {
 
   ) {
     effect(() => {
+
+  const user = this.authService.getUser();
+    this.isLogged = !!user;
+    this.isSuperAdmin = user?.role?.name === 'ROLE_SUPER_ADMIN';
+
       const lang = this.languagePreference.language();
       if (this.isPopupVisible && this.currentArtwork?.description && lang) {
         this.translateCurrentArtwork();
       }
     });
   }
+
+
+_openQuizMenu_() {
+
+  const user = this.authService.getUser();
+
+  if (!user) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  const roleName = (user.role?.name || "").toLowerCase();
+  
+
+  if (roleName.includes("super") || roleName.includes("admin")) {
+
+    this.router.navigate(['/app/quizzes-admin']);
+  } else {
+    
+    this.router.navigate(['/app/quizzes']);
+  }
+}
+
+
+
+
   //  Geometría Sala 2 ( colgar los canvas del usuario)
   private room2Width = 0;
   private room2Depth = 0;
@@ -508,8 +540,17 @@ private tryWallInteract() {
   const hit = hits[0];
   if (hit.distance > 4.0) return;
 
-  const route: string | undefined = hit.object.userData['route'];
-  if (!route) return;
+const route = hit.object.userData['route'];
+const action = hit.object.userData['action'];
+
+if (action && typeof (this as any)[action] === 'function') {
+  (this as any)[action]();
+  return;
+}
+
+
+if (!route) return;
+
 
   if (route === 'start-tour') {
     this.showTourDialog = true;
@@ -741,8 +782,9 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
 
 
 private createModernWallMenu(
-  buttons: { label: string; icon: string; route: string }[]
-): THREE.Group {
+  buttons: { label: string; icon: string; route?: string; action?: string }[]
+)
+: THREE.Group {
 
   const TITLE_LINES = [
     "Bienvenido al museo 3D",
@@ -862,11 +904,13 @@ private createModernWallMenu(
   //  BOTONES CON FONDO GLASS REDONDEADO
   const firstButtonY = (panelHeight / 2) - (titleBGHeight + 0.50) + contentOffsetY;
 
-  buttons.forEach((btn, i) => {
-    const b = this.makePrettyButton(btn.label, btn.icon, btn.route);
-    b.position.set(0, firstButtonY - i * buttonGap, 0.06);
-    group.add(b);
-  });
+buttons.forEach((btn, i) => {
+  const routeOrAction = btn.route ?? btn.action ?? '';
+  const b = this.makePrettyButton(btn.label, btn.icon, routeOrAction);
+  b.position.set(0, firstButtonY - i * buttonGap, 0.06);
+  group.add(b);
+});
+
 
   return group;
 }
@@ -875,7 +919,7 @@ private createModernWallMenu(
 private makePrettyButton(
   label: string,
   icon: string,
-  route: string
+  routeOrAction: string
 ): THREE.Group {
 
   const group = new THREE.Group();
@@ -975,13 +1019,18 @@ private makePrettyButton(
   hoverPlane.position.set(0, 0, 0.02);
   group.add(hoverPlane);
 
-  //  Hotspot invisible
   const hotspot = new THREE.Mesh(
     new THREE.PlaneGeometry(w * 1.06, h * 1.12),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.01 })
   );
   hotspot.position.set(0, 0, 0.03);
-  hotspot.userData['route'] = route;
+  hotspot.userData['route'] = routeOrAction;
+
+
+if (routeOrAction.startsWith("_")) {
+  hotspot.userData['action'] = routeOrAction;
+}
+
   hotspot.userData['hoverMat'] = hoverMat;
 
   this.interactables.push(hotspot);
@@ -1470,14 +1519,14 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const menu = new THREE.Group();
 
     //  MENÚ MODERNO EN LA PARED DEL FONDO
-    const wallMenu = this.createModernWallMenu([
-      { label: 'Traducir Obras', icon: '🌐', route: '_openLanguageSelector_'},
-      { label: 'Iniciar Tour',icon: '▶️', route: '_openTourDialog_' },
-      { label: 'Realizar Quiz',  icon: '🖼️', route: '/' },
-      { label: 'Perfil',      icon: '👤', route: '/app/profile' },
-      { label: 'Cerrar sesión', icon: '🚪', route: '_logout_' }
+   const wallMenu = this.createModernWallMenu([
+  { label: 'Traducir Obras', icon: '🌐', route: '_openLanguageSelector_' },
+  { label: 'Iniciar Tour', icon: '▶️', route: '_openTourDialog_' },
+  { label: 'Realizar Quiz', icon: '🖼️', action: '_openQuizMenu_' },
+  { label: 'Perfil', icon: '👤', route: '/app/profile' },
+  { label: 'Cerrar sesión', icon: '🚪', route: '_logout_' }
+]);
 
-    ]);
 
     // centrado en la pared frontal
     wallMenu.position.set(0, 2.5, 9.4);

@@ -67,4 +67,61 @@ export interface ISearch {
   totalPages?:number;
 }
 
+export interface IQuiz {
+  id?: number | null;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  level?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
+  createdAt?: string;
+  updatedAt?: string;
+  questions?: IQuestion[];
+  questionCount?: number;
+  maxScore?: number | null;
+  hasAttempt?: boolean;
+  lastAttempt?: Date;
+  score?: number;
+  
+}
+
+
+
+export interface IQuestion {
+  id?: number | null;
+  quizId?: number| null; 
+  text: string;
+  imageUrl?: string | null;
+  options: IOption[];
+  imagePreview?: string | null;
+  selectedOptionId?: number | null;
+}
+
+
+export interface IOption {
+  id?: number | null;
+  questionId?: number; 
+  text: string;
+  correct: boolean;
+}
+
+export interface IQuizAttemptResponse {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  timestamp: string;
+  answers: IQuizAttemptAnswerResult[];
+}
+
+export interface IQuizAttemptAnswerResult {
+  questionId: number;
+  questionText: string;
+  selectedOptionId: number;
+  selectedOptionText: string;
+  correct: boolean;
+}
+
+
 export * from './translation';

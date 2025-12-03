@@ -1,0 +1,74 @@
+<section class="quiz-attempt-page">
+
+  <div class="header-area">
+    <img src="/assets/brand/museai-logo.png" alt="MuseAI Logo" class="logo" />
+    <h1 class="title">{{ quiz()?.title }}</h1>
+    <p class="subtitle">{{ quiz()?.description }}</p>
+  </div>
+
+  <div class="quiz-info-card">
+    <div class="quiz-info-image">
+      <ng-container *ngIf="quiz()?.imageUrl; else placeholderQuiz">
+        <img [src]="quiz()?.imageUrl" alt="Quiz Image" />
+      </ng-container>
+      <ng-template #placeholderQuiz>
+        <img src="/assets/icons/photo_icon.png" alt="Placeholder" />
+      </ng-template>
+    </div>
+
+    <div class="quiz-info-details">
+      <div class="info-row">
+        <div class="info-label">Nivel:</div>
+        <div class="info-box level-tag">{{ quiz()?.level }}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Total de preguntas:</div>
+        <div class="info-box">{{ quiz()?.questions?.length }}</div>
+      </div>
+    </div>
+  </div>
+
+ 
+  <div style="text-align:center; margin-bottom: 20px;">
+    <button class="btn return" (click)="return()">
+      Regresar
+    </button>
+  </div>
+
+  <div class="questions-panel">
+  <form (ngSubmit)="submitAttempt()" class="questions-list">
+    <div class="question-card" *ngFor="let question of quiz()?.questions; let i = index">
+      <h3 class="question-title">Pregunta {{ i + 1 }}</h3>
+
+      <div class="question-text">
+        <p>{{ question.text }}</p>
+        <ng-container *ngIf="question.imageUrl">
+  <div class="question-image">
+    <img [src]="question.imageUrl" alt="Imagen pregunta" />
+  </div>
+</ng-container>
+      </div>
+
+      <div class="options-wrapper">
+        <div class="option-item" *ngFor="let op of question.options; let j = index">
+          <label>
+            <input 
+              type="radio" 
+              name="question-{{ i }}" 
+              [value]="op.id" 
+              [(ngModel)]="selectedOptions[i]" 
+              required
+            />
+            {{ op.text }}
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="submit-wrapper"style="text-align:center; margin-bottom: 20px;">
+      <button type="submit" class="btn primary">Enviar Quiz</button>
+    </div>
+  </form>
+</div>
+</section>
