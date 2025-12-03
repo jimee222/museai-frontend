@@ -1,5 +1,5 @@
 // src/app/pages/landing/landing.ts
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { NavbarComponent } from '../../components/landing/navbar/navbar.component';
@@ -11,8 +11,6 @@ import { ServicesComponent } from '../../components/landing/services/services.co
 import { CasesComponent } from '../../components/landing/cases/cases.component';
 import { ContactComponent } from '../../components/landing/contact/contact.component';
 import { FooterComponent } from '../../components/landing/footer/footer.component';
-
-import {OnInit, OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-landing',
@@ -39,7 +37,7 @@ export class Landing implements OnInit, OnDestroy {
   ngOnInit() {
     document.title = "Code Horizon";
 
-    const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement;
+    const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
     if (favicon) {
       favicon.href = "assets/brand/codehorizon-favicon.png";
     }
@@ -48,9 +46,10 @@ export class Landing implements OnInit, OnDestroy {
   ngOnDestroy() {
     document.title = "MuseAI";
 
-    const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement;
+    const favicon = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
     if (favicon) {
-      favicon.href = "assets/favicon.ico";
+      favicon.href = "assets/brand/muse-favicon.png";
     }
   }
+
 }
