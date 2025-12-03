@@ -1,21 +1,23 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { BaseService } from './base-service';
-import { ISearch, IQuiz, IQuizAttemptResponse } from '../interfaces';
+import { ISearch, IQuiz } from '../interfaces';
 import { AlertService } from './alert.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class QuizService extends BaseService<IQuiz> {
 
   protected override source: string = 'quizzes';
 
-  private quizListSignal = signal<IQuiz[]>([]);
+  private quizListSignal = signal<any[]>([]);
   get quizzes$() {
     return this.quizListSignal;
   }
 
-  userAttempts = signal<IQuizAttemptResponse[]>([]);
+ 
+  userQuizProgress = signal<any[]>([]);
 
   public search: ISearch & { keyword?: string } = {
     page: 1,
@@ -25,93 +27,77 @@ export class QuizService extends BaseService<IQuiz> {
 
   public totalItems: number[] = [];
   private alertService: AlertService = inject(AlertService);
+  private authService: AuthService = inject(AuthService);
 
   
   getAll() {
-    const params: any = { page: this.search.page, size: this.search.size };
+  const params: any = { page: this.search.page, size: this.search.size };
 
-    this.findAllWithParams(params).subscribe({
-      next: (response: any) => {
-        this.search = { ...this.search, ...response.meta };
-        this.totalItems = Array.from({ length: this.search.totalPages ?? 0 }, (_, i) => i + 1);
-        this.quizListSignal.set(this.mapWithAttempts(response?.data ?? []));
-      },
-      error: (err) => console.error('Error loading quizzes', err)
-    });
-  }
+  this.findAllWithParams(params).subscribe({
+    next: (response: any) => {
 
- 
-  getAvailableQuizzes() {
-    const params: any = { page: this.search.page, size: this.search.size };
+      const user = this.authService.getUser();
+      const isAdmin = user?.role?.name === 'SUPER_ADMIN';
 
-    this.http.get<any>(`${this.source}/valid`, { params }).subscribe({
+      let quizzes = response?.data ?? [];
+
+      if (!isAdmin) {
+  quizzes = quizzes.filter((q: IQuiz) => Array.isArray(q.questions) && q.questions.length > 0);
+}
+
+
+      this.search = { ...this.search, ...response.meta };
+      this.totalItems = Array.from({ length: this.search.totalPages ?? 0 }, (_, i) => i + 1);
+
+      this.quizListSignal.set(quizzes);
+    },
+    error: (err) => console.error('Error loading quizzes', err)
+  });
+}
+
+
+
+  loadUserQuizProgress(userId: number) {
+    this.http.get<any>(`/quiz-attempts/user/${userId}/progress`).subscribe({
       next: (res) => {
-        const data: IQuiz[] = Array.isArray(res?.data) ? res.data : [];
-        const meta = res?.meta ?? {};
-
-       
-        this.search = { ...this.search, ...meta };
-        this.totalItems = Array.from({ length: this.search.totalPages ?? 0 }, (_, i) => i + 1);
-
-       
-        this.quizListSignal.set(this.mapWithAttempts(data, this.userAttempts()));
+        const progress = Array.isArray(res?.data) ? res.data : [];
+        this.userQuizProgress.set(progress);
+        this.quizListSignal.set(progress);
       },
       error: (err) => {
-        console.error('Error fetching available quizzes:', err);
+        console.error('Error loading quiz progress:', err);
         this.alertService.displayAlert(
           'error',
-          err?.error?.message || 'No fue posible cargar los quizzes disponibles'
+          err?.error?.message || 'No fue posible cargar tu progreso'
         );
       }
     });
   }
 
-  
-  loadUserAttempts(userId: number) {
-    this.http.get<any>(`/quiz-attempts/user/${userId}`).subscribe({
-      next: (res) => {
-        const attempts: IQuizAttemptResponse[] = Array.isArray(res?.data) ? res.data : [];
-        this.userAttempts.set(attempts);
+  userAttemptsList = signal<any[]>([]);
 
-        
-        this.quizListSignal.update(quizzes => this.mapWithAttempts(quizzes, attempts));
-      },
-      error: (err) => console.error('Error loading attempts:', err)
-    });
-  }
+loadAllAttempts(userId: number) {
 
- 
-  private mapWithAttempts(quizzes: IQuiz[], attempts?: IQuizAttemptResponse[]): IQuiz[] {
-    const userAttemptsArray: IQuizAttemptResponse[] = Array.isArray(attempts)
-      ? attempts
-      : Array.isArray(this.userAttempts())
-        ? this.userAttempts()
-        : [];
+  this.http.get<any>(`/quiz-attempts/user/${userId}/all`).subscribe({
+    next: (res) => {
+      
 
-    return quizzes.map(q => {
-      const quizAttempts = userAttemptsArray.filter(a => a.quizId === q.id);
+      const attempts = Array.isArray(res?.data) ? res.data : [];
+      
 
-      const maxScore = quizAttempts.length
-        ? Math.max(...quizAttempts.map(a => a.score))
-        : null;
+      
+      this.userAttemptsList.set(attempts);
 
-      const lastAttempt = quizAttempts.length
-        ? new Date(quizAttempts[quizAttempts.length - 1].timestamp)
-        : undefined;
+      
+    },
+    error: (err) => {
+     
+    }
+  });
+}
 
-      return {
-        ...q,
-        hasAttempt: quizAttempts.length > 0,
-        maxScore,
-        lastAttempt
-      };
-    });
-  }
 
- 
-  public updateLocalQuizzes(quizzes: IQuiz[]) {
-    this.quizListSignal.set(quizzes);
-  }
+
 
   getById(id: number) {
     return this.http.get<{ data: IQuiz }>(`${this.source}/${id}`)
@@ -131,10 +117,12 @@ export class QuizService extends BaseService<IQuiz> {
     return this.delCustomSource(`${quiz.id}`);
   }
 
+
   submitAttempt(payload: {
     quizId: number;
+    userId: number;
     answers: { questionId: number; selectedOptionId: number }[];
-  }): Observable<{ score: number }> {
-    return this.http.post<{ score: number }>(`${this.source}/attempt`, payload);
+  }): Observable<any> {
+    return this.http.post(`/quiz-attempts`, payload);
   }
 }
