@@ -21,13 +21,12 @@ export class QuizListUser implements OnInit {
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
 
- 
   searchTerm = signal<string>('');
 
- 
   filteredQuizzes = computed(() => {
     const term = this.searchTerm().toLowerCase();
     const quizzes = this.quizService.quizzes$(); 
+    
     return term
       ? quizzes.filter(q => q.title.toLowerCase().includes(term))
       : quizzes;
@@ -49,12 +48,11 @@ export class QuizListUser implements OnInit {
 
     this.user.set(currentUser);
 
-    
-    this.quizService.getAvailableQuizzes();
-
    
-    if (currentUser.id !== undefined && currentUser.id !== null) {
-      this.quizService.loadUserAttempts(currentUser.id);
+    this.quizService.getAll();
+
+    if (currentUser.id != null) {
+      this.quizService.loadAllAttempts(currentUser.id);
     }
 
     this.loading.set(false);
@@ -69,6 +67,7 @@ export class QuizListUser implements OnInit {
       );
       return;
     }
+
     this.router.navigateByUrl(`/app/quizzes/${quiz.id}/attempt`);
   }
 

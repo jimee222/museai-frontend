@@ -6,10 +6,14 @@
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: 60px 20px;
-  background: var(--background-color);
-  color: #3b2b14;
+  padding: 90px 16px 80px;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(200, 164, 73, 0.18), transparent 30%),
+    radial-gradient(circle at 88% 12%, rgba(232, 196, 118, 0.12), transparent 26%),
+    linear-gradient(135deg, #1e130a, #000000);
+  color: var(--muse-cream);
   gap: 24px;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* ===========================
@@ -24,11 +28,12 @@
   margin: 0;
   font-size: 3rem;
   font-weight: 800;
+  color: #ffffff;
 }
 
 .quiz-header .subtitle {
   margin: 4px 0 0 0;
-  color: #6d552a;
+  color: rgba(255, 249, 237, 0.86);
   font-size: 1.2rem;
   opacity: 0.85;
   max-width: 350px;
@@ -84,7 +89,7 @@
 }
 
 /* ===========================
-   QUIZ CARD
+   QUIZ CARD (estilo antiguo)
 =========================== */
 .quiz-card {
   position: relative;
@@ -198,8 +203,34 @@
   transform: none !important;
   opacity: 0.6;
 }
+.quiz-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at top right,
+    rgba(200, 164, 73, 0.16),
+    transparent 55%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
 
+.quiz-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(200, 164, 73, 0.8);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.95),
+    0 0 26px rgba(200, 164, 73, 0.6);
+}
 
+.quiz-card:hover::after {
+  opacity: 1;
+}
+
+/* COMPLETED OVERLAY */
 .quiz-card.completed::before {
   content: '';
   position: absolute;
@@ -214,23 +245,35 @@
   color: #d7b25a;
 }
 
-
+/* ===========================
+   RETURN BUTTON estilo menú
+=========================== */
 .btn.return {
-  background-color: var(--secondary-color);
-  color: white;
+  background:
+    radial-gradient(circle at top left, rgba(200, 164, 73, 0.16), transparent 60%),
+    linear-gradient(140deg, #1e130a, #2a1a10);
+  color: #fff; /* texto en blanco */
   padding: 14px 32px;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid rgba(249, 250, 251, 0.16); 
+  border-radius: 14px;
   font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s ease;
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.9),
+    0 0 24px rgba(200, 164, 73, 0.3);
+  transition: all 0.25s ease;
   margin: 12px;
-  align-self: center;
 }
 
 .btn.return:hover {
-  background-color: var(--main-color);
+  transform: translateY(-4px);
+  border-color: rgba(200, 164, 73, 0.8); 
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.95),
+    0 0 26px rgba(200, 164, 73, 0.6);
 }
+
 
 /* ===========================
    RESPONSIVE
