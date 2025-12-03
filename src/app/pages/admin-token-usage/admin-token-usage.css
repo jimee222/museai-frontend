@@ -1,9 +1,9 @@
 .token-usage {
-  max-width: 1100px;      
-  margin: 3.5rem auto 4rem;         
-  padding: 2rem 2.5rem;    
-  border-radius: 22px;     
-  background: rgba(23, 15, 7, 0.86); 
+  max-width: 1280px;
+  margin: 3.5rem auto 4rem;
+  padding: 2rem 2.5rem;
+  border-radius: 22px;
+  background: rgba(23, 15, 7, 0.86);
   border: 1px solid rgba(249, 250, 251, 0.14);
   box-shadow:
     0 18px 60px rgba(0, 0, 0, 0.70),
@@ -265,6 +265,12 @@ select:focus {
 .card h3 {
   margin: 0;
   font-size: 1.35rem;
+  overflow-wrap: anywhere;
+}
+
+.card.top-user h3 {
+  font-size: 1.05rem;
+  line-height: 1.35;
 }
 
 .card small {
