@@ -6,6 +6,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { QuizService } from '../../../../services/quiz.service';
 import { IUser, IRoleType, IQuiz } from '../../../../interfaces';
 import Swal from 'sweetalert2';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-quiz-list-admin',
@@ -53,39 +54,53 @@ export class QuizListAdmin implements OnInit {
     this.router.navigateByUrl('/app/quiz/create');
   }
 
-  
   get filteredQuizzes(): IQuiz[] {
     const term = this.searchTerm().toLowerCase();
     if (!term) return this.quizService.quizzes$();
     return this.quizService.quizzes$().filter(q => q.title.toLowerCase().includes(term));
   }
 
-goToQuiz(quizId: number) {
-  this.router.navigateByUrl(`/app/quiz/edit/${quizId}`);
-}
-async deleteQuiz(quiz: IQuiz) {
-  const result = await Swal.fire({
-    title: '¿Estás seguro?',
-    text: `Eliminarás el quiz "${quiz.title}"`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#d7b25a',
-    cancelButtonColor: '#6d552a',
-  });
-
-  if (result.isConfirmed) {
-    await this.quizService.delete(quiz).toPromise();
-    Swal.fire({
-      icon: 'success',
-      title: 'Quiz eliminado',
-      showConfirmButton: false,
-      timer: 1500
-    });
-    this.quizService.getAll();
+  goToQuiz(quizId: number) {
+    this.router.navigateByUrl(`/app/quiz/edit/${quizId}`);
   }
-}
 
+  async deleteQuiz(quiz: IQuiz) {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: `Eliminarás el quiz "${quiz.title}"`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d7b25a',
+      cancelButtonColor: '#6d552a',
+    });
 
+    if (!result.isConfirmed) return;
+
+    try {
+     
+      await firstValueFrom(this.quizService.delete(quiz));
+
+   
+      await Swal.fire({
+        icon: 'success',
+        title: 'Quiz eliminado',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
+      this.quizService.getAll();
+
+    } catch (error) {
+     
+      console.error('ERROR AL ELIMINAR QUIZ:', error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al eliminar',
+        text: 'Hubo un problema al eliminar el quiz.'
+      });
+    }
+  }
 }
