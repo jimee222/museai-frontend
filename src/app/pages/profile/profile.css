@@ -124,7 +124,7 @@
 }
 
 .tab-content {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(10px);
   transition: opacity 0.4s ease, transform 0.4s ease;
   display: none;
@@ -136,6 +136,9 @@
   display: block;
 }
 
+/* ---------------------------
+   RESPONSIVE
+--------------------------- */
 @media (max-width: 991px) {
   .profile-content-wrapper {
     grid-template-columns: 1fr;
@@ -155,6 +158,7 @@
   }
 }
 
+
 .profile-page,
 .profile-header,
 .profile-header * {
@@ -167,5 +171,61 @@
 }
 
 
+.profile-content-wrapper.fullWidth {
+  grid-template-columns: 1fr !important;
+  justify-content: center;
+}
 
+.profile-content-wrapper.fullWidth .side-art {
+  display: none !important;
+}
+
+
+.quiz-user-page-wrapper.center {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+}
+
+
+.tab-content {
+  width: 100%;
+  display: none;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+
+.tab-content.active app-my-quizzes {
+  width: 100%;
+  max-width: 1200px;
+}
+
+
+.profile-content-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+
+.profile-content-wrapper .profile-content:only-child {
+  margin: 0 auto;
+  max-width: 1200px;
+  width: 100%;
+}
+
+
+.profile-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
 
