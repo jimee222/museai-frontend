@@ -66,6 +66,10 @@
   margin-top: 10px;
   flex-wrap: wrap;
 }
+.museai-alert {
+  background: #2c1b12 !important;
+  backdrop-filter: blur(12px) !important;
+}
 
 /* TARJETAS TIPO LOGIN-CARD */
 .image-card,

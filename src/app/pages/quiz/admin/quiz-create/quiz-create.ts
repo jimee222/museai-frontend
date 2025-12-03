@@ -138,6 +138,11 @@ submit() {
         text: '¡El quiz fue creado exitosamente!',
         confirmButtonText: 'Continuar',
         confirmButtonColor: '#d7b25a',
+        background: '#2c1b12',
+        color: '#fff',
+        customClass: {
+          popup: 'museai-alert',
+        },
         didOpen: () => {
           const confirmBtn = document.querySelector<HTMLButtonElement>('.swal2-confirm');
           if (confirmBtn) {
@@ -159,6 +164,8 @@ submit() {
           cancelButtonText: 'Luego',
           confirmButtonColor: '#d7b25a',
           cancelButtonColor: '#403E3D',
+          background: '#2c1b12',
+          color: '#fff',
         }).then(result => {
           if (result.isConfirmed) {
             this.router.navigateByUrl(`/app/quiz/questions/${quizId}`);

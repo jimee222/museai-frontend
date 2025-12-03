@@ -49,6 +49,13 @@
         >
           Consumo AI
         </a>
+        <a
+          *ngIf="isAdmin()"
+          routerLink="/app/quizzes-admin"
+          routerLinkActive="active"
+        >
+          Creación Quizzes
+        </a>
       </ng-container>
 
       <ng-container *ngIf="!isAuthenticated">
