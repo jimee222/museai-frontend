@@ -80,6 +80,8 @@ export interface IQuiz {
   maxScore?: number | null;
   hasAttempt?: boolean;
   lastAttempt?: Date;
+  score?: number;
+  
 }
 
 
