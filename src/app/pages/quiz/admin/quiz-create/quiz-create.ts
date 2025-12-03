@@ -109,11 +109,28 @@ submit() {
 
   const newQuiz = this.form.value;
 
+ 
+  const title = newQuiz.title.trim().toLowerCase();
+  const existing = this.quizService.quizzes$().some(
+    q => q.title.trim().toLowerCase() === title
+  );
+
+  if (existing) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Título duplicado',
+      text: 'Ya existe un quiz con este nombre. Use un título diferente.',
+      confirmButtonColor: '#d7b25a'
+    });
+    this.loading.set(false);
+    return;
+  }
+
   this.quizService.createQuiz(newQuiz).subscribe({
     next: (response: any) => {
       this.loading.set(false);
 
-     const quizId = response?.data?.id;
+      const quizId = response?.data?.id;
 
       Swal.fire({
         icon: 'success',
@@ -133,27 +150,22 @@ submit() {
           }
         }
       }).then(() => {
-
-Swal.fire({
-  title: 'Agregar preguntas',
-  text: 'Ahora debe agregar preguntas para este quiz.',
-  icon: 'info',
-  showCancelButton: true,
-  confirmButtonText: 'Ir ahora',
-  cancelButtonText: 'Luego',
-  confirmButtonColor: '#d7b25a',
-  cancelButtonColor: '#403E3D',
-}).then(result => {
-  if (result.isConfirmed) {
-    this.router.navigateByUrl(`/app/quiz/questions/${quizId}`);
-  } else {
-    this.router.navigateByUrl('/app/quizzes-admin');
-  }
-});
-
-
-
-
+        Swal.fire({
+          title: 'Agregar preguntas',
+          text: 'Ahora debe agregar preguntas para este quiz.',
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'Ir ahora',
+          cancelButtonText: 'Luego',
+          confirmButtonColor: '#d7b25a',
+          cancelButtonColor: '#403E3D',
+        }).then(result => {
+          if (result.isConfirmed) {
+            this.router.navigateByUrl(`/app/quiz/questions/${quizId}`);
+          } else {
+            this.router.navigateByUrl('/app/quizzes-admin');
+          }
+        });
       });
     },
     error: (err) => {
@@ -163,6 +175,7 @@ Swal.fire({
     }
   });
 }
+
 
   cancel() {
     this.router.navigateByUrl('/app/quizzes-admin');
