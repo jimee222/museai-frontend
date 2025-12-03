@@ -1,0 +1,131 @@
+<section class="quiz-user-page">
+
+  <header class="quiz-header text-center">
+    <h2 class="title">Mis Intentos</h2>
+    <p class="subtitle">Revisa tus calificaciones y vuelve a intentarlo</p>
+
+    <div class="search-container">
+      <input
+        type="text"
+        placeholder="Buscar intento..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        class="search-input"
+      />
+    </div>
+  </header>
+
+  <main class="quiz-cards-container">
+
+    <p class="placeholder-text" *ngIf="filteredAttempts().length === 0">
+      Aún no has completado ningún quiz.
+    </p>
+
+    <div class="quiz-card completed" *ngFor="let attempt of filteredAttempts()">
+      
+      <div class="card-image"
+        [style.backgroundImage]="attempt.quizImage ? 'url(' + attempt.quizImage + ')' : 'none'">
+      </div>
+
+      <div class="card-content">
+        <h3 class="quiz-title">{{ attempt.quizTitle }}</h3>
+        <p class="quiz-meta">📅 {{ formatDate(attempt.timestamp) }}</p>
+
+        <p class="quiz-score-badge"
+          [ngClass]="{
+            'score-high': (attempt.score / attempt.totalQuestions * 100) >= 80,
+            'score-medium': (attempt.score / attempt.totalQuestions * 100) >= 50 && (attempt.score / attempt.totalQuestions * 100) < 80,
+            'score-low': (attempt.score / attempt.totalQuestions * 100) < 50
+          }">
+          {{ (attempt.score / attempt.totalQuestions * 100) | number:'1.0-0'}}%
+        </p>
+
+        <button class="attempt-btn secondary-btn" (click)="onReviewAttempt(attempt)">
+          Ver Detalles
+        </button>
+
+        <button class="attempt-btn" (click)="onStartQuiz(attempt.quizId)">
+          Reintentar Quiz
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+ <div 
+  class="modal-wrapper" 
+  *ngIf="selectedAttempt()" 
+  [style.transform]="'translate(-50%, calc(' + scrollY + 'px + 40px))'"
+>
+
+
+  <div class="modal-overlay" (click)="closeModal()"></div>
+
+  <div class="modal-popup">
+    
+    <button class="close-btn" (click)="closeModal()">✕</button>
+
+    <h2 class="modal-title">Detalles del Intento</h2>
+
+  <div class="modal-body">
+
+  
+  <p><strong>Quiz:</strong> {{ selectedAttempt()?.quizTitle }}</p>
+
+  
+  <p *ngIf="selectedAttempt()?.level">
+    <strong>Nivel:</strong>
+    <span>
+      {{ selectedAttempt()?.level === 'BASIC' ? '🟢 Básico' :
+         selectedAttempt()?.level === 'INTERMEDIATE' ? '🟡 Intermedio' :
+         selectedAttempt()?.level === 'ADVANCED' ? '🔴 Avanzado' :
+         selectedAttempt()?.level }}
+    </span>
+  </p>
+
+  
+  <p><strong>Fecha:</strong> {{ formatDate(selectedAttempt()?.timestamp) }}</p>
+
+  
+  <p *ngIf="selectedAttempt()?.attemptNumber">
+    <strong>Intento #:</strong> {{ selectedAttempt()?.attemptNumber }}
+  </p>
+
+  
+  <p><strong>Puntaje:</strong>
+    {{ (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) | number:'1.0-0' }}%
+  </p>
+
+ 
+  <p><strong>Correctas:</strong>
+    {{ selectedAttempt()?.score }} / {{ selectedAttempt()?.totalQuestions }}
+  </p>
+  
+
+  
+  <p class="score-feedback"
+     [ngClass]="{
+       'score-high': (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) >= 80,
+       'score-medium': (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) >= 50 && (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) < 80,
+       'score-low': (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) < 50
+     }"
+     style="margin-top:10px; font-weight:bold;">
+    {{
+      (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) >= 80
+        ? "⭐ Excelente resultado, puedes avanzar al siguiente nivel."
+      : (selectedAttempt()?.score / selectedAttempt()?.totalQuestions * 100) >= 50
+        ? "👍 Buen trabajo, pero podrías mejorar."
+        : " Te recomendamos volver a intentarlo."
+    }}
+  </p>
+
+</div>
+
+
+    <button class="modal-action" (click)="closeModal()">Cerrar</button>
+
+  </div>
+</div>
+
+
+</section>
