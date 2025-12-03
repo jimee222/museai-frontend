@@ -41,6 +41,7 @@
   -webkit-line-clamp: 10;
   line-clamp: inherit;
   -webkit-box-orient: vertical;
+  color: #ffffff;
 }
 
 
@@ -261,6 +262,15 @@
   color: #ffffff;
   margin-bottom: 50px;
 }
+.question-text {
+   margin: 0;
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #DDD2AB;
+  margin-bottom: 50px;
+}
+
+
 
 /* ============================
    ICON BUTTONS (Save/Edit/Delete)
@@ -301,7 +311,7 @@
 }
 
 
-.option-input {
+.option-item {
   width: 70%;
   padding: 12px 14px;
   border-radius: 10px;
@@ -311,7 +321,7 @@
   transition: .25s ease;
 }
 
-.option-input:focus {
+.option-item:focus {
   background:#fff3c4;
   border-color:#d7b25a;
 }
