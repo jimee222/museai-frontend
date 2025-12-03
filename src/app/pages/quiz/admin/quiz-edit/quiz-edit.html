@@ -24,10 +24,21 @@
         </ng-template>
       </div>
 
-      <input type="file" (change)="onFileSelected($event)" />
+      
+      <label for="fileInput" class="file-input-btn">
+        Seleccionar nueva imagen
+      </label>
+
+      
+      <input
+        id="fileInput"
+        type="file"
+        accept="image/*"
+        (change)="onFileSelected($event)"
+      />
     </div>
 
-    
+   
     <form *ngIf="form" [formGroup]="form" class="quiz-form" (ngSubmit)="submit()">
 
       <div class="form-group">
@@ -62,20 +73,19 @@
         </button>
         <button type="button" class="btn secondary" (click)="cancel()">Cancelar</button>
       </div>
+
       <button class="btn edit-questions" (click)="goToQuestions()">
-      Editar preguntas
-    </button>
+        Editar preguntas
+      </button>
 
     </form>
 
   </div>
 
-  
   <div *ngIf="quiz()" class="edit-questions-container">
     <button class="btn return" (click)="return()">
       Regresar
     </button>
-    
   </div>
 
 </section>

@@ -8,7 +8,7 @@
 
   <div class="quiz-container">
 
-   
+    
     <div class="image-card">
       <h3>Imagen del Quiz</h3>
 
@@ -22,10 +22,21 @@
         </ng-template>
       </div>
 
-      <input type="file" (change)="onFileSelected($event)" />
+      
+      <label for="fileInput" class="file-input-btn">
+        Seleccionar imagen
+      </label>
+
+    
+      <input
+        id="fileInput"
+        type="file"
+        accept="image/*"
+        (change)="onFileSelected($event)"
+      />
     </div>
 
- 
+    
     <form [formGroup]="form" class="quiz-form" (ngSubmit)="submit()">
 
       <div class="form-group">

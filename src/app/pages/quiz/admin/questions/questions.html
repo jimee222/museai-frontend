@@ -75,19 +75,32 @@
           </div>
 
        
-          <div class="question-image-block">
-            <div class="question-image">
-              <ng-container *ngIf="question.imagePreview; else placeholderQImg">
-                <img [src]="question.imagePreview" alt="Imagen pregunta" />
-              </ng-container>
-              <ng-template #placeholderQImg>
-                <img src="/assets/icons/photo_icon.png"/>
-              </ng-template>
-            </div>
+      <div class="question-image-block">
+  <div class="question-image">
+    <ng-container *ngIf="question.imagePreview; else placeholderQImg">
+      <img [src]="question.imagePreview" alt="Imagen pregunta" />
+    </ng-container>
+    <ng-template #placeholderQImg>
+      <img src="/assets/icons/photo_icon.png" />
+    </ng-template>
+  </div>
 
-            <input type="file" class="file-input" 
-                   (change)="onQuestionImageSelected($event, i)" />
-          </div>
+
+  <label for="questionImg{{ i }}" class="file-input-btn">
+    Seleccionar imagen
+  </label>
+
+ 
+  <input
+    id="questionImg{{ i }}"
+    type="file"
+    accept="image/*"
+    class="file-input-hidden"
+    (change)="onQuestionImageSelected($event, i)"
+  />
+</div>
+
+
 
           
           <textarea

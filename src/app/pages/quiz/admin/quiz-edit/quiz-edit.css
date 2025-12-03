@@ -204,6 +204,38 @@ textarea::placeholder {
     filter 0.15s ease,
     background-color 0.15s ease;
 }
+#fileInput {
+  display: none;
+}
+
+
+.file-input-btn {
+  background: var(--third-color);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  display: inline-block;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(201,163,59,0.35);
+  transition: all 0.25s ease;
+}
+
+
+.file-input-btn:hover {
+  background: #d7b25a;
+  transform: translateY(-2px);
+}
+
+
+.file-input-btn:active {
+  transform: scale(0.98);
+}
+
+
+
 
 .primary {
   background: linear-gradient(
