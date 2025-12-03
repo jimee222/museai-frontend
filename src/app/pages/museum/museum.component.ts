@@ -1584,7 +1584,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     tctx.font = 'bold 96px system-ui, sans-serif'; // más pequeño para que quepa
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
-    tctx.fillText('Crea tu propio Lienzo!', tagCanvas.width/2, tagCanvas.height/2);
+    tctx.fillText('¡Crea tu propio Lienzo!', tagCanvas.width/2, tagCanvas.height/2);
 
     const tagTex = new THREE.CanvasTexture(tagCanvas);
     const tag = new THREE.Mesh(
@@ -1672,7 +1672,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     tctx.font = 'bold 80px system-ui, sans-serif';
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
-    tctx.fillText('Crea tu propia Escultura!', tagCanvas.width/2, tagCanvas.height/2);
+    tctx.fillText('¡Crea tu propia Escultura!', tagCanvas.width/2, tagCanvas.height/2);
 
     const tagTex = new THREE.CanvasTexture(tagCanvas);
     const tag = new THREE.Mesh(
@@ -1852,50 +1852,59 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   }
 
 
-   // ===== Cartel "Mi galería" con el estilo de los botones del menú =====
-  {
-    // 1) Dibujamos un canvas 2D con el mismo look
-    const signCanvas = document.createElement('canvas');
-    signCanvas.width = 512;
-    signCanvas.height = 180;
-    const ctx = signCanvas.getContext('2d')!;
+// ===== Cartel "Mi galería" con el estilo de los botones del menú =====
+{
+  // 1) Canvas horizontal y de alta resolución
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 1024;
+  signCanvas.height = 256;             // relación 4:1
+  const ctx = signCanvas.getContext('2d')!;
 
-    // Fondo oscuro
-    ctx.fillStyle = '#232323';
-    ctx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  ctx.clearRect(0, 0, signCanvas.width, signCanvas.height);
 
-    // Borde claro
-    ctx.strokeStyle = '#f5e1ce';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(6, 6, signCanvas.width - 12, signCanvas.height - 12);
+  // Fondo oscuro
+  ctx.fillStyle = '#232323';
+  ctx.fillRect(0, 0, signCanvas.width, signCanvas.height);
 
-    // Texto
-    ctx.fillStyle = '#f5e1ce';
-    ctx.font = 'bold 64px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Mi galería', signCanvas.width / 2, signCanvas.height / 2);
+  // Borde claro
+  ctx.strokeStyle = '#f5e1ce';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(12, 12, signCanvas.width - 24, signCanvas.height - 24);
 
-    const signTex = new THREE.CanvasTexture(signCanvas);
+  // Texto
+  ctx.fillStyle = '#f5e1ce';
+  ctx.font = 'bold 96px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Mi galería', signCanvas.width / 2, signCanvas.height / 2);
 
-    // 2) Plane 3D con esa textura (un poco más ancho que la puerta)
-    const signGeo = new THREE.PlaneGeometry(doorW + 0.8, 0.5);
-    const signMat = new THREE.MeshStandardMaterial({
-      map: signTex,
-      metalness: 0,
-      roughness: 1
-    });
-    const signMesh = new THREE.Mesh(signGeo, signMat);
+  const signTex = new THREE.CanvasTexture(signCanvas);
+  signTex.needsUpdate = true;
+  signTex.minFilter = THREE.LinearFilter;
+  signTex.magFilter = THREE.LinearFilter;
 
-    const signY = doorH + 0.6;
-    const signX = east2X + thick / 2 + 0.02;   // lado museo principal
+  // 2) El plano respeta la misma proporción que el canvas (4:1)
+  const ratio = signCanvas.width / signCanvas.height;  // 4
+  const worldWidth = doorW + 0.01;                      // un poco más ancho que la puerta
+  const worldHeight = worldWidth / ratio;              // para mantener la proporción
 
-    signMesh.position.set(signX, signY, doorZ);
-    signMesh.rotation.y = Math.PI / 2;         // mirando hacia la sala principal
+  const signGeo = new THREE.PlaneGeometry(worldWidth, worldHeight);
+  const signMat = new THREE.MeshBasicMaterial({
+    map: signTex,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const signMesh = new THREE.Mesh(signGeo, signMat);
 
-    this.scene.add(signMesh);
-  }
+  // 3) Posición justo sobre la puerta, ligeramente adelantado
+  const signY = doorH + 0.4;                           // altura sobre la puerta
+  const signX = wallX + wallThick / 2 + 0.08;          // un poco hacia dentro de la sala
 
+  signMesh.position.set(signX, signY, doorZ);
+  signMesh.rotation.y = Math.PI / 2;                   // mirando hacia dentro del museo
+
+  this.scene.add(signMesh);
+}
 }
 
 
