@@ -11,7 +11,7 @@ declare const google: any;
   providedIn: 'root'
 })
 export class GoogleAuthService {
-  private clientId = '951939636581-dsvpc8hdbhi5678d9dpojjbvr0jk5go6.apps.googleusercontent.com';
+  private clientId = environment.googleClientId;
   private initialized = false;
 
   constructor(

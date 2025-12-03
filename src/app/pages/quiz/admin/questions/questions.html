@@ -1,0 +1,153 @@
+<section class="questions-page">
+
+  <div class="header-area">
+    <img src="/assets/brand/museai-logo.png" alt="MuseAI Logo" class="logo" />
+    <h1 class="title">Preguntas del Quiz</h1>
+    <p class="subtitle">Agregue o edite preguntas para este quiz.</p>
+  </div>
+
+  <button class="btn return" (click)="back()">Regresar</button>
+
+  <div class="questions-stack">
+
+    
+    <div class="image-card quiz-info-card">
+      <h3 class="question-title">Información del Quiz</h3>
+
+      <div class="quiz-info-columns">
+
+     
+        <div class="quiz-info-image">
+          <ng-container *ngIf="quiz()?.imageUrl; else placeholderQuiz">
+            <img [src]="quiz()?.imageUrl" alt="Quiz Image" />
+          </ng-container>
+          <ng-template #placeholderQuiz>
+            <img src="/assets/icons/photo_icon.png" alt="Placeholder" class="placeholder-img" />
+          </ng-template>
+        </div>
+
+       
+        <div class="quiz-info-details">
+          <div class="info-row">
+            <div class="info-label">Título:</div>
+            <div class="info-box">{{ quiz()?.title }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">Descripción:</div>
+            <div class="info-box">{{ quiz()?.description }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">Nivel:</div>
+            <div class="info-box level-tag">{{ quiz()?.level }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    
+    <div class="questions-panel">
+
+      <h3 class="question-title">Preguntas</h3>
+
+      <div class="add-question-wrapper">
+        <button class="btn primary" (click)="addQuestion()">+ Agregar Pregunta</button>
+      </div>
+
+
+      <div class="questions-list">
+
+        <div class="question-card" *ngFor="let question of questions(); let i = index">
+
+          
+          <div class="question-card-header">
+            <h3 class="question-title">Pregunta {{ i + 1 }}</h3>
+
+            <div class="question-actions">
+              <img src="/assets/icons/save.png" class="action-icon save-icon"
+                   (click)="saveQuestion(question, i)" alt="Guardar" />
+              <img src="/assets/icons/delete.png" class="action-icon delete-icon"
+                   (click)="deleteQuestion(i)" alt="Eliminar"/>
+            </div>
+          </div>
+
+       
+      <div class="question-image-block">
+  <div class="question-image">
+    <ng-container *ngIf="question.imagePreview; else placeholderQImg">
+      <img [src]="question.imagePreview" alt="Imagen pregunta" />
+    </ng-container>
+    <ng-template #placeholderQImg>
+      <img src="/assets/icons/photo_icon.png" />
+    </ng-template>
+  </div>
+
+
+  <label for="questionImg{{ i }}" class="file-input-btn">
+    Seleccionar imagen
+  </label>
+
+ 
+  <input
+    id="questionImg{{ i }}"
+    type="file"
+    accept="image/*"
+    class="file-input-hidden"
+    (change)="onQuestionImageSelected($event, i)"
+  />
+</div>
+
+
+
+          
+          <textarea
+          class="question-textarea"
+          [(ngModel)]="question.text"
+          placeholder="Escribe la pregunta..."
+          (input)="autoGrow($event)"
+        >
+          </textarea>
+
+         
+          <div class="options-wrapper">
+
+            <div class="option-item" *ngFor="let op of question.options; let j = index">
+
+              <input type="text" class="input option-input" 
+                     [(ngModel)]="op.text"
+                     placeholder="Opción {{ j + 1 }}" />
+
+              <span class="material-icons correct-icon"
+                [class.active]="op.correct"
+                (click)="setCorrectOption(question, j)">
+                check_circle
+              </span>
+
+              <span
+                class="material-icons delete-icon"
+                [class.disabled]="question.options.length <= 2"
+                (click)="removeOption(i, j)">
+                delete
+              </span>
+            </div>
+
+            <button class="btn primary" (click)="addOption(i)">+ Agregar opción</button>
+          </div>
+
+        </div> 
+
+      </div>
+
+
+      <div class="save-wrapper">
+        <button class="btn success" (click)="saveAll()">Guardar Cambios</button>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

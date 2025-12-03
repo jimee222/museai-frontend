@@ -296,7 +296,8 @@ private enablePlayerMovement() {
   showTourDialog = true;
   movementEnabled = true;
   private readonly tourLerpSpeed = 0.02;
-
+isLogged = false;
+isSuperAdmin = false;
 
   constructor(
     private cmaService: CmaService,
@@ -309,12 +310,43 @@ private enablePlayerMovement() {
 
   ) {
     effect(() => {
+
+  const user = this.authService.getUser();
+    this.isLogged = !!user;
+    this.isSuperAdmin = user?.role?.name === 'ROLE_SUPER_ADMIN';
+
       const lang = this.languagePreference.language();
       if (this.isPopupVisible && this.currentArtwork?.description && lang) {
         this.translateCurrentArtwork();
       }
     });
   }
+
+
+_openQuizMenu_() {
+
+  const user = this.authService.getUser();
+
+  if (!user) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  const roleName = (user.role?.name || "").toLowerCase();
+  
+
+  if (roleName.includes("super") || roleName.includes("admin")) {
+
+    this.router.navigate(['/app/quizzes-admin']);
+  } else {
+    
+    this.router.navigate(['/app/quizzes']);
+  }
+}
+
+
+
+
   //  Geometría Sala 2 ( colgar los canvas del usuario)
   private room2Width = 0;
   private room2Depth = 0;
@@ -508,8 +540,17 @@ private tryWallInteract() {
   const hit = hits[0];
   if (hit.distance > 4.0) return;
 
-  const route: string | undefined = hit.object.userData['route'];
-  if (!route) return;
+const route = hit.object.userData['route'];
+const action = hit.object.userData['action'];
+
+if (action && typeof (this as any)[action] === 'function') {
+  (this as any)[action]();
+  return;
+}
+
+
+if (!route) return;
+
 
   if (route === 'start-tour') {
     this.showTourDialog = true;
@@ -741,8 +782,9 @@ private addColliderFromObject(obj: THREE.Object3D, inflate: number | THREE.Vecto
 
 
 private createModernWallMenu(
-  buttons: { label: string; icon: string; route: string }[]
-): THREE.Group {
+  buttons: { label: string; icon: string; route?: string; action?: string }[]
+)
+: THREE.Group {
 
   const TITLE_LINES = [
     "Bienvenido al museo 3D",
@@ -862,11 +904,13 @@ private createModernWallMenu(
   //  BOTONES CON FONDO GLASS REDONDEADO
   const firstButtonY = (panelHeight / 2) - (titleBGHeight + 0.50) + contentOffsetY;
 
-  buttons.forEach((btn, i) => {
-    const b = this.makePrettyButton(btn.label, btn.icon, btn.route);
-    b.position.set(0, firstButtonY - i * buttonGap, 0.06);
-    group.add(b);
-  });
+buttons.forEach((btn, i) => {
+  const routeOrAction = btn.route ?? btn.action ?? '';
+  const b = this.makePrettyButton(btn.label, btn.icon, routeOrAction);
+  b.position.set(0, firstButtonY - i * buttonGap, 0.06);
+  group.add(b);
+});
+
 
   return group;
 }
@@ -875,7 +919,7 @@ private createModernWallMenu(
 private makePrettyButton(
   label: string,
   icon: string,
-  route: string
+  routeOrAction: string
 ): THREE.Group {
 
   const group = new THREE.Group();
@@ -975,13 +1019,18 @@ private makePrettyButton(
   hoverPlane.position.set(0, 0, 0.02);
   group.add(hoverPlane);
 
-  //  Hotspot invisible
   const hotspot = new THREE.Mesh(
     new THREE.PlaneGeometry(w * 1.06, h * 1.12),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.01 })
   );
   hotspot.position.set(0, 0, 0.03);
-  hotspot.userData['route'] = route;
+  hotspot.userData['route'] = routeOrAction;
+
+
+if (routeOrAction.startsWith("_")) {
+  hotspot.userData['action'] = routeOrAction;
+}
+
   hotspot.userData['hoverMat'] = hoverMat;
 
   this.interactables.push(hotspot);
@@ -1470,14 +1519,14 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     const menu = new THREE.Group();
 
     //  MENÚ MODERNO EN LA PARED DEL FONDO
-    const wallMenu = this.createModernWallMenu([
-      { label: 'Traducir Obras', icon: '🌐', route: '_openLanguageSelector_'},
-      { label: 'Iniciar Tour',icon: '▶️', route: '_openTourDialog_' },
-      { label: 'Realizar Quiz',  icon: '🖼️', route: '/' },
-      { label: 'Perfil',      icon: '👤', route: '/app/profile' },
-      { label: 'Cerrar sesión', icon: '🚪', route: '_logout_' }
+   const wallMenu = this.createModernWallMenu([
+  { label: 'Traducir Obras', icon: '🌐', route: '_openLanguageSelector_' },
+  { label: 'Iniciar Tour', icon: '▶️', route: '_openTourDialog_' },
+  { label: 'Realizar Quiz', icon: '🖼️', action: '_openQuizMenu_' },
+  { label: 'Perfil', icon: '👤', route: '/app/profile' },
+  { label: 'Cerrar sesión', icon: '🚪', route: '_logout_' }
+]);
 
-    ]);
 
     // centrado en la pared frontal
     wallMenu.position.set(0, 2.5, 9.4);
@@ -1535,7 +1584,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     tctx.font = 'bold 96px system-ui, sans-serif'; // más pequeño para que quepa
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
-    tctx.fillText('Crea tu propio Lienzo!', tagCanvas.width/2, tagCanvas.height/2);
+    tctx.fillText('¡Crea tu propio Lienzo!', tagCanvas.width/2, tagCanvas.height/2);
 
     const tagTex = new THREE.CanvasTexture(tagCanvas);
     const tag = new THREE.Mesh(
@@ -1623,7 +1672,7 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
     tctx.font = 'bold 80px system-ui, sans-serif';
     tctx.textAlign = 'center';
     tctx.textBaseline = 'middle';
-    tctx.fillText('Crea tu propia Escultura!', tagCanvas.width/2, tagCanvas.height/2);
+    tctx.fillText('¡Crea tu propia Escultura!', tagCanvas.width/2, tagCanvas.height/2);
 
     const tagTex = new THREE.CanvasTexture(tagCanvas);
     const tag = new THREE.Mesh(
@@ -1803,50 +1852,59 @@ private pushOutFromAABBXZ(pos: THREE.Vector3, minX: number, maxX: number, minZ: 
   }
 
 
-   // ===== Cartel "Mi galería" con el estilo de los botones del menú =====
-  {
-    // 1) Dibujamos un canvas 2D con el mismo look
-    const signCanvas = document.createElement('canvas');
-    signCanvas.width = 512;
-    signCanvas.height = 180;
-    const ctx = signCanvas.getContext('2d')!;
+// ===== Cartel "Mi galería" con el estilo de los botones del menú =====
+{
+  // 1) Canvas horizontal y de alta resolución
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 1024;
+  signCanvas.height = 256;             // relación 4:1
+  const ctx = signCanvas.getContext('2d')!;
 
-    // Fondo oscuro
-    ctx.fillStyle = '#232323';
-    ctx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  ctx.clearRect(0, 0, signCanvas.width, signCanvas.height);
 
-    // Borde claro
-    ctx.strokeStyle = '#f5e1ce';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(6, 6, signCanvas.width - 12, signCanvas.height - 12);
+  // Fondo oscuro
+  ctx.fillStyle = '#232323';
+  ctx.fillRect(0, 0, signCanvas.width, signCanvas.height);
 
-    // Texto
-    ctx.fillStyle = '#f5e1ce';
-    ctx.font = 'bold 64px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Mi galería', signCanvas.width / 2, signCanvas.height / 2);
+  // Borde claro
+  ctx.strokeStyle = '#f5e1ce';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(12, 12, signCanvas.width - 24, signCanvas.height - 24);
 
-    const signTex = new THREE.CanvasTexture(signCanvas);
+  // Texto
+  ctx.fillStyle = '#f5e1ce';
+  ctx.font = 'bold 96px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Mi galería', signCanvas.width / 2, signCanvas.height / 2);
 
-    // 2) Plane 3D con esa textura (un poco más ancho que la puerta)
-    const signGeo = new THREE.PlaneGeometry(doorW + 0.8, 0.5);
-    const signMat = new THREE.MeshStandardMaterial({
-      map: signTex,
-      metalness: 0,
-      roughness: 1
-    });
-    const signMesh = new THREE.Mesh(signGeo, signMat);
+  const signTex = new THREE.CanvasTexture(signCanvas);
+  signTex.needsUpdate = true;
+  signTex.minFilter = THREE.LinearFilter;
+  signTex.magFilter = THREE.LinearFilter;
 
-    const signY = doorH + 0.6;
-    const signX = east2X + thick / 2 + 0.02;   // lado museo principal
+  // 2) El plano respeta la misma proporción que el canvas (4:1)
+  const ratio = signCanvas.width / signCanvas.height;  // 4
+  const worldWidth = doorW + 0.01;                      // un poco más ancho que la puerta
+  const worldHeight = worldWidth / ratio;              // para mantener la proporción
 
-    signMesh.position.set(signX, signY, doorZ);
-    signMesh.rotation.y = Math.PI / 2;         // mirando hacia la sala principal
+  const signGeo = new THREE.PlaneGeometry(worldWidth, worldHeight);
+  const signMat = new THREE.MeshBasicMaterial({
+    map: signTex,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const signMesh = new THREE.Mesh(signGeo, signMat);
 
-    this.scene.add(signMesh);
-  }
+  // 3) Posición justo sobre la puerta, ligeramente adelantado
+  const signY = doorH + 0.4;                           // altura sobre la puerta
+  const signX = wallX + wallThick / 2 + 0.08;          // un poco hacia dentro de la sala
 
+  signMesh.position.set(signX, signY, doorZ);
+  signMesh.rotation.y = Math.PI / 2;                   // mirando hacia dentro del museo
+
+  this.scene.add(signMesh);
+}
 }
 
 

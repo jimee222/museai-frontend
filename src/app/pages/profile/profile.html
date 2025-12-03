@@ -1,6 +1,5 @@
 <section class="profile-page">
 
-  
   <header class="profile-header text-center">
     <h2 class="profile-title">Mi Perfil</h2>
     <p class="profile-subtitle">Visualiza tu información personal, quizzes y recorridos de MuseAI</p>
@@ -14,6 +13,7 @@
     >
       Información Personal
     </span>
+
     <span 
       class="tab" 
       [class.active]="activeTab() === 'quizzes'" 
@@ -21,19 +21,10 @@
     >
       Quizzes
     </span>
-    <span 
-      class="tab" 
-      [class.active]="activeTab() === 'recorridos'" 
-      (click)="activeTab.set('recorridos')"
-    >
-      Recorridos
-    </span>
   </nav>
 
-  
-  <main class="profile-content-wrapper">
+  <div class="profile-content-wrapper">
 
-    
     <aside class="side-art left-art" *ngIf="activeTab() === 'info'">
       <lottie-player
         src="/assets/lottie/sculpting.json"
@@ -44,28 +35,32 @@
       ></lottie-player>
     </aside>
 
-    
-    <main class="profile-content text-center">
+    <div class="profile-content text-center">
+      
+      
       <ng-container *ngIf="!loading(); else loadingTpl">
+
+        
         <ng-container *ngIf="user(); else errorTpl">
 
-          <div class="tab-content" [class.active]="activeTab() === 'info'">
+          <div class="tab-content" [ngClass]="{ active: activeTab() === 'info' }">
             <div class="card-container">
               <profile-card [user]="user()"></profile-card>
             </div>
           </div>
 
-          <div class="tab-content" [class.active]="activeTab() === 'quizzes'">
-            <p> Próximamente tus quizzes aparecerán aquí.</p>
-          </div>
+          
+       <div class="tab-content" [ngClass]="{ active: activeTab() === 'quizzes' }">
+  <div class="quiz-user-page-wrapper center">
+    <app-my-quizzes></app-my-quizzes>
+  </div>
+</div>
 
-          <div class="tab-content" [class.active]="activeTab() === 'recorridos'">
-            <p> Aquí podrás ver tus recorridos.</p>
-          </div>
 
         </ng-container>
       </ng-container>
 
+     
       <ng-template #loadingTpl>
         <p class="text-light">Cargando perfil...</p>
       </ng-template>
@@ -73,19 +68,19 @@
       <ng-template #errorTpl>
         <p class="text-danger">{{ error() }}</p>
       </ng-template>
-    </main>
 
-    
-   <aside class="side-art right-art" *ngIf="activeTab() === 'info'">
-  <lottie-player
-    src="/assets/lottie/drops.json"
-    background="transparent"
-    speed="1"
-    loop
-    autoplay
-  ></lottie-player>
-</aside>
+    </div>
 
-  </main> 
+    <aside class="side-art right-art" *ngIf="activeTab() === 'info'">
+      <lottie-player
+        src="/assets/lottie/drops.json"
+        background="transparent"
+        speed="1"
+        loop
+        autoplay
+      ></lottie-player>
+    </aside>
+
+  </div>
 
 </section>

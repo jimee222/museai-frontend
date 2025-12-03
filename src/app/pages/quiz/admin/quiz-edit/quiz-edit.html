@@ -1,0 +1,91 @@
+<section class="create-quiz-page">
+
+  <div class="header-area">
+    <img src="/assets/brand/museai-logo.png" alt="MuseAI Logo" class="logo" />
+    <h1 class="title">{{ quiz() ? 'Editar Quiz' : 'Crear Nuevo Quiz' }}</h1>
+    <p class="subtitle">
+      {{ quiz() ? 'Modifique la información del quiz.' : 'Complete la información para crear un nuevo quiz.' }}
+    </p>
+  </div>
+
+  <div class="quiz-container">
+
+    
+    <div class="image-card">
+      <h3>Imagen del Quiz</h3>
+
+      <div class="quiz-image">
+        <ng-container *ngIf="imagePreview(); else showPlaceholder">
+          <img [src]="imagePreview()" alt="Imagen del Quiz" />
+        </ng-container>
+
+        <ng-template #showPlaceholder>
+          <img src="/assets/icons/photo_icon.png" alt="Placeholder" class="placeholder-img" />
+        </ng-template>
+      </div>
+
+      
+      <label for="fileInput" class="file-input-btn">
+        Seleccionar nueva imagen
+      </label>
+
+      
+      <input
+        id="fileInput"
+        type="file"
+        accept="image/*"
+        (change)="onFileSelected($event)"
+      />
+    </div>
+
+   
+    <form *ngIf="form" [formGroup]="form" class="quiz-form" (ngSubmit)="submit()">
+
+      <div class="form-group">
+        <label for="title">Título del Quiz</label>
+        <input id="title" type="text" formControlName="title" placeholder="Ingrese un título para el quiz"/>
+        <span class="error" *ngIf="form.get('title')?.touched && form.get('title')?.invalid">
+          El título es obligatorio.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripción</label>
+        <textarea id="description" formControlName="description" placeholder="Ingrese una descripción del quiz"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="level">Nivel</label>
+        <select id="level" formControlName="level">
+          <option value="">Seleccione nivel</option>
+          <option value="BASIC">Básico</option>
+          <option value="INTERMEDIATE">Intermedio</option>
+          <option value="ADVANCED">Avanzado</option>
+        </select>
+        <span class="error" *ngIf="form.get('level')?.touched && form.get('level')?.invalid">
+          El nivel es obligatorio.
+        </span>
+      </div>
+
+      <div class="buttons">
+        <button type="submit" class="btn primary">
+          {{ quiz() ? 'Actualizar Quiz' : 'Crear Quiz' }}
+        </button>
+        <button type="button" class="btn secondary" (click)="cancel()">Cancelar</button>
+      </div>
+
+      <button class="btn edit-questions" (click)="goToQuestions()">
+        Editar preguntas
+      </button>
+
+    </form>
+
+  </div>
+
+  <div *ngIf="quiz()" class="edit-questions-container">
+    <button class="btn return" (click)="return()">
+      Regresar
+    </button>
+  </div>
+
+</section>

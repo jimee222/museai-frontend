@@ -14,6 +14,13 @@ import { EditProfile } from './pages/edit-profile/edit-profile';
 import { AuthGuard } from './guards/auth.guard';
 import { CreateCanvasPageComponent } from './pages/create-canvas/create-canvas';
 import { SculptorPageComponent } from './sculptor/pages/sculptor-page.component';
+import { QuizListAdmin } from './pages/quiz/admin/quiz-list-admin/quiz-list-admin';
+import { QuizCreate } from './pages/quiz/admin/quiz-create/quiz-create'; 
+import { QuizEdit } from './pages/quiz/admin/quiz-edit/quiz-edit'; 
+import { Questions } from './pages/quiz/admin/questions/questions';
+import { QuizListUser } from './pages/quiz/user/quiz-list-user/quiz-list-user';
+import {QuizAttemptComponent} from './pages/quiz/user/quiz-attempt/quiz-attempt';
+
 
 export const routes: Routes = [
   {
@@ -50,27 +57,53 @@ export const routes: Routes = [
 
   {
     path: 'app',
-    canActivate: [AuthGuard],
+canActivate: [AuthGuard], 
+children: [
+  {
+    path: 'menu',
+    component: Menu
+  },
+  {
+    path: 'profile',
+    component: Profile
+  },
+  {
+    path: 'edit-profile',
+    component: EditProfile
+  },
+
+  {
+    path: 'quizzes',
+    component: QuizListUser 
+  },
+  {
+  path: 'quizzes/:id/attempt',
+  component: QuizAttemptComponent
+},
+  {
+    path: 'quizzes-admin',
+    component: QuizListAdmin
+  },
+
+  {
+    path: 'quiz',
     children: [
-      {
-        path: 'menu',
-        component: Menu,
-      },
-      {
-        path: 'profile',
-        component: Profile,
-      },
-      {
-        path: 'edit-profile',
-        component: EditProfile,
-      },
+      { path: 'create', component: QuizCreate },
+      { path: 'edit/:id', component: QuizEdit },
+      { path: 'questions/:id', component: Questions },
+      { path: '', redirectTo: 'create', pathMatch: 'full' }
+    ]
+  }
+]
+
+    },
+
       {
         path: '',
         pathMatch: 'full',
         redirectTo: 'menu',
       },
-    ],
-  },
+    
   {
       path: 'museum',
       component: MuseumComponent,
@@ -80,6 +113,7 @@ export const routes: Routes = [
     path: 'sculptor',
     component: SculptorPageComponent,
   },
+  
   {
     path: '**',
     component: NotFound,
