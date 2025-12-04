@@ -74,6 +74,8 @@ export class QuizListAdmin implements OnInit {
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#d7b25a',
       cancelButtonColor: '#6d552a',
+      background: '#2c1b12',
+      color: '#fff',
     });
 
     if (!result.isConfirmed) return;
@@ -85,6 +87,8 @@ export class QuizListAdmin implements OnInit {
    
       await Swal.fire({
         icon: 'success',
+        background: '#2c1b12',
+        color: '#fff',
         title: 'Quiz eliminado',
         showConfirmButton: false,
         timer: 1500

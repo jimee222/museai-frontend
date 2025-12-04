@@ -91,6 +91,8 @@ export class Questions implements OnInit {
     Swal.fire({
       icon: 'error',
       title: 'Las opciones no pueden ser iguales',
+      background: '#2c1b12',
+      color: '#fff',
       confirmButtonColor: '#d7b25a'
     });
     return;
@@ -108,7 +110,8 @@ export class Questions implements OnInit {
           : item
         )
       );
-      Swal.fire({ icon:'success', title:'Pregunta guardada', timer:900, showConfirmButton:false });
+      Swal.fire({ icon:'success', background: '#2c1b12',
+      color: '#fff', title:'Pregunta guardada', timer:900, showConfirmButton:false });
     },
     error: ()=> Swal.fire({ icon:'error', title:'Error al guardar' })
   });
@@ -126,7 +129,8 @@ export class Questions implements OnInit {
     this.questionService.deleteQuestion(this.quizId(), q.id).subscribe({
       next: () => {
         this.questions.update(list => list.filter((_, x)=> x!==i));
-        Swal.fire({ icon:'success', title:'Pregunta Eliminada', timer:800, showConfirmButton:false });
+        Swal.fire({ icon:'success', background: '#2c1b12',
+        color: '#fff',title:'Pregunta Eliminada', timer:800, showConfirmButton:false });
       },
       error: () => Swal.fire({ icon:'error', title:'Error eliminando pregunta' })
     });
@@ -166,7 +170,8 @@ export class Questions implements OnInit {
 
   this.questionService.saveAllQuestions(this.quizId(), payload).subscribe({
     next: () => {
-      Swal.fire({ icon:'success', title:'Cambios guardados', timer:1200, showConfirmButton:false });
+      Swal.fire({ icon:'success', background: '#2c1b12',
+        color: '#fff',title:'Cambios guardados', timer:1200, showConfirmButton:false });
       this.loading.set(false);
     },
     error: () => {

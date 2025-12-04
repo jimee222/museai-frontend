@@ -152,7 +152,9 @@ if (!quizId || isNaN(quizId)) {
           showConfirmButton: false,
           timer: 1500,
           confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d7b25a'
+          confirmButtonColor: '#d7b25a',
+          background: '#2c1b12',
+          color: '#fff',
         });
         this.router.navigateByUrl('/app/quizzes-admin');
       },

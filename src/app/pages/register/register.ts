@@ -67,9 +67,10 @@ export class Register implements AfterViewInit {
   showConfirm = signal(false);
 
   submitting = signal(false);
+  private readonly formValid = signal(false);
   apiError = signal<string | null>(null);
   apiSuccess = signal<string | null>(null);
-  canSubmit = computed(() => this.form.valid && !this.submitting());
+  canSubmit = computed(() => this.formValid() && !this.submitting());
 
   levels = [
     { value: 'beginner', label: 'Principiante' },
@@ -99,6 +100,9 @@ export class Register implements AfterViewInit {
       ),
       artLevel: ['', [Validators.required]],
     });
+
+    this.formValid.set(this.form.valid);
+    this.form.statusChanges.subscribe(() => this.formValid.set(this.form.valid));
   }
 
   /*  ANILLO IA  */

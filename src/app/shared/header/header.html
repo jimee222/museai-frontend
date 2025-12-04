@@ -28,9 +28,10 @@
   <div class="links">
     <div class="links-main">
 
-      <a routerLink="/app/menu" routerLinkActive="active">Inicio</a>
 
       <ng-container *ngIf="isAuthenticated">
+        <a routerLink="/app/menu" routerLinkActive="active">Inicio</a>
+
         <a routerLink="/museum" routerLinkActive="active">Museo</a>
 
         <a routerLink="/create-canvas" routerLinkActive="active">Lienzo</a>
@@ -38,6 +39,7 @@
         <a routerLink="/sculptor" routerLinkActive="active">
           Escultura 3D
         </a>
+        <a routerLink="/app/quizzes" routerLinkActive="active">Quiz</a>
 
         <a routerLink="/app/profile" routerLinkActive="active">Perfil</a>
 
@@ -47,6 +49,13 @@
           routerLinkActive="active"
         >
           Consumo AI
+        </a>
+        <a
+          *ngIf="isAdmin()"
+          routerLink="/app/quizzes-admin"
+          routerLinkActive="active"
+        >
+          Creación Quizzes
         </a>
       </ng-container>
 
