@@ -28,9 +28,10 @@
   <div class="links">
     <div class="links-main">
 
-      <a routerLink="/app/menu" routerLinkActive="active">Inicio</a>
 
       <ng-container *ngIf="isAuthenticated">
+        <a routerLink="/app/menu" routerLinkActive="active">Inicio</a>
+
         <a routerLink="/museum" routerLinkActive="active">Museo</a>
 
         <a routerLink="/create-canvas" routerLinkActive="active">Lienzo</a>
